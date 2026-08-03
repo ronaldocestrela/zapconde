@@ -1,7 +1,9 @@
 namespace Tests.Architecture;
 
 /// <summary>
-/// Testes de conformidade arquitetural para a Subfase 1.2.1 (EF Core 10 + Npgsql)
+/// Testes de conformidade arquitetural para persistência relacional:
+/// - Subfase 1.2.1: EF Core 10 + Npgsql
+/// - Subfase 1.2.3: Pgvector (busca vetorial para RAG)
 /// </summary>
 public class InfrastructurePersistenceConfigurationTests
 {
@@ -21,6 +23,15 @@ public class InfrastructurePersistenceConfigurationTests
 
         Assert.True(hasNpgsqlProviderReference,
             "BuildingBlocks.Infrastructure deve referenciar Npgsql.EntityFrameworkCore.PostgreSQL na Subfase 1.2.1");
+    }
+
+    [Fact]
+    public void Infrastructure_Should_Reference_PgvectorEfCoreProvider()
+    {
+        var hasPgvectorProviderReference = HasPackageReference("Pgvector.EntityFrameworkCore");
+
+        Assert.True(hasPgvectorProviderReference,
+            "BuildingBlocks.Infrastructure deve referenciar Pgvector.EntityFrameworkCore na Subfase 1.2.3 para suporte a busca vetorial (RAG)");
     }
 
     private static bool HasPackageReference(string packageId)

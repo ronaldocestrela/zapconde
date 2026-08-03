@@ -113,7 +113,29 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Build e todos os 16 testes da subfase executados com sucesso (100% Green).
 
 
-* [] **Subfase 1.2.3:** Configurar suporte ao **Pgvector** (`Pgvector.EntityFrameworkCore`) no PostgreSQL para a futura busca vetorial do RAG.
+* [x] **Subfase 1.2.3:** Configurar suporte ao **Pgvector** (`Pgvector.EntityFrameworkCore`) no PostgreSQL para a futura busca vetorial do RAG.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Pacote `Pgvector.EntityFrameworkCore` (versão 0.3.0) adicionado em:
+    - `src/BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj`
+  - Configuração reutilizável de suporte vetorial criada:
+    - `BuildingBlocks.Infrastructure/Persistence/VectorDbContextOptionsExtensions.cs`
+    - Métodos de extensão `UseNpgsqlWithVector()` (genérico e não-genérico) que habilitam tipos vetoriais via `NpgsqlDataSourceBuilder`
+  - Compatibilidade preservada com arquitetura multi-tenant existente (sem quebra de isolamento)
+  - BDD da subfase criado:
+    - `tests/LivingDoc/Features/Fase1_2_3_PgvectorSupport.feature` (8 cenários)
+  - Testes criados e aprovados (TDD Red → Green):
+    - `tests/Tests.Architecture/InfrastructurePersistenceConfigurationTests.cs` (teste adicional para Pgvector.EntityFrameworkCore)
+    - `tests/Tests.Integration/Infrastructure/PgvectorSupportTests.cs` (4 testes - validação com PostgreSQL real + pgvector via Testcontainers)
+      - Extensão pgvector habilitada no PostgreSQL
+      - Mapeamento EF Core de tipo `vector`
+      - Persistência e leitura de embeddings vetoriais
+      - Consultas de similaridade vetorial com ordenação por distância L2
+      - Isolamento multi-tenant preservado em embeddings
+  - Build da solução e todos os testes relevantes da subfase executados com sucesso (100% Green).
+  - Base técnica preparada para implementação futura do módulo AIEngine/RAG.
 
 
 
