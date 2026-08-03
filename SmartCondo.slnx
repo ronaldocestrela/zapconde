@@ -1,0 +1,35 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/API/">
+    <Project Path="src/API/SmartCondo.Api/SmartCondo.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/BuildingBlocks.Domain/BuildingBlocks.Domain.csproj" />
+    <Project Path="src/BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj" />
+    <Project Path="src/BuildingBlocks/BuildingBlocks.Shared/BuildingBlocks.Shared.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/AccessControl/">
+    <Project Path="src/Modules/AccessControl/Modules.AccessControl.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/AIEngine/">
+    <Project Path="src/Modules/AIEngine/Modules.AIEngine.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Financial/">
+    <Project Path="src/Modules/Financial/Modules.Financial.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/Modules.Identity.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Operations/">
+    <Project Path="src/Modules/Operations/Modules.Operations.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/WhatsApp/">
+    <Project Path="src/Modules/WhatsApp/Modules.WhatsApp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Tests.Architecture/Tests.Architecture.csproj" />
+    <Project Path="tests/Tests.Integration/Tests.Integration.csproj" />
+    <Project Path="tests/Tests.Unit/Tests.Unit.csproj" />
+  </Folder>
+</Solution>
