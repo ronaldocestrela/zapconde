@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\API\SmartCondo.Api\SmartCondo.Api.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks\BuildingBlocks.Infrastructure\BuildingBlocks.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\BuildingBlocks.Shared\BuildingBlocks.Shared.csproj" />
   </ItemGroup>
 

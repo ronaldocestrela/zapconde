@@ -5,8 +5,8 @@ Backend SaaS multi-tenant para gestão condominial inteligente em .NET 10.
 ## Status atual
 
 - Fase em execução: **Fase 1 — Fundação da Infraestrutura**
-- Subfase concluída: **1.1.2 — Configuração do SmartCondo.Api (Minimal APIs + FastEndpoints)**
-- Próxima subfase: **1.1.3 — Documentação OpenAPI/Scalar com XML Comments**
+- Subfase concluída: **1.2.2 — ITenantScoped + Global Query Filter por tenant**
+- Próxima subfase: **1.2.3 — Pgvector para RAG**
 
 ## Estrutura inicial implementada
 
@@ -26,6 +26,14 @@ Backend SaaS multi-tenant para gestão condominial inteligente em .NET 10.
 - Solução `SmartCondo.slnx` com todos os projetos registrados.
 - Padronização com `Directory.Build.props` e `.editorconfig`.
 - Testes de conformidade estrutural em `tests/Tests.Architecture/StructuralConformityTests.cs`.
+- Testes de persistência da Subfase 1.2.1 em:
+  - `tests/Tests.Architecture/InfrastructurePersistenceConfigurationTests.cs`
+  - `tests/Tests.Integration/Infrastructure/PostgreSqlConnectivityTests.cs`
+- **Testes de multi-tenancy da Subfase 1.2.2 em:**
+  - `tests/Tests.Architecture/MultiTenancyArchitectureTests.cs` (7 testes aprovados)
+  - `tests/Tests.Unit/Infrastructure/MultiTenantDbContextTests.cs` (5 testes aprovados)
+  - `tests/Tests.Integration/Infrastructure/MultiTenantDbContextIntegrationTests.cs` (4 testes aprovados)
+  - Documentação viva: `tests/LivingDoc/Features/Fase1_2_2_TenantGlobalQueryFilter.feature`
 
 ## Referências
 

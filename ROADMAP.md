@@ -61,10 +61,56 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 ### 1.2. Banco de Dados Relacional e Isolamento Multi-tenant
 
-* [] **Subfase 1.2.1:** Configurar o EF Core 10 com driver PostgreSQL (`Npgsql`) no `BuildingBlocks.Infrastructure`.
+* [x] **Subfase 1.2.1:** Configurar o EF Core 10 com driver PostgreSQL (`Npgsql`) no `BuildingBlocks.Infrastructure`.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - `BuildingBlocks.Infrastructure` atualizado com:
+    - `Microsoft.EntityFrameworkCore` `10.0.10`
+    - `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.0`
+  - Configuração de `ConnectionStrings:Postgres` em:
+    - `src/API/SmartCondo.Api/appsettings.json`
+    - `src/API/SmartCondo.Api/appsettings.Development.json` (override por ambiente)
+  - Composição de infraestrutura adicionada via:
+    - `src/BuildingBlocks/BuildingBlocks.Infrastructure/DependencyInjection/InfrastructureServiceCollectionExtensions.cs`
+    - `src/API/SmartCondo.Api/Configuration/ServiceCollectionExtensions.cs`
+    - `src/API/SmartCondo.Api/Program.cs`
+  - Referência de projeto adicionada:
+    - `src/API/SmartCondo.Api/SmartCondo.Api.csproj` -> `BuildingBlocks.Infrastructure`
+  - BDD da subfase criado:
+    - `tests/LivingDoc/Features/Fase1_2_1_EfCoreNpgsqlSetup.feature`
+  - Testes criados:
+    - `tests/Tests.Architecture/InfrastructurePersistenceConfigurationTests.cs`
+    - `tests/Tests.Integration/Infrastructure/PostgreSqlConnectivityTests.cs`
+  - Build e testes relevantes da subfase executados com sucesso.
 
 
-* [] **Subfase 1.2.2:** Criar a interface `ITenantScoped` e implementar o **Global Query Filter** no EF Core para forçar `e.TenantId == CurrentTenantId` em todas as consultas.
+* [x] **Subfase 1.2.2:** Criar a interface `ITenantScoped` e implementar o **Global Query Filter** no EF Core para forçar `e.TenantId == CurrentTenantId` em todas as consultas.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Contratos de multi-tenancy criados em `BuildingBlocks.Shared/MultiTenancy`:
+    - `ITenantScoped` (interface com `TenantId` para entidades)
+    - `ICurrentTenantService` (interface de contexto de tenant)
+  - Infraestrutura de multi-tenancy criada em `BuildingBlocks.Infrastructure/MultiTenancy`:
+    - `CurrentTenantService` (implementação padrão com comportamento deny-by-default)
+  - DbContext base reutilizável criado:
+    - `BuildingBlocks.Infrastructure/Persistence/MultiTenantDbContext`
+    - Aplica `HasQueryFilter` automaticamente em entidades `ITenantScoped` via reflexão
+    - Filtro: `entity.TenantId == _currentTenantService.TenantId` (consultas vazias quando tenant não resolvido)
+  - DI ajustado em `InfrastructureServiceCollectionExtensions`:
+    - `ICurrentTenantService` registrado como Scoped para isolamento por requisição
+  - Referência de projeto adicionada:
+    - `BuildingBlocks.Infrastructure.csproj` → `BuildingBlocks.Shared`
+  - BDD da subfase criado:
+    - `tests/LivingDoc/Features/Fase1_2_2_TenantGlobalQueryFilter.feature` (8 cenários)
+  - Testes criados e aprovados (TDD Green):
+    - `tests/Tests.Architecture/MultiTenancyArchitectureTests.cs` (7 testes - validação de localização e dependências)
+    - `tests/Tests.Unit/Infrastructure/MultiTenantDbContextTests.cs` (5 testes - validação de aplicação de filtro)
+    - `tests/Tests.Integration/Infrastructure/MultiTenantDbContextIntegrationTests.cs` (4 testes - validação com PostgreSQL real via Testcontainers)
+  - Build e todos os 16 testes da subfase executados com sucesso (100% Green).
 
 
 * [] **Subfase 1.2.3:** Configurar suporte ao **Pgvector** (`Pgvector.EntityFrameworkCore`) no PostgreSQL para a futura busca vetorial do RAG.

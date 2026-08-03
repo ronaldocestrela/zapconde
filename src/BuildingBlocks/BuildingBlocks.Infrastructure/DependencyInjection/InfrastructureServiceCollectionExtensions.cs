@@ -1,3 +1,5 @@
+using BuildingBlocks.Infrastructure.MultiTenancy;
+using BuildingBlocks.Shared.MultiTenancy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,6 +21,9 @@ public static class InfrastructureServiceCollectionExtensions
         {
             throw new InvalidOperationException("Connection string 'ConnectionStrings:Postgres' não foi configurada.");
         }
+
+        // Registra serviço de contexto de tenant (scoped para suportar isolamento por requisição)
+        services.AddScoped<ICurrentTenantService, CurrentTenantService>();
 
         return services;
     }
