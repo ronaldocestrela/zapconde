@@ -25,7 +25,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddApiDocumentation(this IServiceCollection services)
     {
-        services.AddOpenApi();
+        services.AddOpenApi("v1");
 
         return services;
     }

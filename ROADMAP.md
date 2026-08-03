@@ -43,7 +43,19 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - API inicializa em ~114ms com 1 endpoint registrado.
 
 
-* [] **Subfase 1.1.3:** Adicionar suporte a documentação OpenAPI/Scalar com geração automática a partir dos XML Comments.
+* [x] **Subfase 1.1.3:** Adicionar suporte a documentação OpenAPI/Scalar com geração automática a partir dos XML Comments.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - `SmartCondo.Api` configurada para gerar arquivo XML de documentação no build (`GenerateDocumentationFile=true`).
+  - Documento OpenAPI v1 exposto em `/openapi/v1.json` no ambiente de desenvolvimento.
+  - UI de documentação Scalar habilitada em `/scalar` no ambiente de desenvolvimento.
+  - Comentários XML públicos enriquecendo o contrato OpenAPI (ex.: `HealthDto`).
+  - Arquivo BDD criado: `tests/LivingDoc/Features/Fase1_1_3_ApiDocumentation.feature`.
+  - Testes de integração estendidos em `tests/Tests.Integration/Api/ApiBootstrapTests.cs` para OpenAPI/Scalar/XML docs.
+  - Testes arquiteturais estendidos em `tests/Tests.Architecture/ApiConfigurationTests.cs` para Scalar e geração de XML.
+  - Build da solução e testes relevantes da subfase executados com sucesso.
 
 
 

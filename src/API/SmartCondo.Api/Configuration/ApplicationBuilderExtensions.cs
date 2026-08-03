@@ -1,4 +1,5 @@
 using FastEndpoints;
+using Scalar.AspNetCore;
 
 namespace SmartCondo.Api.Configuration;
 
@@ -16,6 +17,7 @@ public static class ApplicationBuilderExtensions
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
+            app.MapScalarApiReference("/scalar");
         }
 
         // Redirecionamento HTTPS

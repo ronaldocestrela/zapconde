@@ -1,6 +1,6 @@
 using System.Net;
-using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Tests.Integration.Api;
@@ -16,7 +16,11 @@ public class ApiBootstrapTests : IClassFixture<WebApplicationFactory<Program>>
 
     public ApiBootstrapTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
+        _factory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Development");
+        });
+
         _client = _factory.CreateClient();
     }
 
@@ -95,5 +99,42 @@ public class ApiBootstrapTests : IClassFixture<WebApplicationFactory<Program>>
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound, 
             "o endpoint de template WeatherForecast deve ter sido removido");
+    }
+
+    [Fact]
+    public async Task OpenApiEndpoint_Should_Return200Ok()
+    {
+        // Act
+        var response = await _client.GetAsync("/openapi/v1.json");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK,
+            "o endpoint OpenAPI deve estar disponível em desenvolvimento");
+    }
+
+    [Fact]
+    public async Task OpenApiEndpoint_Should_ContainHealthPathAndDescription()
+    {
+        // Act
+        var response = await _client.GetAsync("/openapi/v1.json");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        content.Should().Contain("/api/health",
+            "o documento OpenAPI deve conter o endpoint de health");
+        content.Should().Contain("DTO de resposta do endpoint de health check",
+            "os XML Comments devem enriquecer o contrato OpenAPI com descrições");
+    }
+
+    [Fact]
+    public async Task ScalarEndpoint_Should_Return200Ok()
+    {
+        // Act
+        var response = await _client.GetAsync("/scalar");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK,
+            "a interface Scalar deve estar disponível em desenvolvimento");
     }
 }

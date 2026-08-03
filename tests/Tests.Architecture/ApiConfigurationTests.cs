@@ -76,6 +76,40 @@ public class ApiConfigurationTests
             "A API não deve depender diretamente de BuildingBlocks.Domain (violação de Clean Architecture)");
     }
 
+    [Fact]
+    public void Api_Should_ReferenceScalar()
+    {
+        // Arrange
+        var apiAssembly = GetAssemblyByName("SmartCondo.Api");
+
+        // Act
+        var referencedAssemblies = apiAssembly?.GetReferencedAssemblies() ?? [];
+        var hasScalarReference = referencedAssemblies
+            .Any(a => a.Name != null && a.Name.Contains("Scalar.AspNetCore"));
+
+        // Assert
+        Assert.True(hasScalarReference,
+            "A API deve referenciar o pacote Scalar.AspNetCore para exibir a UI da documentação");
+    }
+
+    [Fact]
+    public void Api_Should_GenerateXmlDocumentationFile()
+    {
+        // Arrange
+        var apiAssembly = GetAssemblyByName("SmartCondo.Api");
+        Assert.NotNull(apiAssembly);
+
+        var assemblyLocation = apiAssembly!.Location;
+        var xmlDocumentationPath = Path.ChangeExtension(assemblyLocation, ".xml");
+
+        // Act
+        var xmlDocumentationExists = File.Exists(xmlDocumentationPath);
+
+        // Assert
+        Assert.True(xmlDocumentationExists,
+            "A API deve gerar arquivo XML de documentação para enriquecer o contrato OpenAPI");
+    }
+
     /// <summary>
     /// Carrega assembly pelo nome a partir do diretório de saída do projeto
     /// </summary>
