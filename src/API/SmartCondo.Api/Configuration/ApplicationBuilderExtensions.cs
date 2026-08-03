@@ -1,4 +1,5 @@
 using FastEndpoints;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
 
 namespace SmartCondo.Api.Configuration;
@@ -25,6 +26,16 @@ public static class ApplicationBuilderExtensions
 
         // Pipeline do FastEndpoints
         app.UseFastEndpoints();
+
+        app.MapHealthChecks("/health/live", new HealthCheckOptions
+        {
+            Predicate = _ => false
+        });
+
+        app.MapHealthChecks("/health/ready", new HealthCheckOptions
+        {
+            Predicate = registration => registration.Tags.Contains("ready")
+        });
 
         return app;
     }

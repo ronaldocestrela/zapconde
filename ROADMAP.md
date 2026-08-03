@@ -141,7 +141,44 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 ### 1.3. Mensageria, Outbox Pattern e Caching
 
-* [] **Subfase 1.3.1:** Configurar o **MassTransit** com **RabbitMQ** para mensageria assíncrona orientada a eventos.
+* [x] **Subfase 1.3.1:** Configurar o **MassTransit** com **RabbitMQ** para mensageria assíncrona orientada a eventos.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Dependências de mensageria adicionadas:
+    - `src/BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj`
+      - `MassTransit` `8.5.2`
+      - `MassTransit.RabbitMQ` `8.5.2`
+    - `tests/Tests.Integration/Tests.Integration.csproj`
+      - `Testcontainers.RabbitMq` `4.8.1`
+  - Configuração dedicada de broker adicionada em:
+    - `src/API/SmartCondo.Api/appsettings.json`
+    - `src/API/SmartCondo.Api/appsettings.Development.json`
+    - Seção `RabbitMQ` com `Host`, `Port`, `VirtualHost`, `Username`, `Password`
+  - Contrato compartilhado para integração criado:
+    - `src/BuildingBlocks/BuildingBlocks.Shared/Messaging/IIntegrationEvent.cs`
+  - Bootstrap de mensageria implementado na infraestrutura:
+    - `src/BuildingBlocks/BuildingBlocks.Infrastructure/Messaging/RabbitMqOptions.cs`
+    - `src/BuildingBlocks/BuildingBlocks.Infrastructure/DependencyInjection/InfrastructureServiceCollectionExtensions.cs`
+      - Validação de configuração RabbitMQ
+      - Registro `AddMassTransit` com transporte RabbitMQ
+      - Suporte a `ConnectionStrings:RabbitMQ` (URI completa) com fallback para seção dedicada
+  - Health check explícito de RabbitMQ implementado:
+    - `src/BuildingBlocks/BuildingBlocks.Infrastructure/Messaging/RabbitMqBusHealthCheck.cs`
+    - Endpoints de saúde mapeados em:
+      - `src/API/SmartCondo.Api/Configuration/ApplicationBuilderExtensions.cs`
+      - `/health/live` e `/health/ready` (sem conflito com `/api/health`)
+  - BDD da subfase criado:
+    - `tests/LivingDoc/Features/Fase1_3_1_MassTransitRabbitMqBootstrap.feature`
+  - Testes criados e aprovados:
+    - `tests/Tests.Architecture/MessagingConfigurationArchitectureTests.cs`
+      - valida referências de pacotes, tipo `RabbitMqOptions` e seção `RabbitMQ` nos appsettings
+    - `tests/Tests.Integration/Infrastructure/RabbitMqMessagingBootstrapIntegrationTests.cs`
+      - valida exposição de readiness e coexistência com endpoint funcional `/api/health`
+  - Build da solução e testes relevantes executados com sucesso (Green):
+    - Arquitetura: **33/33 aprovados**
+    - Integração: **21/21 aprovados**
 
 
 * [] **Subfase 1.3.2:** Habilitar o **Transactional Outbox Pattern** no EF Core/MassTransit para garantir idempotência.
