@@ -166,10 +166,74 @@ Funcionalidade: Solicitacao de Segunda Via de Boleto via WhatsApp
 
 Ao ser solicitado a implementar qualquer módulo neste repositório, você DEVE seguir estes passos estritamente:
 
+### 🎯 Padrão de Retorno Obrigatório: Result Pattern
+
+**TODA resposta de API DEVE utilizar o tipo `Result` ou `Result<T>` definido em `BuildingBlocks.Shared`.**
+
+* **Proibições:**
+  - ❌ Nunca retornar exceções brutas ou stack traces no payload da resposta.
+  - ❌ Nunca retornar `null` ou tipos primitivos diretamente sem encapsulamento.
+  - ❌ Nunca usar códigos HTTP inconsistentes com o estado de negócio.
+
+* **Estrutura do `Result`:**
+  ```csharp
+  public class Result
+  {
+      public bool IsSuccess { get; }
+      public string Message { get; }
+      public IEnumerable<string> Errors { get; }
+      // Métodos factory: Success(), Failure(...), ValidationFailure(...)
+  }
+
+  public class Result<T> : Result
+  {
+      public T Data { get; }
+      // Método factory: Success(T data)
+  }
+  ```
+
+* **Mapeamento Obrigatório para HTTP Status Codes:**
+  | Estado de Negócio | HTTP Status | Método `Result` | Exemplo de Cenário |
+  |-------------------|-------------|-----------------|-------------------|
+  | ✅ Sucesso com dados | `200 OK` | `Result<T>.Success(data)` | Consulta retornou registros |
+  | ✅ Criação bem-sucedida | `201 Created` | `Result<T>.Success(data)` | Novo recurso criado com sucesso |
+  | ⚠️ Validação falhou | `400 Bad Request` | `Result.ValidationFailure(errors)` | Campos obrigatórios ausentes |
+  | ⚠️ Entidade processável mas inválida | `422 Unprocessable Entity` | `Result.ValidationFailure(errors)` | CPF inválido, data no passado |
+  | 🚫 Recurso não encontrado | `404 Not Found` | `Result.Failure("Not found")` | Morador ou Boleto inexistente |
+  | ⚠️ Conflito de negócio | `409 Conflict` | `Result.Failure("Conflict")` | Reserva já existe no horário |
+  | ❌ Erro inesperado do sistema | `500 Internal Server Error` | `Result.Failure("System error")` | Banco fora do ar, exceção não tratada |
+
+* **Exemplo de Uso em Endpoint (FastEndpoints):**
+  ```csharp
+  public class GetBoletosEndpoint : Endpoint<GetBoletosRequest, Result<IEnumerable<BoletoDto>>>
+  {
+      public override async Task HandleAsync(GetBoletosRequest req, CancellationToken ct)
+      {
+          var boletos = await _boletoService.GetPendingBoletosAsync(req.MoradorId, ct);
+
+          if (!boletos.Any())
+              await SendAsync(Result<IEnumerable<BoletoDto>>.Success(boletos), 200, ct);
+          else
+              await SendAsync(Result<IEnumerable<BoletoDto>>.Success(boletos), 200, ct);
+      }
+  }
+  ```
+
+### 🎨 Identidade Visual (Stitch) e Comunicação MCP
+
+* **Identidade Visual Obrigatória:** quando houver implementação de telas, protótipos, fluxos de UX, componentes visuais ou documentação de interface, seguir a identidade visual do projeto Stitch:
+  - `https://stitch.withgoogle.com/projects/13499280582130189383`
+
+* **Comunicação via MCP Obrigatória:** para integrações entre agentes, ferramentas e serviços externos, priorizar o uso de MCP (Model Context Protocol) como canal padrão de comunicação, com contratos explícitos, rastreáveis e versionáveis.
+
+---
+
+### 📋 Fluxo de Implementação (TDD + Result Pattern)
+
 1. **Passo 1 (Especificação):** Crie ou leia o arquivo `.feature` correspondente na pasta `/tests/LivingDoc/Features`.
 2. **Passo 2 (TDD - Red):** Crie as classes de teste de unidade/integração que validam a funcionalidade. Garanta que elas falhem inicialmente.
 3. **Passo 3 (Domain & EF Core):** Crie as entidades de domínio utilizando `Entity Framework Core 10` com mapeamentos em arquivos de configuração (`IEntityTypeConfiguration<T>`).
-4. **Passo 4 (Application & CQRS):** Implemente os Handlers (MediatR/FastEndpoints) aplicando os filtros de Multi-tenancy (`tenant_id`).
+4. **Passo 4 (Application & CQRS):** Implemente os Handlers (MediatR/FastEndpoints) aplicando os filtros de Multi-tenancy (`tenant_id`) **e retornando obrigatoriamente `Result`/`Result<T>`**.
 5. **Passo 5 (TDD - Green):** Faça os testes passarem.
 6. **Passo 6 (Refactor & Docs):** Refatore o código garantindo legibilidade, padrões C# 14, e adicione comentários XML em endpoints públicos para geração da documentação OpenAPI.
 

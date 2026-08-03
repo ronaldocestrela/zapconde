@@ -5,8 +5,8 @@ Backend SaaS multi-tenant para gestão condominial inteligente em .NET 10.
 ## Status atual
 
 - Fase em execução: **Fase 1 — Fundação da Infraestrutura**
-- Subfase concluída: **1.1.1 — Estrutura Inicial do Modular Monolith**
-- Próxima subfase: **1.1.2 — Configuração do SmartCondo.Api (Minimal APIs + FastEndpoints)**
+- Subfase concluída: **1.1.2 — Configuração do SmartCondo.Api (Minimal APIs + FastEndpoints)**
+- Próxima subfase: **1.1.3 — Documentação OpenAPI/Scalar com XML Comments**
 
 ## Estrutura inicial implementada
 

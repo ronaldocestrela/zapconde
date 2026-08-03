@@ -26,7 +26,21 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Build e testes da fase executados com sucesso.
 
 
-* [] **Subfase 1.1.2:** Configurar o projeto `SmartCondo.Api` em .NET 10 com **Minimal APIs** / **FastEndpoints**.
+* [x] **Subfase 1.1.2:** Configurar o projeto `SmartCondo.Api` em .NET 10 com **Minimal APIs** / **FastEndpoints**.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Contrato `Result` e `Result<T>` criado em `BuildingBlocks.Shared` conforme `AGENTS.md`.
+  - FastEndpoints 5.40.0 configurado no projeto API.
+  - Endpoint `/api/health` implementado retornando `Result<HealthDto>`.
+  - `Program.cs` refatorado e organizado com métodos de extensão (`ServiceCollectionExtensions`, `ApplicationBuilderExtensions`).
+  - Template `WeatherForecast` removido completamente.
+  - Arquivo BDD criado: `tests/LivingDoc/Features/Fase1_1_2_ApiBootstrap.feature`.
+  - Testes de integração criados em `tests/Tests.Integration/Api/ApiBootstrapTests.cs` (6 casos de teste).
+  - Testes arquiteturais criados em `tests/Tests.Architecture/ApiConfigurationTests.cs` (4 casos de teste).
+  - **Todos os 24 testes da solução passaram** (TDD Red → Green completo).
+  - API inicializa em ~114ms com 1 endpoint registrado.
 
 
 * [] **Subfase 1.1.3:** Adicionar suporte a documentação OpenAPI/Scalar com geração automática a partir dos XML Comments.
