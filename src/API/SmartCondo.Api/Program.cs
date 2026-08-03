@@ -4,7 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configurar serviços (delegado para extensões)
 builder.Services
-    .AddApiServices()
+    .AddApiServices(builder.Configuration)
     .AddApiDocumentation();
 
 var app = builder.Build();

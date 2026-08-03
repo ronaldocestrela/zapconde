@@ -1,4 +1,5 @@
 using FastEndpoints;
+using BuildingBlocks.Infrastructure.DependencyInjection;
 
 namespace SmartCondo.Api.Configuration;
 
@@ -11,8 +12,10 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Configura os serviços principais da API
     /// </summary>
-    public static IServiceCollection AddApiServices(this IServiceCollection services)
+    public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddInfrastructure(configuration);
+
         // FastEndpoints para gerenciamento de endpoints
         services.AddFastEndpoints();
 
