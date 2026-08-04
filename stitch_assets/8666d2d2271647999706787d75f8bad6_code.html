@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ZapCond - Selecione seu perfil</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#1f1b16",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-fixed": "#001d36",
+                        "on-surface": "#191c1e",
+                        "on-tertiary-fixed-variant": "#4c463f",
+                        "primary-fixed": "#d1e4ff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#c2e9c7",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#184975",
+                        "surface-tint": "#35618e",
+                        "surface-bright": "#f7f9fb",
+                        "secondary": "#44664b",
+                        "primary": "#0f436f",
+                        "on-secondary-fixed-variant": "#2c4e35",
+                        "background": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#c2c7d0",
+                        "primary-fixed-dim": "#9fcafd",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#e0e3e5",
+                        "on-secondary-fixed": "#00210c",
+                        "tertiary": "#46403a",
+                        "surface-dim": "#d8dadc",
+                        "tertiary-container": "#5d5750",
+                        "on-background": "#191c1e",
+                        "on-primary-container": "#afd2ff",
+                        "on-secondary-container": "#486a4f",
+                        "surface-container": "#eceef0",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#9fcafd",
+                        "secondary-fixed": "#c5ecca",
+                        "outline": "#727780",
+                        "primary-container": "#2e5b88",
+                        "on-surface-variant": "#42474f",
+                        "on-tertiary-container": "#d7cdc5",
+                        "tertiary-fixed": "#ebe1d8",
+                        "secondary-fixed-dim": "#aad0af",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "tertiary-fixed-dim": "#cec5bc",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-container-low": "#f2f4f6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "1rem",
+                        "container-padding": "2.5rem",
+                        "stack-xl": "4rem",
+                        "inline-md": "1rem",
+                        "max-width-auth": "440px",
+                        "stack-lg": "2rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "display": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "headline-sm": ["Manrope"],
+                        "label-sm": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "display-mobile": ["Manrope"],
+                        "body-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "display-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: theme('colors.surface-bright'); /* Soft neutral background */
+            color: theme('colors.on-background');
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .auth-card {
+            background-color: theme('colors.surface-container-lowest');
+            border-radius: theme('borderRadius.2xl');
+            box-shadow: 0 4px 24px rgba(15, 67, 111, 0.08); /* Soft primary shadow */
+            padding: theme('spacing.container-padding');
+            width: 100%;
+            max-width: theme('spacing.max-width-auth');
+            margin: 0 auto;
+        }
+
+        @media (max-width: 767px) {
+            .auth-card {
+                padding: theme('spacing.stack-lg');
+                margin: theme('spacing.stack-lg') theme('spacing.stack-md');
+                border-radius: theme('borderRadius.2xl');
+            }
+        }
+
+        .role-card {
+            border: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .role-card:hover {
+            border-color: theme('colors.outline-variant');
+            background-color: theme('colors.surface-container-low');
+        }
+
+        .role-card.active {
+            border-color: theme('colors.secondary-container'); /* Soft Mint Green */
+            background-color: theme('colors.surface-container-low');
+        }
+
+        .btn-primary {
+            background-color: theme('colors.primary');
+            color: theme('colors.on-primary');
+            border-radius: theme('borderRadius.2xl');
+            transition: transform 0.1s ease-in-out, opacity 0.2s ease-in-out;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body class="antialiased flex items-center justify-center p-4">
+<!-- Main Content Area -->
+<main class="w-full flex-grow flex items-center justify-center py-stack-xl">
+<div class="auth-card flex flex-col gap-stack-lg">
+<!-- Header Section -->
+<div class="flex flex-col items-center text-center gap-stack-sm">
+<!-- Logo Placement -->
+<div class="mb-stack-md w-16 h-16 flex items-center justify-center bg-surface-container rounded-2xl">
+<img alt="ZapCond Logo" class="w-10 h-10 object-contain" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230f436f\'%3E%3Cpath d=\'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z\'/%3E%3C/svg%3E'" src="https://lh3.googleusercontent.com/aida/AP1WRLvwyDUwtXN0DuiS7L9uuVezkzh68EEAbh1Dn1M-E3HjHofQ4E0XkRdZcEiUFGqEiol4I4Mmk6fL1wuIJpMWiQntkKakYInGHBFiL_1Hj03so0gT8d3kamWaTjhV_MrAwDpBKt4Z-rpKRzTjvdleWQ0vKUMqdOs_BIUUK5wmrgeDjZXj_pTKQ7wV49x5uJDPGqEE1l1tkn1rmQJmUql6u3WWgPeNU8PXPn1rmOdCmIQxymZWWKUCHYvTDP7A"/>
+</div>
+<h1 class="font-display-mobile md:font-display text-display-mobile md:text-display text-on-surface">
+                    Selecione seu perfil
+                </h1>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Como você deseja acessar o ZapCond hoje?
+                </p>
+</div>
+<!-- Role Selection Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md" id="role-selection">
+<!-- Síndico -->
+<div aria-pressed="false" class="role-card flex flex-col items-center justify-center p-stack-md rounded-2xl bg-surface-container-lowest shadow-sm" onclick="selectRole(this)" role="button" tabindex="0">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center mb-stack-sm text-on-primary-fixed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">admin_panel_settings</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Síndico</span>
+</div>
+<!-- Administradora -->
+<div aria-pressed="false" class="role-card flex flex-col items-center justify-center p-stack-md rounded-2xl bg-surface-container-lowest shadow-sm" onclick="selectRole(this)" role="button" tabindex="0">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center mb-stack-sm text-on-primary-fixed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">business_center</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Administradora</span>
+</div>
+<!-- Morador -->
+<div aria-pressed="false" class="role-card flex flex-col items-center justify-center p-stack-md rounded-2xl bg-surface-container-lowest shadow-sm" onclick="selectRole(this)" role="button" tabindex="0">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center mb-stack-sm text-on-primary-fixed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">home</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Morador</span>
+</div>
+<!-- Porteiro -->
+<div aria-pressed="false" class="role-card flex flex-col items-center justify-center p-stack-md rounded-2xl bg-surface-container-lowest shadow-sm" onclick="selectRole(this)" role="button" tabindex="0">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center mb-stack-sm text-on-primary-fixed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">badge</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Porteiro</span>
+</div>
+</div>
+<!-- Action Area -->
+<div class="mt-stack-md flex flex-col gap-stack-sm">
+<button class="btn-primary w-full py-3 px-6 font-label-md text-label-md flex justify-center items-center gap-2" disabled="" id="continue-btn" style="opacity: 0.5; cursor: not-allowed;" type="button">
+                    Continuar
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<div class="text-center mt-2">
+<a class="font-label-sm text-label-sm text-on-surface-variant underline hover:text-primary transition-colors" href="#">Precisa de ajuda?</a>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Component from JSON -->
+<footer class="bg-transparent w-full bottom-0 py-stack-lg flex flex-col items-center gap-stack-sm max-w-auth mx-auto">
+<div class="flex gap-stack-md font-label-sm text-label-sm">
+<a class="text-on-surface-variant hover:text-primary transition-colors opacity-100 hover:opacity-80" href="#">Privacidade</a>
+<span class="text-outline-variant">•</span>
+<a class="text-on-surface-variant hover:text-primary transition-colors opacity-100 hover:opacity-80" href="#">Termos</a>
+<span class="text-outline-variant">•</span>
+<a class="text-on-surface-variant hover:text-primary transition-colors opacity-100 hover:opacity-80" href="#">Suporte</a>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-70">
+            © 2024 ZapCond. Protegendo seu refúgio digital.
+        </p>
+</footer>
+<script>
+        function selectRole(selectedElement) {
+            // Remove active class from all
+            const cards = document.querySelectorAll('.role-card');
+            cards.forEach(card => {
+                card.classList.remove('active');
+                card.setAttribute('aria-pressed', 'false');
+                // Reset icon fill if desired, keeping outline for simplicity in this soft minimalist style
+            });
+
+            // Add active class to selected
+            selectedElement.classList.add('active');
+            selectedElement.setAttribute('aria-pressed', 'true');
+            
+            // Enable continue button
+            const continueBtn = document.getElementById('continue-btn');
+            continueBtn.disabled = false;
+            continueBtn.style.opacity = '1';
+            continueBtn.style.cursor = 'pointer';
+        }
+    </script>
+</body></html>

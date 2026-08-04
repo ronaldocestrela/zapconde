@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html class="h-full antialiased" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ZapCond - Recuperação de Senha</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#1f1b16",
+                    "surface-container-high": "#e6e8ea",
+                    "on-primary-fixed": "#001d36",
+                    "on-surface": "#191c1e",
+                    "on-tertiary-fixed-variant": "#4c463f",
+                    "primary-fixed": "#d1e4ff",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "secondary-container": "#c2e9c7",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#184975",
+                    "surface-tint": "#35618e",
+                    "surface-bright": "#f7f9fb",
+                    "secondary": "#44664b",
+                    "primary": "#0f436f",
+                    "on-secondary-fixed-variant": "#2c4e35",
+                    "background": "#f7f9fb",
+                    "on-primary": "#ffffff",
+                    "outline-variant": "#c2c7d0",
+                    "primary-fixed-dim": "#9fcafd",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#e0e3e5",
+                    "on-secondary-fixed": "#00210c",
+                    "tertiary": "#46403a",
+                    "surface-dim": "#d8dadc",
+                    "tertiary-container": "#5d5750",
+                    "on-background": "#191c1e",
+                    "on-primary-container": "#afd2ff",
+                    "on-secondary-container": "#486a4f",
+                    "surface-container": "#eceef0",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "inverse-primary": "#9fcafd",
+                    "secondary-fixed": "#c5ecca",
+                    "outline": "#727780",
+                    "primary-container": "#2e5b88",
+                    "on-surface-variant": "#42474f",
+                    "on-tertiary-container": "#d7cdc5",
+                    "tertiary-fixed": "#ebe1d8",
+                    "secondary-fixed-dim": "#aad0af",
+                    "inverse-surface": "#2d3133",
+                    "surface-container-highest": "#e0e3e5",
+                    "surface-container-lowest": "#ffffff",
+                    "surface": "#f7f9fb",
+                    "tertiary-fixed-dim": "#cec5bc",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-container-low": "#f2f4f6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px",
+                    "2xl": "1rem"
+            },
+            "spacing": {
+                    "stack-md": "1rem",
+                    "container-padding": "2.5rem",
+                    "stack-xl": "4rem",
+                    "inline-md": "1rem",
+                    "max-width-auth": "440px",
+                    "stack-lg": "2rem",
+                    "stack-sm": "0.5rem"
+            },
+            "fontFamily": {
+                    "display": ["Manrope", "sans-serif"],
+                    "body-lg": ["Manrope", "sans-serif"],
+                    "headline-sm": ["Manrope", "sans-serif"],
+                    "label-sm": ["Manrope", "sans-serif"],
+                    "headline-md": ["Manrope", "sans-serif"],
+                    "label-md": ["Manrope", "sans-serif"],
+                    "display-mobile": ["Manrope", "sans-serif"],
+                    "body-md": ["Manrope", "sans-serif"]
+            },
+            "fontSize": {
+                    "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "display-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .auth-shadow {
+            box-shadow: 0 8px 32px rgba(15, 67, 111, 0.15); /* 15% opacity of Primary color #0f436f */
+        }
+        .input-inset {
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+        }
+        .input-focus-glow:focus {
+            box-shadow: 0 0 0 3px rgba(197, 236, 202, 0.5); /* secondary-fixed (soft mint green) */
+            border-color: #0f436f; /* primary (deep cerulean) */
+        }
+    </style>
+</head>
+<body class="bg-surface h-full flex flex-col font-body-md text-on-surface">
+<!-- TopAppBar -->
+<header class="w-full top-0 px-container-padding py-stack-lg bg-transparent flex justify-between items-center max-w-auth mx-auto">
+<div class="font-display text-display-mobile md:text-display font-bold text-primary dark:text-primary-fixed cursor-default">
+            ZapCond
+        </div>
+<button aria-label="Help" class="text-on-surface-variant hover:opacity-80 transition-opacity scale-95 duration-200" type="button">
+<span class="material-symbols-outlined text-2xl">help_outline</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex items-center justify-center p-4">
+<div class="w-full max-w-[440px] bg-surface-container-lowest rounded-2xl auth-shadow md:p-container-padding p-6 relative overflow-hidden">
+<!-- Logo / Illustration Area -->
+<div class="flex justify-center mb-stack-lg">
+<img alt="ZapCond Refuge Logo" class="w-24 h-24 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLvwyDUwtXN0DuiS7L9uuVezkzh68EEAbh1Dn1M-E3HjHofQ4E0XkRdZcEiUFGqEiol4I4Mmk6fL1wuIJpMWiQntkKakYInGHBFiL_1Hj03so0gT8d3kamWaTjhV_MrAwDpBKt4Z-rpKRzTjvdleWQ0vKUMqdOs_BIUUK5wmrgeDjZXj_pTKQ7wV49x5uJDPGqEE1l1tkn1rmQJmUql6u3WWgPeNU8PXPn1rmOdCmIQxymZWWKUCHYvTDP7A"/>
+</div>
+<!-- Header Texts -->
+<div class="text-center mb-stack-lg">
+<h1 class="font-headline-md text-headline-md text-on-surface mb-2">Recuperar Senha</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Insira o e-mail associado à sua conta e enviaremos um link para redefinir sua senha.
+                </p>
+</div>
+<!-- Form -->
+<form class="space-y-stack-lg" id="recovery-form" onsubmit="event.preventDefault(); showSuccess();">
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-md text-label-md text-on-surface" for="email">E-mail</label>
+<input class="w-full rounded-2xl border border-outline-variant bg-surface-bright py-3 px-4 text-on-surface font-body-md transition-all duration-200 input-inset input-focus-glow outline-none focus:ring-0 placeholder:text-outline-variant" id="email" name="email" placeholder="seu.email@exemplo.com" required="" type="email"/>
+</div>
+<div class="flex flex-col gap-4">
+<button class="w-full bg-primary text-on-primary py-3 px-4 rounded-2xl font-label-md text-label-md transition-transform duration-200 active:scale-[0.98] hover:bg-primary-container" type="submit">
+                        Recuperar Senha
+                    </button>
+<a class="text-center font-label-md text-label-md text-primary underline hover:text-primary-container transition-colors" href="#">
+                        Voltar para o Login
+                    </a>
+</div>
+</form>
+<!-- Success State Overlay (Hidden by default) -->
+<div class="hidden absolute inset-0 bg-surface-container-lowest flex flex-col items-center justify-center p-container-padding text-center z-10 transition-opacity duration-300 opacity-0" id="success-state">
+<div class="w-16 h-16 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center mb-6 shadow-sm">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-4">Verifique seu e-mail</h2>
+<p class="font-body-md text-body-md text-secondary bg-secondary-fixed/20 p-4 rounded-xl border border-secondary-container">
+                    E-mail enviado! Verifique sua caixa de entrada para redefinir sua senha com segurança.
+                </p>
+<button class="mt-8 font-label-md text-label-md text-primary underline hover:text-primary-container transition-colors" onclick="hideSuccess()" type="button">
+                    Tentar outro e-mail
+                </button>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full bottom-0 py-stack-lg bg-transparent flex flex-col items-center gap-stack-sm max-w-auth mx-auto mt-auto">
+<div class="flex gap-4">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors opacity-100 hover:opacity-80" href="#">Privacidade</a>
+<span class="text-on-surface-variant/50">•</span>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors opacity-100 hover:opacity-80" href="#">Termos</a>
+<span class="text-on-surface-variant/50">•</span>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors opacity-100 hover:opacity-80" href="#">Suporte</a>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant text-center px-4">
+            © 2024 ZapCond. Protegendo seu refúgio digital.
+        </p>
+</footer>
+<script>
+        function showSuccess() {
+            const successState = document.getElementById('success-state');
+            successState.classList.remove('hidden');
+            // Slight delay to allow display:block to apply before animating opacity
+            setTimeout(() => {
+                successState.classList.remove('opacity-0');
+                successState.classList.add('opacity-100');
+            }, 10);
+        }
+
+        function hideSuccess() {
+            const successState = document.getElementById('success-state');
+            successState.classList.remove('opacity-100');
+            successState.classList.add('opacity-0');
+            setTimeout(() => {
+                successState.classList.add('hidden');
+                document.getElementById('email').value = ''; // clear input
+            }, 300);
+        }
+    </script>
+</body></html>
