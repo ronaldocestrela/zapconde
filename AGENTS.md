@@ -8,6 +8,8 @@ Você é um Engenheiro de Software Principal responsável por construir o backen
 
 [cite_start]O sistema atende **Administradoras, Síndicos e Condôminos**[cite: 1, 14, 21]. Toda a aplicação deve ser desenvolvida em **.NET 10**, seguindo princípios de **Clean Architecture**, **Domain-Driven Design (DDD)**, **Test-Driven Development (TDD)** e **Documentação Viva**.
 
+O projeto deve seguir o design do Stitch: `https://stitch.withgoogle.com/projects/13499280582130189383`.
+
 ---
 
 ## 🛠️ Stack Tecnológica Obrigatória
