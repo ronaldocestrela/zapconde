@@ -1,4 +1,5 @@
 using BuildingBlocks.Shared.MultiTenancy;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -8,6 +9,7 @@ namespace BuildingBlocks.Infrastructure.Persistence;
 /// <summary>
 /// Contexto base abstrato para aplicação multi-tenant com isolamento automático por tenant_id.
 /// Aplica Global Query Filter do EF Core em todas as entidades que implementam ITenantScoped.
+/// Mapeia entidades de Transactional Outbox Pattern do MassTransit.
 /// </summary>
 public abstract class MultiTenantDbContext : DbContext
 {
@@ -27,11 +29,15 @@ public abstract class MultiTenantDbContext : DbContext
     }
 
     /// <summary>
-    /// Aplica configuração de modelo incluindo Global Query Filter para entidades multi-tenant.
+    /// Aplica configuração de modelo incluindo Global Query Filter para entidades multi-tenant
+    /// e mapeamento das tabelas do Transactional Outbox do MassTransit.
     /// </summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Mapeia tabelas de outbox e inbox do MassTransit
+        modelBuilder.AddTransactionalOutboxEntities();
 
         // Aplica filtro global para todas as entidades ITenantScoped
         ApplyGlobalFilters(modelBuilder);

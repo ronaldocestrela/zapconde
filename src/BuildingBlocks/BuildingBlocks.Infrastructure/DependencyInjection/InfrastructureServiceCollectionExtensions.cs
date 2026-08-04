@@ -2,6 +2,7 @@ using BuildingBlocks.Infrastructure.Messaging;
 using BuildingBlocks.Infrastructure.MultiTenancy;
 using BuildingBlocks.Shared.MultiTenancy;
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
@@ -67,6 +68,21 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<ICurrentTenantService, CurrentTenantService>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Habilita o Transactional Outbox Pattern com EF Core e PostgreSQL para o DbContext especificado no MassTransit.
+    /// </summary>
+    public static IBusRegistrationConfigurator AddMassTransitOutbox<TDbContext>(this IBusRegistrationConfigurator busConfigurator)
+        where TDbContext : DbContext
+    {
+        busConfigurator.AddEntityFrameworkOutbox<TDbContext>(o =>
+        {
+            o.UsePostgres();
+            o.UseBusOutbox();
+        });
+
+        return busConfigurator;
     }
 
     private static void ValidateRabbitMqOptions(RabbitMqOptions? options)

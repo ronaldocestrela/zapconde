@@ -181,7 +181,25 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
     - Integração: **21/21 aprovados**
 
 
-* [] **Subfase 1.3.2:** Habilitar o **Transactional Outbox Pattern** no EF Core/MassTransit para garantir idempotência.
+* [x] **Subfase 1.3.2:** Habilitar o **Transactional Outbox Pattern** no EF Core/MassTransit para garantir idempotência.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Dependências de outbox adicionadas:
+    - Pacote `MassTransit.EntityFrameworkCore` `8.5.2` adicionado em `BuildingBlocks.Infrastructure`, `Tests.Architecture`, `Tests.Unit` e `Tests.Integration`.
+  - Integração com `MultiTenantDbContext`:
+    - `MultiTenantDbContext.OnModelCreating` atualizado com `modelBuilder.AddTransactionalOutboxEntities()`.
+    - Entidades do MassTransit Outbox (`OutboxMessage`, `OutboxState`, `InboxState`) isentas automaticamente do Global Query Filter de `ITenantScoped`.
+  - Método de extensão de infraestrutura:
+    - `AddMassTransitOutbox<TDbContext>()` criado em `InfrastructureServiceCollectionExtensions.cs` para habilitar `UsePostgres()` e `UseBusOutbox()`.
+  - Especificação BDD da subfase criada:
+    - `tests/LivingDoc/Features/Fase1_3_2_TransactionalOutboxPattern.feature`
+  - Suíte de testes (TDD Red → Green):
+    - `tests/Tests.Architecture/OutboxConfigurationArchitectureTests.cs` (2 testes de conformidade)
+    - `tests/Tests.Unit/Infrastructure/TransactionalOutboxUnitTests.cs` (2 testes unitários de mapeamento e isenção de filtro de tenant)
+    - `tests/Tests.Integration/Infrastructure/TransactionalOutboxIntegrationTests.cs` (teste de integração ponta a ponta com PostgreSQL real via Testcontainers validando commit atômico de entidades de domínio e gravação na outbox)
+  - Execução e aprovação de 100% dos testes da solução (55/55 aprovados: 35 arquitetura, 8 unidade, 12 integração).
 
 
 * [] **Subfase 1.3.3:** Configurar cliente Redis (`StackExchange.Redis`) para controle de cache, Distributed Locks e sessão de chat.

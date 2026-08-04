@@ -27,7 +27,9 @@ public class MultiTenantDbContextTests
 
         // Assert - Verifica se a entidade tem query filter configurado
         Assert.NotNull(tenantEntityType);
+#pragma warning disable CS0618
         var queryFilter = tenantEntityType.GetQueryFilter();
+#pragma warning restore CS0618
         Assert.NotNull(queryFilter);
     }
 
@@ -48,7 +50,9 @@ public class MultiTenantDbContextTests
 
         // Assert - Verifica se a entidade NÃO tem query filter configurado
         Assert.NotNull(nonTenantEntityType);
+#pragma warning disable CS0618
         var queryFilter = nonTenantEntityType.GetQueryFilter();
+#pragma warning restore CS0618
         Assert.Null(queryFilter);
     }
 
