@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZapCond — Unidades e Moradores (Stitch Reference)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #2E5B88;
+      --accent: #A3C9A8;
+      --sand: #F4EAE1;
+      --white: #FFFFFF;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Manrope', sans-serif; margin: 0; background: #f7f9fb; color: #191c1e; }
+    .topbar { background: var(--white); padding: 1rem 1.5rem; border-bottom: 1px solid #eef1f4; display: flex; justify-content: space-between; align-items: center; }
+    .brand { font-weight: 700; color: var(--primary); font-size: 1.25rem; text-decoration: none; }
+    main { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+    h1 { color: var(--primary); margin: 0; }
+    .filter-bar { display: flex; gap: 0.75rem; padding: 1rem; background: var(--sand); border-radius: 0.75rem; margin: 1rem 0; flex-wrap: wrap; }
+    .filter-bar input, .filter-bar select { border: 1px solid #d8dde3; border-radius: 0.75rem; padding: 0.55rem 0.85rem; font-family: inherit; }
+    .search { flex: 1; min-width: 240px; }
+    .btn-primary { background: var(--primary); color: white; border: none; border-radius: 0.75rem; padding: 0.65rem 1.25rem; font-weight: 600; cursor: pointer; }
+    .btn-secondary { background: var(--white); color: var(--primary); border: 1px solid #c5d4e3; border-radius: 0.75rem; padding: 0.65rem 1rem; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; background: var(--white); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 20px 40px -15px rgba(46,91,136,0.18); }
+    th { text-align: left; padding: 0.85rem 1rem; background: var(--sand); font-size: 0.8rem; text-transform: uppercase; }
+    td { padding: 0.85rem 1rem; border-top: 1px solid #eef1f4; }
+    .badge-prop { background: var(--accent); padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+    .badge-inq { background: #dbeaf5; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+    .e2e { margin-top: 2rem; padding: 1.25rem; background: var(--sand); border-radius: 0.75rem; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#">ZapCond</a>
+    <span>Tenant: Ville de Paris</span>
+  </header>
+  <main>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+      <div>
+        <h1>Unidades e Moradores</h1>
+        <p style="color:#42474f;margin:0.25rem 0 0;">Gestão de blocos, unidades e titularidade</p>
+      </div>
+      <div style="display:flex;gap:0.75rem;">
+        <button class="btn-secondary">Importar em Lote</button>
+        <button class="btn-primary">+ Nova Unidade / Morador</button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <input class="search" placeholder="Buscar por unidade, morador ou bloco..." />
+      <select><option>Bloco A</option><option>Bloco B</option></select>
+      <select><option>Status da Unidade</option></select>
+      <select><option>Papel</option></select>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Bloco / Unidade</th><th>Morador Atual</th><th>Papel</th><th>Contato</th><th>Data Início</th><th>Ações</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Bloco A</strong> / 101</td>
+          <td>João Silva</td>
+          <td><span class="badge-prop">Proprietário</span></td>
+          <td>+55 11 99999-9999</td>
+          <td>15/01/2024</td>
+          <td><a href="#">Editar</a> · <a href="#">Trocar</a> · <a href="#">Histórico</a></td>
+        </tr>
+        <tr>
+          <td><strong>Bloco A</strong> / 102</td>
+          <td>Maria Costa</td>
+          <td><span class="badge-inq">Inquilino</span></td>
+          <td>+55 11 88888-8888</td>
+          <td>01/06/2025</td>
+          <td><a href="#">Editar</a> · <a href="#">Trocar</a> · <a href="#">Histórico</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <section class="e2e">
+      <h3 style="margin:0 0 0.75rem;color:var(--primary);">Critérios E2E — Fase 2.2.2</h3>
+      <ul style="margin:0;padding-left:1.25rem;font-size:0.85rem;">
+        <li>Table Filter &amp; Search Filter Response</li>
+        <li>Side Drawer Slide-in Animation</li>
+        <li>File Dropzone Import Preview</li>
+        <li>Ownership Switch Confirmation Modal</li>
+        <li>Audit History Timeline Rendering</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

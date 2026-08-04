@@ -99,6 +99,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<ICnpjLookupService, CnpjLookupService>();
         services.AddScoped<ICepLookupService, CepLookupService>();
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
+        services.AddScoped<IUnitResidentService, UnitResidentService>();
 
         services.AddHttpClient("ViaCep", client =>
         {

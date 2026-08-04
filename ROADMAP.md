@@ -291,7 +291,19 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Infra Testing: `InMemoryCacheService` para rascunhos sem Redis local (`Infrastructure:UseInMemoryCache`).
   - Blazor: página `/onboarding` wizard 6 etapas + `OnboardingApiClient` + `onboarding.css` (tokens `#2E5B88`, `#A3C9A8`, `#F4EAE1`); CTA `/sem-tenant` → `/onboarding`.
   - Design Stitch: referência HTML em `stitch_assets/onboarding/wizard-reference.html`.
-* [] **Subfase 2.2.2:** Entidade `Bloco`, `Unidade` (Apartamentos/Casas) e mapeamento dos tipos de moradores (Proprietário / Inquilino).
+* [x] **Subfase 2.2.2:** Entidade `Bloco`, `Unidade` (Apartamentos/Casas) e mapeamento dos tipos de moradores (Proprietário / Inquilino).
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Entidades `Bloco`, `Unidade`, `Morador`, `VinculoUnidade`, enums `PapelVinculo`/`UnidadeStatus` e `CpfValidator` em `Modules.Identity.Domain`.
+  - EF Core: configs + migration `AddBlocoUnidadeVinculo`; query filters por tenant/condo em `IdentityDbContext`; seed demo (Blocos A/B, unidade 102).
+  - Serviço `UnitResidentService` + `IUnitResidentService` com CRUD, filtros, troca de titularidade, histórico e importação XLSX (ClosedXML).
+  - FastEndpoints `Result<T>`: `/api/blocks`, `/api/units`, `/api/units/{id}/transfer`, `/api/units/{id}/history`, `/api/units/import/*`.
+  - BDD: `tests/LivingDoc/Features/Fase2_2_2_BlocosUnidadesMoradores.feature`.
+  - Testes: unitários (`BlocoTests`, `UnidadeTests`, `VinculoUnidadeTests`, `CpfValidatorTests`), arquitetura (`UnitResidentArchitectureTests`), integração (`UnitResidentIntegrationTests`) — Green.
+  - Blazor: página `/unidades` com filter bar, tabela, drawer lateral, wizard importação, modal troca titularidade, timeline histórico, painel E2E + `units.css` (tokens `#2E5B88`, `#A3C9A8`, `#F4EAE1`).
+  - Design Stitch: referência HTML em `stitch_assets/units/management-reference.html`.
 
 
 * [] **Subfase 2.2.3:** [FN-ID-04] Cadastro do número do celular do morador para autenticação nativa via WhatsApp.

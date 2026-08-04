@@ -63,6 +63,7 @@ public static class IdentityDataSeeder
         CancellationToken ct)
     {
         await EnsureAdministradoraCondominioAsync(dbContext, ct);
+        await SeedUnitsDemoAsync(dbContext, ct);
 
         const string email = "sindico@zapcond.com";
         var demoUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
@@ -194,6 +195,32 @@ public static class IdentityDataSeeder
             IsTenantActive = true
         });
 
+        await dbContext.SaveChangesAsync(ct);
+    }
+
+    private static async Task SeedUnitsDemoAsync(IdentityDbContext dbContext, CancellationToken ct)
+    {
+        if (await dbContext.Blocos.IgnoreQueryFilters().AnyAsync(b => b.CondoId == 10, ct))
+        {
+            return;
+        }
+
+        var blocoA = Bloco.Create(1, 10, "Bloco A", "Torre A", 1);
+        var blocoB = Bloco.Create(1, 10, "Bloco B", "Torre B", 2);
+        dbContext.Blocos.AddRange(blocoA, blocoB);
+        await dbContext.SaveChangesAsync(ct);
+
+        var morador = Morador.Create(1, 10, "Carlos Mendes", "39053344705", "carlos@test.com", "+5511977776666");
+        dbContext.Moradores.Add(morador);
+        await dbContext.SaveChangesAsync(ct);
+
+        var unidade = Unidade.Create(1, 10, blocoA.Id, "102");
+        dbContext.Unidades.Add(unidade);
+        await dbContext.SaveChangesAsync(ct);
+
+        var vinculo = VinculoUnidade.Create(1, 10, unidade.Id, morador.Id, PapelVinculo.Proprietario, new DateTime(2023, 6, 1));
+        dbContext.VinculosUnidade.Add(vinculo);
+        unidade.RecalcularStatus();
         await dbContext.SaveChangesAsync(ct);
     }
 

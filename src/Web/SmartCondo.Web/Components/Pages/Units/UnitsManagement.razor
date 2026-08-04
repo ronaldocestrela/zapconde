@@ -1,0 +1,649 @@
+@page "/unidades"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject UnitsApiClient UnitsApi
+@inject AuthSession Session
+@inject NavigationManager Navigation
+
+<PageTitle>ZapCond - Unidades e Moradores</PageTitle>
+
+<div class="units-page">
+    <header class="units-header">
+        <div>
+            <h1>Unidades e Moradores</h1>
+            <p>Gestão de blocos, unidades e titularidade do condomínio</p>
+        </div>
+        <div class="units-actions">
+            <button class="btn-units-secondary" type="button" @onclick="OpenImportModal">
+                <span class="material-symbols-outlined" style="font-size:1.1rem">upload_file</span>
+                Importar em Lote
+            </button>
+            <button class="btn-units-primary" type="button" @onclick="OpenCreateDrawer">
+                + Nova Unidade / Morador
+            </button>
+        </div>
+    </header>
+
+    <div class="units-filter-bar">
+        <input class="units-search" type="search" placeholder="Buscar por unidade, morador ou bloco..."
+               @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchKeyUp" />
+        <select @bind="_filterBlockId" @bind:after="LoadUnitsAsync">
+            <option value="">Bloco</option>
+            @foreach (var block in _blocks)
+            {
+                <option value="@block.Id">@block.Codigo</option>
+            }
+        </select>
+        <select @bind="_filterStatus" @bind:after="LoadUnitsAsync">
+            <option value="">Status da Unidade</option>
+            <option value="Ocupada">Ocupada</option>
+            <option value="Vaga">Vaga</option>
+            <option value="EmReforma">Em Reforma</option>
+        </select>
+        <select @bind="_filterPapel" @bind:after="LoadUnitsAsync">
+            <option value="">Papel</option>
+            <option value="Proprietario">Proprietário</option>
+            <option value="Inquilino">Inquilino</option>
+        </select>
+    </div>
+
+    @if (_loading)
+    {
+        <p>Carregando unidades...</p>
+    }
+    else if (_units.Count == 0)
+    {
+        <div class="units-empty">
+            <span class="material-symbols-outlined" style="font-size:3rem;color:var(--units-primary)">apartment</span>
+            <p>Nenhuma unidade encontrada. Cadastre a primeira unidade ou importe uma planilha.</p>
+        </div>
+    }
+    else
+    {
+        <div class="units-table-wrap">
+            <table class="units-table">
+                <thead>
+                    <tr>
+                        <th>Bloco / Unidade</th>
+                        <th>Morador Atual</th>
+                        <th>Papel</th>
+                        <th>Contato / WhatsApp</th>
+                        <th>Data de Início</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var unit in _units)
+                    {
+                        <tr>
+                            <td><strong>@unit.BlocoCodigo</strong> / @unit.Numero</td>
+                            <td>@(unit.MoradorNome ?? "—")</td>
+                            <td>
+                                @if (unit.Papel == "Proprietario")
+                                {
+                                    <span class="units-badge units-badge-proprietario">Proprietário</span>
+                                }
+                                else if (unit.Papel == "Inquilino")
+                                {
+                                    <span class="units-badge units-badge-inquilino">Inquilino</span>
+                                }
+                                else
+                                {
+                                    <span class="units-badge units-badge-status">@unit.Status</span>
+                                }
+                            </td>
+                            <td>@(unit.MoradorTelefone ?? "—")</td>
+                            <td>@(unit.DataInicio?.ToString("dd/MM/yyyy") ?? "—")</td>
+                            <td>
+                                <div class="units-row-actions">
+                                    <button type="button" @onclick="() => OpenEditDrawer(unit)">Editar</button>
+                                    <button type="button" @onclick="() => OpenTransferModal(unit)">Trocar Titularidade</button>
+                                    <button type="button" @onclick="() => OpenHistoryDrawer(unit)">Ver Histórico</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_toastMessage))
+    {
+        <div class="units-alert-info" style="margin-top:1rem;">@_toastMessage</div>
+    }
+
+    <section class="units-e2e-panel">
+        <h3>Critérios E2E — Fase 2.2.2</h3>
+        <ul>
+            <li>Table Filter &amp; Search Filter Response</li>
+            <li>Side Drawer Slide-in Animation</li>
+            <li>File Dropzone Import Preview</li>
+            <li>Ownership Switch Confirmation Modal</li>
+            <li>Audit History Timeline Rendering</li>
+        </ul>
+    </section>
+</div>
+
+@* Form Drawer *@
+@if (_showDrawer)
+{
+    <div class="units-overlay" @onclick="CloseDrawer"></div>
+    <aside class="units-drawer" @onclick:stopPropagation="true">
+        <div class="units-drawer-header">
+            <h2>@(_editingUnit is null ? "Nova Unidade / Morador" : "Editar Unidade")</h2>
+            <button class="btn-units-ghost" type="button" @onclick="CloseDrawer">✕</button>
+        </div>
+        <div class="units-drawer-body">
+            <div class="units-field">
+                <label>Bloco</label>
+                <select @bind="_formBlocoId">
+                    @foreach (var block in _blocks)
+                    {
+                        <option value="@block.Id">@block.Codigo</option>
+                    }
+                </select>
+            </div>
+            <div class="units-field">
+                <label>Número da Unidade</label>
+                <input @bind="_formNumero" disabled="@(_editingUnit is not null)" />
+            </div>
+            <div class="units-field">
+                <label>Nome Completo</label>
+                <input @bind="_formMoradorNome" />
+            </div>
+            <div class="units-field">
+                <label>CPF</label>
+                <input @bind="_formMoradorCpf" />
+            </div>
+            <div class="units-field">
+                <label>E-mail</label>
+                <input type="email" @bind="_formMoradorEmail" />
+            </div>
+            <div class="units-field">
+                <label>Telefone / WhatsApp</label>
+                <input @bind="_formMoradorTelefone" />
+            </div>
+            <div class="units-field">
+                <label>Papel</label>
+                <div class="units-toggle-group">
+                    <button type="button" class="@(_formPapel == "Proprietario" ? "active" : "")"
+                            @onclick='() => _formPapel = "Proprietario"'>Proprietário / Titular</button>
+                    <button type="button" class="@(_formPapel == "Inquilino" ? "active" : "")"
+                            @onclick='() => _formPapel = "Inquilino"'>Inquilino / Locatário</button>
+                </div>
+            </div>
+            <div class="units-field">
+                <label>Dependências</label>
+                <div class="units-tags">
+                    @foreach (var tag in _availableTags)
+                    {
+                        <button type="button" class="units-tag @(_formDependencias.Contains(tag) ? "selected" : "")"
+                                @onclick="() => ToggleTag(tag)">@tag</button>
+                    }
+                </div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_formError))
+            {
+                <div style="color:var(--units-error);font-size:0.9rem;">@_formError</div>
+            }
+        </div>
+        <div class="units-drawer-footer">
+            <button class="btn-units-ghost" type="button" @onclick="CloseDrawer">Cancelar</button>
+            <button class="btn-units-primary" type="button" @onclick="SaveUnitAsync" disabled="@_saving">
+                @(_saving ? "Salvando..." : "Salvar Alterações")
+            </button>
+        </div>
+    </aside>
+}
+
+@* Transfer Modal *@
+@if (_showTransfer && _transferUnit is not null)
+{
+    <div class="units-modal-backdrop" @onclick="CloseTransferModal">
+        <div class="units-modal" @onclick:stopPropagation="true">
+            <h2>Troca de Titularidade</h2>
+            <div class="units-alert-info">
+                A vinculação antiga será arquivada no histórico sem perda de dados ou histórico financeiro.
+            </div>
+            <div class="units-field">
+                <label>Data de Encerramento</label>
+                <input type="date" @bind="_transferDataEncerramento" />
+            </div>
+            <div class="units-field">
+                <label>Motivo</label>
+                <input @bind="_transferMotivo" placeholder="Ex: Contrato Encerrado" />
+            </div>
+            <div class="units-field">
+                <label>Nome do Novo Titular</label>
+                <input @bind="_transferNovoNome" />
+            </div>
+            <div class="units-field">
+                <label>CPF</label>
+                <input @bind="_transferNovoCpf" />
+            </div>
+            <div class="units-field">
+                <label>E-mail</label>
+                <input @bind="_transferNovoEmail" />
+            </div>
+            <div class="units-field">
+                <label>Telefone / WhatsApp</label>
+                <input @bind="_transferNovoTelefone" />
+            </div>
+            <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1rem;">
+                <button class="btn-units-ghost" type="button" @onclick="CloseTransferModal">Cancelar</button>
+                <button class="btn-units-primary" type="button" @onclick="ConfirmTransferAsync">Confirmar Troca</button>
+            </div>
+        </div>
+    </div>
+}
+
+@* History Drawer *@
+@if (_showHistory && _historyUnit is not null)
+{
+    <div class="units-overlay" @onclick="CloseHistoryDrawer"></div>
+    <aside class="units-drawer" @onclick:stopPropagation="true">
+        <div class="units-drawer-header">
+            <h2>Histórico — @_historyUnit.BlocoCodigo / @_historyUnit.Numero</h2>
+            <button class="btn-units-ghost" type="button" @onclick="CloseHistoryDrawer">✕</button>
+        </div>
+        <div class="units-drawer-body">
+            @if (_historyItems.Count == 0)
+            {
+                <p>Nenhum registro de histórico.</p>
+            }
+            else
+            {
+                <div class="units-timeline">
+                    @foreach (var item in _historyItems)
+                    {
+                        <div class="units-timeline-item @(item.IsActive ? "active" : "")">
+                            <strong>@item.MoradorNome</strong>
+                            — @(item.Papel == "Proprietario" ? "Proprietário" : "Inquilino")
+                            <div class="date-range">
+                                @item.DataInicio.ToString("MMM yyyy") —
+                                @(item.DataFim?.ToString("MMM yyyy") ?? "Atual")
+                                @if (!string.IsNullOrWhiteSpace(item.MotivoEncerramento))
+                                {
+                                    <span> — @item.MotivoEncerramento</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(item.CreatedByUserId))
+                            {
+                                <div style="font-size:0.78rem;color:#6b7280;margin-top:0.25rem;">
+                                    Audit: @item.CreatedByUserId
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </aside>
+}
+
+@* Import Wizard Modal *@
+@if (_showImport)
+{
+    <div class="units-modal-backdrop" @onclick="CloseImportModal">
+        <div class="units-modal" style="width:min(800px,100%)" @onclick:stopPropagation="true">
+            <h2>Importação em Lote via Planilha</h2>
+            <div class="units-modal-steps">
+                <div class="units-modal-step @(_importStep == 1 ? "active" : "")">1. Template</div>
+                <div class="units-modal-step @(_importStep == 2 ? "active" : "")">2. Upload</div>
+                <div class="units-modal-step @(_importStep == 3 ? "active" : "")">3. Preview</div>
+            </div>
+
+            @if (_importStep == 1)
+            {
+                <p>Baixe o template Excel, preencha os dados e avance para upload.</p>
+                <a class="btn-units-primary" href="@UnitsApi.GetTemplateUrl()" target="_blank" style="display:inline-block;text-decoration:none;">
+                    Download Template (.XLSX)
+                </a>
+                <div style="margin-top:1rem;text-align:right;">
+                    <button class="btn-units-primary" type="button" @onclick="() => _importStep = 2">Próximo</button>
+                </div>
+            }
+            else if (_importStep == 2)
+            {
+                <div class="units-dropzone @(_dragOver ? "dragover" : "")"
+                     @ondragenter="OnDragEnter" @ondragleave="OnDragLeave"
+                     @ondragenter:preventDefault @ondragover:preventDefault @ondrop="OnDrop" @ondrop:preventDefault>
+                    <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--units-primary)">cloud_upload</span>
+                    <p>Arraste e solte o arquivo .xlsx aqui</p>
+                    <InputFile OnChange="OnFileSelected" accept=".xlsx,.xls,.csv" />
+                </div>
+                @if (!string.IsNullOrWhiteSpace(_importFileName))
+                {
+                    <p style="margin-top:0.75rem;">Arquivo: <strong>@_importFileName</strong></p>
+                }
+            }
+            else if (_importStep == 3 && _importPreview is not null)
+            {
+                <p>@_importPreview.ValidRows válida(s), @_importPreview.InvalidRows com erro(s)</p>
+                <div class="units-table-wrap units-preview-table" style="max-height:300px;overflow-y:auto;">
+                    <table class="units-table">
+                        <thead>
+                            <tr>
+                                <th>Linha</th><th>Bloco</th><th>Unidade</th><th>Morador</th><th>CPF</th><th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in _importPreview.Rows)
+                            {
+                                <tr class="@(row.IsValid ? "" : "invalid-row")">
+                                    <td>@row.RowNumber</td>
+                                    <td>@row.BlocoCodigo</td>
+                                    <td>@row.Numero</td>
+                                    <td>@row.MoradorNome</td>
+                                    <td>@row.MoradorCpf</td>
+                                    <td>@(row.IsValid ? "✓" : string.Join(", ", row.Errors))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top:1rem;display:flex;gap:0.75rem;justify-content:flex-end;">
+                    <button class="btn-units-ghost" type="button" @onclick="CloseImportModal">Cancelar</button>
+                    <button class="btn-units-primary" type="button" @onclick="CommitImportAsync"
+                            disabled="@(_importPreview.ValidRows == 0)">
+                        Importar @_importPreview.ValidRows Linha(s)
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool _sessionReady;
+    private bool _loading = true;
+    private bool _saving;
+    private bool _showDrawer;
+    private bool _showTransfer;
+    private bool _showHistory;
+    private bool _showImport;
+    private bool _dragOver;
+    private int _importStep = 1;
+
+    private string _searchTerm = string.Empty;
+    private string _filterBlockId = string.Empty;
+    private string _filterStatus = string.Empty;
+    private string _filterPapel = string.Empty;
+    private string _toastMessage = string.Empty;
+    private string _formError = string.Empty;
+    private string _importFileName = string.Empty;
+
+    private List<BlockModel> _blocks = [];
+    private List<UnitListItemModel> _units = [];
+    private List<UnitHistoryItemModel> _historyItems = [];
+    private UnitListItemModel? _editingUnit;
+    private UnitListItemModel? _transferUnit;
+    private UnitListItemModel? _historyUnit;
+    private ImportPreviewModel? _importPreview;
+
+    private int _formBlocoId;
+    private string _formNumero = string.Empty;
+    private string _formMoradorNome = string.Empty;
+    private string _formMoradorCpf = string.Empty;
+    private string _formMoradorEmail = string.Empty;
+    private string _formMoradorTelefone = string.Empty;
+    private string _formPapel = "Proprietario";
+    private List<string> _formDependencias = [];
+
+    private DateTime _transferDataEncerramento = DateTime.Today;
+    private string _transferMotivo = string.Empty;
+    private string _transferNovoNome = string.Empty;
+    private string _transferNovoCpf = string.Empty;
+    private string _transferNovoEmail = string.Empty;
+    private string _transferNovoTelefone = string.Empty;
+
+    private readonly string[] _availableTags = ["Vagas de Garagem", "Pets", "Depósito", "Box"];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _sessionReady) return;
+
+        await Session.EnsureLoadedAsync();
+        if (string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            Navigation.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        if (Session.Context is null)
+        {
+            Navigation.NavigateTo("/selecionar-perfil", replace: true);
+            return;
+        }
+
+        _sessionReady = true;
+        await LoadBlocksAsync();
+        await LoadUnitsAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadBlocksAsync()
+    {
+        var result = await UnitsApi.GetBlocksAsync();
+        if (result.IsSuccess && result.Data is not null)
+        {
+            _blocks = result.Data;
+            if (_blocks.Count > 0 && _formBlocoId == 0)
+            {
+                _formBlocoId = _blocks[0].Id;
+            }
+        }
+    }
+
+    private async Task LoadUnitsAsync()
+    {
+        _loading = true;
+        var query = new UnitListQueryModel
+        {
+            Q = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm,
+            BlockId = int.TryParse(_filterBlockId, out var bid) ? bid : null,
+            Status = string.IsNullOrWhiteSpace(_filterStatus) ? null : _filterStatus,
+            Papel = string.IsNullOrWhiteSpace(_filterPapel) ? null : _filterPapel
+        };
+
+        var result = await UnitsApi.GetUnitsAsync(query);
+        _units = result.IsSuccess && result.Data is not null ? result.Data : [];
+        _loading = false;
+    }
+
+    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await LoadUnitsAsync();
+    }
+
+    private void OpenCreateDrawer()
+    {
+        _editingUnit = null;
+        ResetForm();
+        _showDrawer = true;
+    }
+
+    private void OpenEditDrawer(UnitListItemModel unit)
+    {
+        _editingUnit = unit;
+        _formBlocoId = unit.BlocoId;
+        _formNumero = unit.Numero;
+        _formMoradorNome = unit.MoradorNome ?? string.Empty;
+        _formMoradorTelefone = unit.MoradorTelefone ?? string.Empty;
+        _formPapel = unit.Papel ?? "Proprietario";
+        _formError = string.Empty;
+        _showDrawer = true;
+    }
+
+    private void CloseDrawer() => _showDrawer = false;
+
+    private void ResetForm()
+    {
+        _formNumero = string.Empty;
+        _formMoradorNome = string.Empty;
+        _formMoradorCpf = string.Empty;
+        _formMoradorEmail = string.Empty;
+        _formMoradorTelefone = string.Empty;
+        _formPapel = "Proprietario";
+        _formDependencias = [];
+        _formError = string.Empty;
+        if (_blocks.Count > 0) _formBlocoId = _blocks[0].Id;
+    }
+
+    private void ToggleTag(string tag)
+    {
+        if (_formDependencias.Contains(tag)) _formDependencias.Remove(tag);
+        else _formDependencias.Add(tag);
+    }
+
+    private async Task SaveUnitAsync()
+    {
+        _saving = true;
+        _formError = string.Empty;
+
+        if (_editingUnit is null)
+        {
+            var result = await UnitsApi.CreateUnitAsync(new CreateUnitModel
+            {
+                BlocoId = _formBlocoId,
+                Numero = _formNumero,
+                MoradorNome = _formMoradorNome,
+                MoradorCpf = _formMoradorCpf,
+                MoradorEmail = _formMoradorEmail,
+                MoradorTelefone = _formMoradorTelefone,
+                Papel = _formPapel,
+                Dependencias = _formDependencias
+            });
+
+            if (!result.IsSuccess)
+            {
+                _formError = result.Message;
+            }
+            else
+            {
+                _toastMessage = "Unidade cadastrada com sucesso!";
+                _showDrawer = false;
+                await LoadUnitsAsync();
+            }
+        }
+        else
+        {
+            var result = await UnitsApi.UpdateUnitAsync(_editingUnit.UnitId, new UpdateUnitModel
+            {
+                Status = _editingUnit.Status,
+                MoradorNome = _formMoradorNome,
+                MoradorCpf = _formMoradorCpf,
+                MoradorEmail = _formMoradorEmail,
+                MoradorTelefone = _formMoradorTelefone,
+                Papel = _formPapel,
+                Dependencias = _formDependencias
+            });
+
+            if (!result.IsSuccess) _formError = result.Message;
+            else
+            {
+                _toastMessage = "Unidade atualizada!";
+                _showDrawer = false;
+                await LoadUnitsAsync();
+            }
+        }
+
+        _saving = false;
+    }
+
+    private void OpenTransferModal(UnitListItemModel unit)
+    {
+        _transferUnit = unit;
+        _transferMotivo = string.Empty;
+        _transferNovoNome = string.Empty;
+        _transferNovoCpf = string.Empty;
+        _transferNovoEmail = string.Empty;
+        _transferNovoTelefone = string.Empty;
+        _showTransfer = true;
+    }
+
+    private void CloseTransferModal() => _showTransfer = false;
+
+    private async Task ConfirmTransferAsync()
+    {
+        if (_transferUnit is null) return;
+
+        var result = await UnitsApi.TransferOwnershipAsync(_transferUnit.UnitId, new TransferOwnershipModel
+        {
+            DataEncerramento = _transferDataEncerramento,
+            Motivo = _transferMotivo,
+            Papel = _transferUnit.Papel ?? "Proprietario",
+            NovoMoradorNome = _transferNovoNome,
+            NovoMoradorCpf = _transferNovoCpf,
+            NovoMoradorEmail = _transferNovoEmail,
+            NovoMoradorTelefone = _transferNovoTelefone
+        });
+
+        if (result.IsSuccess)
+        {
+            _toastMessage = result.Message;
+            _showTransfer = false;
+            await LoadUnitsAsync();
+        }
+    }
+
+    private async Task OpenHistoryDrawer(UnitListItemModel unit)
+    {
+        _historyUnit = unit;
+        var result = await UnitsApi.GetHistoryAsync(unit.UnitId);
+        _historyItems = result.IsSuccess && result.Data is not null ? result.Data : [];
+        _showHistory = true;
+    }
+
+    private void CloseHistoryDrawer() => _showHistory = false;
+
+    private void OpenImportModal()
+    {
+        _importStep = 1;
+        _importPreview = null;
+        _importFileName = string.Empty;
+        _showImport = true;
+    }
+
+    private void CloseImportModal() => _showImport = false;
+
+    private void OnDragEnter() => _dragOver = true;
+    private void OnDragLeave() => _dragOver = false;
+
+    private async Task OnDrop(DragEventArgs _) => _dragOver = false;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        _importFileName = file.Name;
+        await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        ms.Position = 0;
+
+        var result = await UnitsApi.PreviewImportAsync(ms, file.Name);
+        if (result.IsSuccess && result.Data is not null)
+        {
+            _importPreview = result.Data;
+            _importStep = 3;
+        }
+    }
+
+    private async Task CommitImportAsync()
+    {
+        if (_importPreview is null) return;
+
+        var result = await UnitsApi.CommitImportAsync(new ImportCommitModel
+        {
+            Rows = _importPreview.Rows.Where(r => r.IsValid).ToList()
+        });
+
+        if (result.IsSuccess)
+        {
+            _toastMessage = result.Message;
+            _showImport = false;
+            await LoadUnitsAsync();
+        }
+    }
+}

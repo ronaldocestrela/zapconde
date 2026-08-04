@@ -25,6 +25,14 @@ public class IdentityDbContext : IdentityDbContext<ApplicationUser, ApplicationR
 
     public DbSet<Condominio> Condominios => Set<Condominio>();
 
+    public DbSet<Bloco> Blocos => Set<Bloco>();
+
+    public DbSet<Unidade> Unidades => Set<Unidade>();
+
+    public DbSet<Morador> Moradores => Set<Morador>();
+
+    public DbSet<VinculoUnidade> VinculosUnidade => Set<VinculoUnidade>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -42,5 +50,25 @@ public class IdentityDbContext : IdentityDbContext<ApplicationUser, ApplicationR
         builder.Entity<Condominio>().HasQueryFilter(c =>
             !_currentTenantService.TenantId.HasValue ||
             c.TenantId == _currentTenantService.TenantId);
+
+        builder.Entity<Bloco>().HasQueryFilter(b =>
+            !_currentTenantService.TenantId.HasValue ||
+            (b.TenantId == _currentTenantService.TenantId &&
+             (!_currentTenantService.CondoId.HasValue || b.CondoId == _currentTenantService.CondoId)));
+
+        builder.Entity<Unidade>().HasQueryFilter(u =>
+            !_currentTenantService.TenantId.HasValue ||
+            (u.TenantId == _currentTenantService.TenantId &&
+             (!_currentTenantService.CondoId.HasValue || u.CondoId == _currentTenantService.CondoId)));
+
+        builder.Entity<Morador>().HasQueryFilter(m =>
+            !_currentTenantService.TenantId.HasValue ||
+            (m.TenantId == _currentTenantService.TenantId &&
+             (!_currentTenantService.CondoId.HasValue || m.CondoId == _currentTenantService.CondoId)));
+
+        builder.Entity<VinculoUnidade>().HasQueryFilter(v =>
+            !_currentTenantService.TenantId.HasValue ||
+            (v.TenantId == _currentTenantService.TenantId &&
+             (!_currentTenantService.CondoId.HasValue || v.CondoId == _currentTenantService.CondoId)));
     }
 }
