@@ -1,5 +1,6 @@
 @page "/login"
 @layout AuthLayout
+@rendermode InteractiveServer
 @inject AuthApiClient AuthApi
 @inject AuthSession Session
 @inject NavigationManager Navigation
@@ -23,7 +24,7 @@
         </div>
     }
 
-    <EditForm Model="_model" OnValidSubmit="HandleLoginAsync">
+    <EditForm Model="_model" FormName="login-desktop" OnValidSubmit="HandleLoginAsync">
         <div class="auth-field">
             <label for="email">E-mail</label>
             <div class="auth-input-wrap">
@@ -66,7 +67,7 @@
         </div>
     }
 
-    <EditForm Model="_model" OnValidSubmit="HandleLoginAsync">
+    <EditForm Model="_model" FormName="login-mobile" OnValidSubmit="HandleLoginAsync">
         <div class="auth-field">
             <label for="email-mobile">E-mail</label>
             <div class="auth-input-wrap">
