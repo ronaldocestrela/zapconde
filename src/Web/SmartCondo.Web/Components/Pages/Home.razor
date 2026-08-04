@@ -1,12 +1,17 @@
 ﻿@page "/"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject AuthSession Session
 @inject NavigationManager Navigation
 
 <PageTitle>ZapCond</PageTitle>
 
-@if (Session.Context is null)
+@if (!_sessionReady)
 {
-    <p>Redirecionando para login...</p>
+    <p style="padding:2rem;font-family:Manrope,sans-serif;">Carregando...</p>
+}
+else if (Session.Context is null)
+{
+    <p style="padding:2rem;font-family:Manrope,sans-serif;">Redirecionando para login...</p>
 }
 else
 {
@@ -18,11 +23,24 @@ else
 }
 
 @code {
-    protected override void OnInitialized()
+    private bool _sessionReady;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender || _sessionReady)
+        {
+            return;
+        }
+
+        await Session.EnsureLoadedAsync();
+
         if (Session.Context is null)
         {
-            Navigation.NavigateTo("/login");
+            Navigation.NavigateTo("/login", replace: true);
+            return;
         }
+
+        _sessionReady = true;
+        StateHasChanged();
     }
 }

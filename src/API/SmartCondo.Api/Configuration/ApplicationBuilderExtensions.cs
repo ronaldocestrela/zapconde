@@ -20,7 +20,11 @@ public static class ApplicationBuilderExtensions
             app.MapScalarApiReference("/scalar");
         }
 
-        app.UseHttpsRedirection();
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
+
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseFastEndpoints();

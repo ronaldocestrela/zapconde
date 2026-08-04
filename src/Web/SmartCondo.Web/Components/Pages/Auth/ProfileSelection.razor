@@ -1,6 +1,6 @@
 @page "/selecionar-perfil"
 @layout AuthLayout
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject AuthApiClient AuthApi
 @inject AuthSession Session
 @inject SessionAuthStateProvider AuthState
@@ -8,55 +8,65 @@
 
 <PageTitle>ZapCond - Selecione seu perfil</PageTitle>
 
-<div class="auth-card">
-    <div class="auth-logo">
-        <img src="images/auth/zapcond-logo.png" alt="ZapCond Logo" />
+@if (!_sessionReady)
+{
+    <div class="auth-card">
+        <p style="text-align:center;">Carregando perfis...</p>
     </div>
-    <div class="auth-title">
-        <h1>Selecione seu perfil</h1>
-        <p>Como você deseja acessar o ZapCond hoje?</p>
-    </div>
-
-    @if (!string.IsNullOrEmpty(_errorMessage))
-    {
-        <div class="auth-error-banner" role="alert">
-            <span class="material-symbols-outlined">error</span>
-            <span>@_errorMessage</span>
+}
+else
+{
+    <div class="auth-card">
+        <div class="auth-logo">
+            <img src="images/auth/zapcond-logo.png" alt="ZapCond Logo" />
         </div>
-    }
+        <div class="auth-title">
+            <h1>Selecione seu perfil</h1>
+            <p>Como você deseja acessar o ZapCond hoje?</p>
+        </div>
 
-    <div class="role-grid">
-        @foreach (var role in _roles)
+        @if (!string.IsNullOrEmpty(_errorMessage))
         {
-            var profile = Session.Profiles.FirstOrDefault(p => MapRoleLabel(p.Role) == role.Label);
-            var isAvailable = profile is not null;
-            <button type="button"
-                    class="role-card @(_selectedRole == role.Label ? "selected" : "")"
-                    disabled="@(!isAvailable)"
-                    @onclick="() => SelectRole(role.Label, profile)">
-                <div class="role-icon">
-                    <span class="material-symbols-outlined">@role.Icon</span>
-                </div>
-                <span>@role.Label</span>
-            </button>
+            <div class="auth-error-banner" role="alert">
+                <span class="material-symbols-outlined">error</span>
+                <span>@_errorMessage</span>
+            </div>
         }
+
+        <div class="role-grid">
+            @foreach (var role in _roles)
+            {
+                var profile = Session.Profiles.FirstOrDefault(p => MapRoleLabel(p.Role) == role.Label);
+                var isAvailable = profile is not null;
+                <button type="button"
+                        class="role-card @(_selectedRole == role.Label ? "selected" : "")"
+                        disabled="@(!isAvailable)"
+                        @onclick="() => SelectRole(role.Label, profile)">
+                    <div class="role-icon">
+                        <span class="material-symbols-outlined">@role.Icon</span>
+                    </div>
+                    <span>@role.Label</span>
+                </button>
+            }
+        </div>
+
+        <button class="btn-primary" style="margin-top:1.5rem;" disabled="@(_selectedMembershipId is null || _isSubmitting)" @onclick="ContinueAsync">
+            Continuar
+            <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+
+        <p style="text-align:center;margin-top:1rem;">
+            <a class="auth-link" href="/login">Voltar ao login</a>
+        </p>
     </div>
-
-    <button class="btn-primary" style="margin-top:1.5rem;" disabled="@(_selectedMembershipId is null || _isSubmitting)" @onclick="ContinueAsync">
-        Continuar
-        <span class="material-symbols-outlined">arrow_forward</span>
-    </button>
-
-    <p style="text-align:center;margin-top:1rem;">
-        <a class="auth-link" href="/login">Voltar ao login</a>
-    </p>
-</div>
+}
 
 @code {
     private Guid? _selectedMembershipId;
     private string? _selectedRole;
     private string? _errorMessage;
     private bool _isSubmitting;
+    private bool _sessionReady;
 
     private readonly List<RoleOption> _roles =
     [
@@ -66,12 +76,23 @@
         new("Porteiro", "badge")
     ];
 
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender || _sessionReady)
+        {
+            return;
+        }
+
+        await Session.EnsureLoadedAsync();
+
         if (string.IsNullOrWhiteSpace(Session.AccessToken))
         {
-            Navigation.NavigateTo("/login");
+            Navigation.NavigateTo("/login", replace: true);
+            return;
         }
+
+        _sessionReady = true;
+        StateHasChanged();
     }
 
     private void SelectRole(string label, AuthProfileModel? profile)
@@ -95,7 +116,11 @@
             var result = await AuthApi.SelectProfileAsync(Session.AccessToken, _selectedMembershipId.Value);
             if (!result.IsSuccess || result.Data is null)
             {
-                _errorMessage = result.Message;
+                _errorMessage = result.StatusCode == 0
+                    ? result.Message
+                    : string.IsNullOrWhiteSpace(result.Message)
+                        ? "Não foi possível selecionar o perfil."
+                        : result.Message;
                 return;
             }
 
@@ -107,8 +132,13 @@
                 result.Data.UserId,
                 result.Data.Role);
 
+            await Session.PersistAsync();
             AuthState.NotifyChanged();
-            Navigation.NavigateTo("/");
+            Navigation.NavigateTo("/", replace: true);
+        }
+        catch (Exception)
+        {
+            _errorMessage = "Erro inesperado ao selecionar o perfil.";
         }
         finally
         {
@@ -118,6 +148,7 @@
 
     private static string MapRoleLabel(string role) => role switch
     {
+        "Sindico" => "Síndico",
         "Portaria" => "Porteiro",
         "Condomino" => "Morador",
         _ => role

@@ -7,14 +7,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace SmartCondo.Web.Services;
 
-public sealed class AuthSession
-{
-    public string? AccessToken { get; set; }
-    public string? RefreshToken { get; set; }
-    public List<AuthProfileModel> Profiles { get; set; } = [];
-    public AuthContextModel? Context { get; set; }
-}
-
 public sealed record AuthProfileModel(
     [property: JsonPropertyName("membershipId")] Guid MembershipId,
     [property: JsonPropertyName("tenantId")] int TenantId,
@@ -33,50 +25,169 @@ public sealed class AuthApiClient(HttpClient httpClient)
 
     public async Task<ApiResult<LoginResponse>> LoginAsync(string email, string password, CancellationToken ct = default)
     {
-        var response = await httpClient.PostAsJsonAsync("/api/auth/login", new { email, password }, ct);
-        return await ParseAsync<LoginResponse>(response, ct);
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/auth/login", new { email, password }, ct);
+            return await ParseAsync<LoginResponse>(response, ct);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ConnectionFailure<LoginResponse>(ex);
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            return ConnectionFailure<LoginResponse>(ex);
+        }
     }
 
     public async Task<ApiResult<SelectProfileResponse>> SelectProfileAsync(string accessToken, Guid membershipId, CancellationToken ct = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/auth/select-profile");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        request.Content = JsonContent.Create(new { membershipId });
-        var response = await httpClient.SendAsync(request, ct);
-        return await ParseAsync<SelectProfileResponse>(response, ct);
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/api/auth/select-profile");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            request.Content = JsonContent.Create(new { membershipId });
+            var response = await httpClient.SendAsync(request, ct);
+            return await ParseAsync<SelectProfileResponse>(response, ct);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ConnectionFailure<SelectProfileResponse>(ex);
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            return ConnectionFailure<SelectProfileResponse>(ex);
+        }
     }
 
     public async Task<ApiResult<ForgotPasswordResponse>> ForgotPasswordAsync(string email, CancellationToken ct = default)
     {
-        var response = await httpClient.PostAsJsonAsync("/api/auth/forgot-password", new { email }, ct);
-        return await ParseAsync<ForgotPasswordResponse>(response, ct);
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/auth/forgot-password", new { email }, ct);
+            return await ParseAsync<ForgotPasswordResponse>(response, ct);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ConnectionFailure<ForgotPasswordResponse>(ex);
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            return ConnectionFailure<ForgotPasswordResponse>(ex);
+        }
+    }
+
+    private ApiResult<T> ConnectionFailure<T>(Exception ex)
+    {
+        var baseUrl = httpClient.BaseAddress?.ToString().TrimEnd('/') ?? "API";
+        return new ApiResult<T>(
+            false,
+            default,
+            $"Não foi possível conectar à API em {baseUrl}. Verifique se a API está em execução.",
+            0);
     }
 
     private static async Task<ApiResult<T>> ParseAsync<T>(HttpResponseMessage response, CancellationToken ct)
     {
+        var statusCode = (int)response.StatusCode;
         var json = await response.Content.ReadAsStringAsync(ct);
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-        var isSuccess = root.GetProperty("isSuccess").GetBoolean();
-        var message = root.TryGetProperty("message", out var msg) ? msg.GetString() ?? string.Empty : string.Empty;
 
-        if (!isSuccess || !root.TryGetProperty("data", out var data))
+        if (string.IsNullOrWhiteSpace(json))
         {
-            return new ApiResult<T>(false, default, message, (int)response.StatusCode);
+            return new ApiResult<T>(
+                false,
+                default,
+                $"Resposta vazia da API (HTTP {statusCode}).",
+                statusCode);
         }
 
-        var payload = data.Deserialize<T>(JsonOptions);
-        return new ApiResult<T>(true, payload, message, (int)response.StatusCode);
+        JsonDocument doc;
+        try
+        {
+            doc = JsonDocument.Parse(json);
+        }
+        catch (JsonException)
+        {
+            return new ApiResult<T>(
+                false,
+                default,
+                $"Resposta inválida da API (HTTP {statusCode}).",
+                statusCode);
+        }
+
+        using (doc)
+        {
+            var root = doc.RootElement;
+
+            if (!root.TryGetProperty("isSuccess", out var isSuccessElement))
+            {
+                return new ApiResult<T>(
+                    false,
+                    default,
+                    $"Resposta inesperada da API (HTTP {statusCode}).",
+                    statusCode);
+            }
+
+            var isSuccess = isSuccessElement.GetBoolean();
+            var message = root.TryGetProperty("message", out var msg) ? msg.GetString() ?? string.Empty : string.Empty;
+
+            if (!isSuccess || !root.TryGetProperty("data", out var data))
+            {
+                return new ApiResult<T>(false, default, message, statusCode);
+            }
+
+            var payload = data.Deserialize<T>(JsonOptions);
+            if (payload is null)
+            {
+                return new ApiResult<T>(
+                    false,
+                    default,
+                    string.IsNullOrWhiteSpace(message) ? "Resposta da API sem dados." : message,
+                    statusCode);
+            }
+
+            if (payload is LoginResponse login && string.IsNullOrWhiteSpace(login.AccessToken))
+            {
+                return new ApiResult<T>(
+                    false,
+                    default,
+                    "Login retornou sucesso, mas sem access token.",
+                    statusCode);
+            }
+
+            if (payload is SelectProfileResponse profile && string.IsNullOrWhiteSpace(profile.AccessToken))
+            {
+                return new ApiResult<T>(
+                    false,
+                    default,
+                    "Seleção de perfil retornou sucesso, mas sem access token.",
+                    statusCode);
+            }
+
+            return new ApiResult<T>(true, payload, message, statusCode);
+        }
     }
 }
 
 public sealed record ApiResult<T>(bool IsSuccess, T? Data, string Message, int StatusCode);
 
-public sealed record LoginResponse(string AccessToken, string RefreshToken, DateTime ExpiresAt, List<AuthProfileModel> Profiles);
+public sealed record LoginResponse(
+    [property: JsonPropertyName("accessToken")] string AccessToken,
+    [property: JsonPropertyName("refreshToken")] string RefreshToken,
+    [property: JsonPropertyName("expiresAt")] DateTime ExpiresAt,
+    [property: JsonPropertyName("profiles")] List<AuthProfileModel> Profiles);
 
-public sealed record SelectProfileResponse(string AccessToken, string RefreshToken, DateTime ExpiresAt, int TenantId, int CondoId, string UserId, string Role);
+public sealed record SelectProfileResponse(
+    [property: JsonPropertyName("accessToken")] string AccessToken,
+    [property: JsonPropertyName("refreshToken")] string RefreshToken,
+    [property: JsonPropertyName("expiresAt")] DateTime ExpiresAt,
+    [property: JsonPropertyName("tenantId")] int TenantId,
+    [property: JsonPropertyName("condoId")] int CondoId,
+    [property: JsonPropertyName("userId")] string UserId,
+    [property: JsonPropertyName("role")] string Role);
 
-public sealed record ForgotPasswordResponse(string Message);
+public sealed record ForgotPasswordResponse(
+    [property: JsonPropertyName("message")] string Message);
 
 public sealed class SessionAuthStateProvider(AuthSession session) : AuthenticationStateProvider
 {

@@ -64,24 +64,22 @@ public static class IdentityDataSeeder
     {
         const string email = "sindico@zapcond.com";
         var user = await userManager.FindByEmailAsync(email);
-        if (user is not null)
+        if (user is null)
         {
-            return;
+            user = new ApplicationUser
+            {
+                Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                Email = email,
+                UserName = email,
+                EmailConfirmed = true,
+                DisplayName = "Síndico Demo",
+                IsActive = true
+            };
+
+            await userManager.CreateAsync(user, "Senha@123");
         }
 
-        user = new ApplicationUser
-        {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Email = email,
-            UserName = email,
-            EmailConfirmed = true,
-            DisplayName = "Síndico Demo",
-            IsActive = true
-        };
-
-        await userManager.CreateAsync(user, "Senha@123");
-
-        var blockedEmail = "bloqueado@zapcond.com";
+        const string blockedEmail = "bloqueado@zapcond.com";
         if (await userManager.FindByEmailAsync(blockedEmail) is null)
         {
             var blocked = new ApplicationUser
@@ -96,31 +94,48 @@ public static class IdentityDataSeeder
             await userManager.CreateAsync(blocked, "Senha@123");
         }
 
-        if (!await dbContext.UserCondoMemberships.IgnoreQueryFilters().AnyAsync(m => m.UserId == user.Id, ct))
+        await EnsureMembershipAsync(
+            dbContext,
+            user.Id,
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            SmartCondoRoles.Sindico,
+            ct);
+
+        await EnsureMembershipAsync(
+            dbContext,
+            user.Id,
+            Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+            SmartCondoRoles.Portaria,
+            ct);
+    }
+
+    private static async Task EnsureMembershipAsync(
+        IdentityDbContext dbContext,
+        Guid userId,
+        Guid membershipId,
+        string role,
+        CancellationToken ct)
+    {
+        var exists = await dbContext.UserCondoMemberships
+            .IgnoreQueryFilters()
+            .AnyAsync(m => m.Id == membershipId || (m.UserId == userId && m.Role == role), ct);
+
+        if (exists)
         {
-            dbContext.UserCondoMemberships.Add(new UserCondoMembership
-            {
-                Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                UserId = user.Id,
-                TenantId = 1,
-                CondoId = 10,
-                Role = SmartCondoRoles.Sindico,
-                IsActive = true,
-                IsTenantActive = true
-            });
-
-            dbContext.UserCondoMemberships.Add(new UserCondoMembership
-            {
-                Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                UserId = user.Id,
-                TenantId = 1,
-                CondoId = 10,
-                Role = SmartCondoRoles.Portaria,
-                IsActive = true,
-                IsTenantActive = true
-            });
-
-            await dbContext.SaveChangesAsync(ct);
+            return;
         }
+
+        dbContext.UserCondoMemberships.Add(new UserCondoMembership
+        {
+            Id = membershipId,
+            UserId = userId,
+            TenantId = 1,
+            CondoId = 10,
+            Role = role,
+            IsActive = true,
+            IsTenantActive = true
+        });
+
+        await dbContext.SaveChangesAsync(ct);
     }
 }
