@@ -211,7 +211,9 @@ public sealed class UnitListItemModel
     [JsonPropertyName("moradorNome")] public string? MoradorNome { get; set; }
     [JsonPropertyName("papel")] public string? Papel { get; set; }
     [JsonPropertyName("moradorTelefone")] public string? MoradorTelefone { get; set; }
+    [JsonPropertyName("phoneVerificationStatus")] public int PhoneVerificationStatus { get; set; }
     [JsonPropertyName("dataInicio")] public DateTime? DataInicio { get; set; }
+    [JsonPropertyName("moradorId")] public int? MoradorId { get; set; }
 }
 
 public sealed class CreateUnitModel

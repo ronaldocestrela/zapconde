@@ -100,6 +100,8 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<ICepLookupService, CepLookupService>();
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
         services.AddScoped<IUnitResidentService, UnitResidentService>();
+        services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
+        services.AddScoped<IWhatsAppOtpSender, StubWhatsAppOtpSender>();
 
         services.AddHttpClient("ViaCep", client =>
         {

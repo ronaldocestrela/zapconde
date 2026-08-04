@@ -1,0 +1,300 @@
+@page "/verificar-celular"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@implements IAsyncDisposable
+@inject PhoneVerificationApiClient PhoneApi
+@inject AuthSession Session
+@inject NavigationManager Navigation
+@inject IWebHostEnvironment Environment
+
+<PageTitle>ZapCond - Verificação de Telefone</PageTitle>
+
+<main class="phone-page">
+    <a class="phone-back" href="/unidades"><span class="material-symbols-outlined">arrow_back</span> Voltar para unidades</a>
+
+    <section class="phone-auth-shell" aria-labelledby="phone-title">
+        <div class="phone-brand">ZapCond</div>
+        <div class="phone-icon" aria-hidden="true"><span class="material-symbols-outlined">forum</span></div>
+
+        @if (!_ready)
+        {
+            <div class="phone-loading">Preparando verificação segura...</div>
+        }
+        else if (_moradorId <= 0)
+        {
+            <div class="phone-alert phone-alert-error">Selecione um morador na tela de unidades para verificar o celular.</div>
+        }
+        else if (_step == PhoneStep.Registration)
+        {
+            <h1 id="phone-title">Autenticação e Notificações via WhatsApp</h1>
+            <p class="phone-lead">Insira o número de telefone para receber um código de acesso seguro.</p>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="phone-alert @(_isError ? "phone-alert-error" : "phone-alert-success")">@_message</div>
+            }
+
+            <div class="phone-field">
+                <label for="phone-number">Número de Celular</label>
+                <div class="phone-input-wrap">
+                    <span class="phone-flag" aria-hidden="true">BR</span>
+                    <span class="phone-prefix">+55</span>
+                    <input id="phone-number"
+                           type="tel"
+                           inputmode="numeric"
+                           maxlength="15"
+                           placeholder="(00) 00000-0000"
+                           value="@_phone"
+                           @oninput="FormatPhone" />
+                </div>
+            </div>
+
+            <button class="phone-primary" type="button" disabled="@_busy" @onclick="RequestCodeAsync">
+                <span class="phone-whatsapp" aria-hidden="true">◉</span>
+                @(_busy ? "Enviando..." : "Enviar Código via WhatsApp")
+            </button>
+        }
+        else
+        {
+            <h1 id="phone-title">Verifique seu Telefone</h1>
+            <p class="phone-lead">
+                Enviamos um código de 6 dígitos via WhatsApp para
+                <strong>@(_status?.MaskedPhoneNumber ?? _phone)</strong>
+            </p>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="phone-alert @(_isError ? "phone-alert-error" : "phone-alert-success")">
+                    <span class="material-symbols-outlined">@(_isError ? "error" : "check_circle")</span>
+                    <span>@_message</span>
+                </div>
+            }
+
+            <div class="phone-status @StatusClass">
+                <span class="material-symbols-outlined">@StatusIcon</span>
+                @StatusLabel
+            </div>
+
+            @if (_status?.Status == 2)
+            {
+                <p class="phone-verified-copy">Este celular está pronto para autenticação e notificações seguras.</p>
+                <a class="phone-primary phone-primary-link" href="/unidades">Concluir</a>
+            }
+            else
+            {
+                <div class="phone-otp" aria-label="Código de verificação de seis dígitos">
+                    @for (var i = 0; i < 6; i++)
+                    {
+                        var index = i;
+                        <input aria-label="Dígito @(i + 1)"
+                               inputmode="numeric"
+                               maxlength="1"
+                               value="@_otp[index]"
+                               @oninput="args => SetOtpDigit(index, args)" />
+                    }
+                </div>
+
+                <button class="phone-primary" type="button" disabled="@(_busy || _otp.Any(string.IsNullOrWhiteSpace))" @onclick="VerifyAsync">
+                    @(_busy ? "Validando..." : "Validar Código")
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+
+                <button class="phone-resend" type="button" disabled="@(_busy || _remainingSeconds > 0)" @onclick="ResendAsync">
+                    @if (_remainingSeconds > 0)
+                    {
+                        <span>Reenviar código em 00:@_remainingSeconds.ToString("D2")</span>
+                    }
+                    else
+                    {
+                        <span>Reenviar Código</span>
+                    }
+                </button>
+            }
+        }
+    </section>
+
+    @if (Environment.IsDevelopment())
+    {
+        <aside class="phone-e2e">
+            <strong>E2E Targets Rendered:</strong>
+            <span>BR Phone Mask</span>
+            <span>OTP Sequence</span>
+            <span>Resend Timer</span>
+            <span>Verified Badge Render</span>
+        </aside>
+    }
+</main>
+
+@code {
+    [SupplyParameterFromQuery(Name = "moradorId")]
+    public int MoradorId { get; set; }
+
+    private int _moradorId;
+    private bool _ready;
+    private bool _busy;
+    private bool _isError;
+    private string _message = string.Empty;
+    private string _phone = string.Empty;
+    private string[] _otp = ["", "", "", "", "", ""];
+    private PhoneVerificationModel? _status;
+    private PhoneStep _step;
+    private int _remainingSeconds;
+    private CancellationTokenSource? _countdownCts;
+
+    private string StatusLabel => (_status?.Status ?? 0) switch
+    {
+        1 => "Aguardando Validação",
+        2 => "Número Validado & Vinculado",
+        3 => "Código Expirado",
+        _ => "Número não verificado"
+    };
+
+    private string StatusIcon => (_status?.Status ?? 0) switch
+    {
+        1 => "hourglass_empty",
+        2 => "check_circle",
+        3 => "timer_off",
+        _ => "phone_iphone"
+    };
+
+    private string StatusClass => (_status?.Status ?? 0) switch
+    {
+        1 => "pending",
+        2 => "verified",
+        3 => "expired",
+        _ => "unknown"
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        await Session.EnsureLoadedAsync();
+        if (string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            Navigation.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        _moradorId = MoradorId;
+        if (_moradorId > 0)
+        {
+            var result = await PhoneApi.GetStatusAsync(_moradorId);
+            if (result.IsSuccess && result.Data is not null)
+            {
+                _status = result.Data;
+                _phone = result.Data.MaskedPhoneNumber?.Replace("+55 ", "", StringComparison.Ordinal) ?? string.Empty;
+                _step = result.Data.Status is 1 or 2 or 3 ? PhoneStep.Otp : PhoneStep.Registration;
+                if (result.Data.Status == 1 && result.Data.RequestedAtUtc.HasValue)
+                {
+                    var elapsed = (int)(DateTime.UtcNow - result.Data.RequestedAtUtc.Value).TotalSeconds;
+                    StartCountdown(Math.Max(0, 60 - elapsed));
+                }
+            }
+        }
+
+        _ready = true;
+        StateHasChanged();
+    }
+
+    private void FormatPhone(ChangeEventArgs args)
+    {
+        var digits = new string((args.Value?.ToString() ?? string.Empty).Where(char.IsDigit).Take(11).ToArray());
+        _phone = digits.Length switch
+        {
+            <= 2 => digits.Length == 0 ? string.Empty : $"({digits}",
+            <= 7 => $"({digits[..2]}) {digits[2..]}",
+            _ => $"({digits[..2]}) {digits.Substring(2, 5)}-{digits[7..]}"
+        };
+    }
+
+    private void SetOtpDigit(int index, ChangeEventArgs args)
+    {
+        var value = args.Value?.ToString() ?? string.Empty;
+        _otp[index] = value.LastOrDefault(char.IsDigit) is var digit && digit != default ? digit.ToString() : string.Empty;
+    }
+
+    private async Task RequestCodeAsync()
+    {
+        _busy = true;
+        var result = await PhoneApi.RequestCodeAsync(_moradorId, _phone);
+        ApplyResult(result);
+        if (result.IsSuccess)
+        {
+            _step = PhoneStep.Otp;
+            StartCountdown(result.Data?.ResendAvailableInSeconds ?? 60);
+        }
+        _busy = false;
+    }
+
+    private async Task VerifyAsync()
+    {
+        _busy = true;
+        var result = await PhoneApi.VerifyAsync(_moradorId, string.Concat(_otp));
+        ApplyResult(result);
+        _busy = false;
+    }
+
+    private async Task ResendAsync()
+    {
+        _busy = true;
+        var result = await PhoneApi.ResendAsync(_moradorId);
+        ApplyResult(result);
+        if (result.IsSuccess)
+        {
+            _otp = ["", "", "", "", "", ""];
+            StartCountdown(result.Data?.ResendAvailableInSeconds ?? 60);
+        }
+        _busy = false;
+    }
+
+    private void ApplyResult(ApiResult<PhoneVerificationModel> result)
+    {
+        _isError = !result.IsSuccess;
+        _message = result.Message;
+        if (result.Data is not null)
+        {
+            _status = result.Data;
+        }
+    }
+
+    private void StartCountdown(int seconds)
+    {
+        _countdownCts?.Cancel();
+        _countdownCts = new CancellationTokenSource();
+        _remainingSeconds = seconds;
+        _ = RunCountdownAsync(_countdownCts.Token);
+    }
+
+    private async Task RunCountdownAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+            while (_remainingSeconds > 0 && await timer.WaitForNextTickAsync(ct))
+            {
+                _remainingSeconds--;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _countdownCts?.Cancel();
+        _countdownCts?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    private enum PhoneStep
+    {
+        Registration,
+        Otp
+    }
+}

@@ -92,13 +92,27 @@
                                     <span class="units-badge units-badge-status">@unit.Status</span>
                                 }
                             </td>
-                            <td>@(unit.MoradorTelefone ?? "—")</td>
+                            <td>
+                                <div>@(unit.MoradorTelefone ?? "—")</div>
+                                @if (unit.MoradorId.HasValue)
+                                {
+                                    <span class="units-phone-status @(unit.PhoneVerificationStatus == 2 ? "verified" : "pending")">
+                                        @(unit.PhoneVerificationStatus == 2 ? "WhatsApp validado" : "WhatsApp pendente")
+                                    </span>
+                                }
+                            </td>
                             <td>@(unit.DataInicio?.ToString("dd/MM/yyyy") ?? "—")</td>
                             <td>
                                 <div class="units-row-actions">
                                     <button type="button" @onclick="() => OpenEditDrawer(unit)">Editar</button>
                                     <button type="button" @onclick="() => OpenTransferModal(unit)">Trocar Titularidade</button>
                                     <button type="button" @onclick="() => OpenHistoryDrawer(unit)">Ver Histórico</button>
+                                    @if (unit.MoradorId.HasValue)
+                                    {
+                                        <button type="button" @onclick="() => OpenPhoneVerification(unit.MoradorId.Value)">
+                                            Verificar celular
+                                        </button>
+                                    }
                                 </div>
                             </td>
                         </tr>
@@ -477,6 +491,9 @@
     }
 
     private void CloseDrawer() => _showDrawer = false;
+
+    private void OpenPhoneVerification(int moradorId) =>
+        Navigation.NavigateTo($"/verificar-celular?moradorId={moradorId}");
 
     private void ResetForm()
     {

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ZapCond - Validação de Telefone</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-primary-container": "#afd2ff",
+                        "surface-container": "#eceef0",
+                        "tertiary-container": "#5d5750",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#4c463f",
+                        "on-error": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "outline-variant": "#c2c7d0",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-tint": "#35618e",
+                        "surface-container-high": "#e6e8ea",
+                        "tertiary-fixed": "#ebe1d8",
+                        "background": "#f7f9fb",
+                        "primary-fixed": "#d1e4ff",
+                        "primary": "#0f436f",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e0e3e5",
+                        "secondary": "#44664b",
+                        "on-primary": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "on-secondary-fixed-variant": "#2c4e35",
+                        "on-surface-variant": "#42474f",
+                        "primary-container": "#2e5b88",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "surface-dim": "#d8dadc",
+                        "outline": "#727780",
+                        "on-secondary-fixed": "#00210c",
+                        "on-primary-fixed": "#001d36",
+                        "on-tertiary-container": "#d7cdc5",
+                        "inverse-primary": "#9fcafd",
+                        "secondary-fixed": "#c5ecca",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#486a4f",
+                        "primary-fixed-dim": "#9fcafd",
+                        "secondary-container": "#c2e9c7",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#1f1b16",
+                        "tertiary": "#46403a",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed-dim": "#cec5bc",
+                        "on-primary-fixed-variant": "#184975",
+                        "secondary-fixed-dim": "#aad0af",
+                        "surface-bright": "#f7f9fb",
+                        "mint-green": "#A3C9A8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1rem"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "stack-xl": "4rem",
+                        "max-width-auth": "440px",
+                        "inline-md": "1rem",
+                        "container-padding": "2.5rem",
+                        "stack-md": "1rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "headline-sm": ["Manrope"],
+                        "label-sm": ["Manrope"],
+                        "display-mobile": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "display": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "display-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    },
+                    "boxShadow": {
+                        "auth": "0 8px 32px 0 rgba(15, 67, 111, 0.15)"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .material-symbols-outlined.filled { font-variation-settings: 'FILL' 1; }
+        
+        /* OTP Input styling */
+        .otp-input:focus {
+            outline: none;
+            border-color: #0f436f;
+            box-shadow: 0 0 0 3px rgba(163, 201, 168, 0.4); /* Soft Mint Green glow */
+        }
+        
+        @keyframes pulse-yellow {
+            0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+        .animate-pulse-badge {
+            animation: pulse-yellow 2s infinite;
+        }
+
+        .button-squish:active {
+            transform: scale(0.98);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen flex flex-col items-center justify-start text-on-surface">
+<!-- Mobile Top App Bar (Modified for minimal Auth context) -->
+<header class="w-full flex justify-center items-center px-6 py-4 bg-surface z-50">
+<span class="font-headline-md text-headline-md font-bold text-primary">ZapCond</span>
+</header>
+<!-- Main Content Container (Mobile Auth Card) -->
+<main class="w-full max-w-max-width-auth flex-1 flex flex-col px-4 pt-4 pb-8">
+<div class="bg-surface-container-lowest rounded-t-2xl rounded-b-2xl shadow-auth p-6 flex flex-col w-full relative overflow-hidden flex-1">
+<!-- Progress Bar -->
+<div class="absolute top-0 left-0 w-full h-1 bg-surface-container-highest">
+<div class="h-full bg-mint-green w-2/3"></div>
+</div>
+<!-- Header Section -->
+<div class="text-center mt-6 mb-stack-lg">
+<div class="w-16 h-16 bg-primary-fixed rounded-full flex items-center justify-center mx-auto mb-4">
+<span class="material-symbols-outlined text-primary text-3xl">sms</span>
+</div>
+<h1 class="font-display-mobile text-display-mobile text-primary mb-2">Verifique seu Telefone</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Enviamos um código de 6 dígitos via WhatsApp para<br/><strong class="text-on-surface">+55 11 98765-4321</strong></p>
+</div>
+<!-- Error Banner (Example) -->
+<div class="bg-error-container text-on-error-container p-4 rounded-xl flex items-start gap-3 mb-6">
+<span class="material-symbols-outlined filled text-error shrink-0 mt-0.5">error</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold">Número Já Vinculado</span>
+<span class="font-label-sm text-label-sm mt-1">Este número já está em uso por outra conta.</span>
+</div>
+</div>
+<!-- Limit Warning Banner (Example) -->
+<div class="bg-[#FFF3CD] text-[#856404] p-4 rounded-xl flex items-start gap-3 mb-stack-lg border border-[#FFEEBA]">
+<span class="material-symbols-outlined filled text-[#856404] shrink-0 mt-0.5">warning</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold">Limite de Envios Atingido</span>
+<span class="font-label-sm text-label-sm mt-1">Aguarde 15 minutos antes de solicitar novo código.</span>
+</div>
+</div>
+<!-- OTP Input Form -->
+<form class="flex flex-col flex-1">
+<div class="flex justify-between gap-2 mb-stack-lg">
+<input class="otp-input w-12 h-14 text-center font-headline-md text-headline-md bg-surface-container-low border border-outline-variant rounded-xl text-primary transition-all duration-200" maxlength="1" type="text" value="4"/>
+<input class="otp-input w-12 h-14 text-center font-headline-md text-headline-md bg-surface-container-low border border-outline-variant rounded-xl text-primary transition-all duration-200" maxlength="1" type="text" value="8"/>
+<input class="otp-input w-12 h-14 text-center font-headline-md text-headline-md bg-surface-container-low border border-outline-variant rounded-xl text-primary transition-all duration-200" maxlength="1" type="text" value="1"/>
+<input class="otp-input w-12 h-14 text-center font-headline-md text-headline-md bg-surface-container-low border border-outline-variant rounded-xl text-primary transition-all duration-200 focus:border-primary" maxlength="1" type="text"/>
+<input class="otp-input w-12 h-14 text-center font-headline-md text-headline-md bg-surface-container-low border border-outline-variant rounded-xl text-primary transition-all duration-200" maxlength="1" type="text"/>
+<input class="otp-input w-12 h-14 text-center font-headline-md text-headline-md bg-surface-container-low border border-outline-variant rounded-xl text-primary transition-all duration-200" maxlength="1" type="text"/>
+</div>
+<!-- Status Badges Example List -->
+<div class="mb-stack-lg flex flex-col gap-3">
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-1">Status (Exemplos)</h3>
+<!-- Aguardando -->
+<div class="flex items-center gap-2 px-3 py-2 bg-yellow-50 rounded-lg border border-yellow-200 w-max animate-pulse-badge">
+<span class="material-symbols-outlined text-yellow-600 text-sm">hourglass_empty</span>
+<span class="font-label-md text-label-md text-yellow-700">Aguardando Validação</span>
+</div>
+<!-- Validado -->
+<div class="flex items-center gap-2 px-3 py-2 bg-[#E8F3EA] rounded-lg border border-[#A3C9A8] w-max">
+<span class="material-symbols-outlined text-[#2c4e35] text-sm filled">check_circle</span>
+<span class="font-label-md text-label-md text-[#2c4e35]">Número Validado &amp; Vinculado</span>
+</div>
+<!-- Expirado -->
+<div class="flex items-center gap-2 px-3 py-2 bg-surface-container-high rounded-lg border border-outline-variant w-max opacity-75">
+<span class="material-symbols-outlined text-outline text-sm">timer_off</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Código Expirado</span>
+</div>
+</div>
+<div class="mt-auto flex flex-col gap-4">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-4 rounded-2xl button-squish transition-transform flex items-center justify-center gap-2 shadow-sm" type="button">
+                        Validar Código
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+<button class="w-full bg-transparent text-primary font-label-md text-label-md py-3 rounded-2xl hover:bg-surface-container-low transition-colors underline decoration-outline-variant underline-offset-4" type="button">
+                        Reenviar Código
+                    </button>
+</div>
+</form>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-auto bg-transparent flex flex-col md:flex-row justify-center items-center gap-4 py-8 px-4">
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-80 hover:opacity-100 transition-opacity">© 2024 ZapCond. Secure Digital Sanctuary.</p>
+<div class="flex gap-4">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Security Audit</a>
+</div>
+</footer>
+<script>
+        // Simple OTP input logic for demonstration
+        document.querySelectorAll('.otp-input').forEach((input, index, inputs) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+    </script>
+</body></html>

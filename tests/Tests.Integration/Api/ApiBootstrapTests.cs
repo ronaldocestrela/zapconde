@@ -80,6 +80,8 @@ public class ApiBootstrapTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task HealthEndpoint_Should_RespondQuickly()
     {
         // Arrange
+        // O primeiro request inicializa o TestServer e não representa a latência do endpoint.
+        await _client.GetAsync("/api/health");
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act

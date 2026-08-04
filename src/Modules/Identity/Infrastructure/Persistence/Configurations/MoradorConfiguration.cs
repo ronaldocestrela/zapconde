@@ -16,8 +16,16 @@ public sealed class MoradorConfiguration : IEntityTypeConfiguration<Morador>
         builder.Property(x => x.Cpf).HasMaxLength(11).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(256).IsRequired();
         builder.Property(x => x.TelefoneWhatsApp).HasMaxLength(32);
+        builder.Property(x => x.TelefoneWhatsAppE164).HasMaxLength(14);
+        builder.Property(x => x.PhoneVerificationStatus)
+            .HasConversion<string>()
+            .HasMaxLength(32)
+            .HasDefaultValue(PhoneVerificationStatus.NaoInformado);
 
         builder.HasIndex(x => new { x.TenantId, x.CondoId, x.Cpf }).IsUnique();
+        builder.HasIndex(x => new { x.TenantId, x.CondoId, x.TelefoneWhatsAppE164 })
+            .IsUnique()
+            .HasFilter("\"PhoneVerificationStatus\" = 'Validado' AND \"TelefoneWhatsAppE164\" IS NOT NULL");
 
         builder.HasOne(x => x.User)
             .WithMany()

@@ -306,8 +306,21 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Design Stitch: referência HTML em `stitch_assets/units/management-reference.html`.
 
 
-* [] **Subfase 2.2.3:** [FN-ID-04] Cadastro do número do celular do morador para autenticação nativa via WhatsApp.
+* [x] **Subfase 2.2.3:** [FN-ID-04] Cadastro do número do celular do morador para autenticação nativa via WhatsApp.
 
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio: `PhoneNumberValidator` para E.164 BR, enum `PhoneVerificationStatus` e transições de verificação em `Morador`.
+  - EF Core: migration `AddMoradorPhoneVerification`, backfill seguro e índice único filtrado por tenant/condomínio para números validados.
+  - Serviço `PhoneVerificationService`: OTP de 6 dígitos com hash SHA-256, TTL de 5 minutos, cooldown de 60 segundos e limite de 5 envios/15 minutos via `ICacheService`.
+  - Abstração `IWhatsAppOtpSender` com stub seguro; integração BSP real permanece reservada para a Fase 6.
+  - FastEndpoints `Result<T>`: request-code, verify, resend e status em `/api/residents/{moradorId}/phone/*`, com isolamento multi-tenant.
+  - Sincronização com `ApplicationUser.PhoneNumber`/`PhoneNumberConfirmed` quando o morador possui usuário Identity.
+  - BDD: `tests/LivingDoc/Features/Fase2_2_3_CadastroCelularWhatsApp.feature`.
+  - Testes: domínio/validador, arquitetura, integração HTTP e isolamento tenant — Green.
+  - Blazor: página responsiva `/verificar-celular`, máscara BR, OTP em 6 campos, timer, alertas e badges; CTA/status integrado em `/unidades`.
+  - Design Stitch: referências desktop/mobile em `stitch_assets/phone/` e tokens Manrope, `#2E5B88`, `#A3C9A8`, `#F4EAE1`.
 
 
 ---

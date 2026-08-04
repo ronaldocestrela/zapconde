@@ -471,6 +471,8 @@ public sealed class UnitResidentService : IUnitResidentService
             MoradorNome = vinculo?.Morador?.Nome,
             Papel = vinculo?.Papel,
             MoradorTelefone = vinculo?.Morador?.TelefoneWhatsApp,
+            PhoneVerificationStatus = vinculo?.Morador?.PhoneVerificationStatus
+                ?? PhoneVerificationStatus.NaoInformado,
             DataInicio = vinculo?.DataInicio,
             MoradorId = vinculo?.MoradorId,
             VinculoId = vinculo?.Id

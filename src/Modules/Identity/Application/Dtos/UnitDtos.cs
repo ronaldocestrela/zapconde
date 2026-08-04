@@ -82,6 +82,8 @@ public sealed class UnitListItemDto
 
     public string? MoradorTelefone { get; set; }
 
+    public PhoneVerificationStatus PhoneVerificationStatus { get; set; }
+
     public DateTime? DataInicio { get; set; }
 
     public int? MoradorId { get; set; }
