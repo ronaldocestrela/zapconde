@@ -57,7 +57,12 @@ public sealed class AuthService : IAuthService
             await _tokenService.CreatePreContextTokensAsync(user, memberships, ct);
 
         var profiles = memberships
-            .Select(m => new AuthProfileDto(m.Id, m.TenantId, m.CondoId, m.Role, m.Role))
+            .Select(m => new AuthProfileDto(
+                m.Id,
+                m.TenantId,
+                m.CondoId,
+                m.Role,
+                string.IsNullOrWhiteSpace(m.DisplayLabel) ? m.Role : m.DisplayLabel))
             .ToList();
 
         return Result<AuthTokenDto>.Success(
@@ -144,5 +149,32 @@ public sealed class AuthService : IAuthService
         {
             return Result<AuthTokenDto>.Failure("Refresh token inválido ou expirado.");
         }
+    }
+
+    public async Task<Result<IReadOnlyList<AuthProfileDto>>> GetProfilesAsync(Guid userId, CancellationToken ct = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user is null || !user.IsActive)
+        {
+            return Result<IReadOnlyList<AuthProfileDto>>.Failure("Usuário não encontrado ou bloqueado.");
+        }
+
+        var memberships = await _dbContext.UserCondoMemberships
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(m => m.UserId == userId && m.IsActive && m.IsTenantActive)
+            .OrderBy(m => m.DisplayLabel)
+            .ToListAsync(ct);
+
+        var profiles = memberships
+            .Select(m => new AuthProfileDto(
+                m.Id,
+                m.TenantId,
+                m.CondoId,
+                m.Role,
+                string.IsNullOrWhiteSpace(m.DisplayLabel) ? m.Role : m.DisplayLabel))
+            .ToList();
+
+        return Result<IReadOnlyList<AuthProfileDto>>.Success(profiles);
     }
 }

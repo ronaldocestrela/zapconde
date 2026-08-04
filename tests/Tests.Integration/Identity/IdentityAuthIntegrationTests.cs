@@ -13,6 +13,7 @@ using Modules.Identity.Infrastructure.Persistence;
 
 namespace Tests.Integration.Identity;
 
+[Collection("IdentityIntegration")]
 public sealed class IdentityAuthIntegrationTests : IClassFixture<IdentityWebApplicationFactory>
 {
     private readonly HttpClient _client;
@@ -133,6 +134,7 @@ public sealed class IdentityWebApplicationFactory : WebApplicationFactory<Progra
         var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
         await db.Database.EnsureDeletedAsync();
         await db.Database.EnsureCreatedAsync();
-        await Modules.Identity.Infrastructure.IdentityDataSeeder.SeedAsync(Services);
+        db.ChangeTracker.Clear();
+        await Modules.Identity.Infrastructure.IdentityDataSeeder.SeedAsync(scope.ServiceProvider);
     }
 }

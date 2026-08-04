@@ -17,6 +17,7 @@ var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7195"
 builder.Services.AddHttpClient<AuthApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
 });
 
 var app = builder.Build();

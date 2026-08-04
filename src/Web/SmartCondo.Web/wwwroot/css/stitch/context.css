@@ -1,0 +1,317 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&display=swap');
+
+:root {
+    --context-primary: #0f436f;
+    --context-primary-dark: #002c4f;
+    --context-secondary: #44664b;
+    --context-surface: #f8f9ff;
+    --context-surface-container: #e5eeff;
+    --context-surface-high: #dce9ff;
+    --context-on-surface: #0b1c30;
+    --context-outline: #727780;
+    --context-outline-variant: #c2c7d0;
+    --context-error: #ba1a1a;
+    --context-error-container: #ffdad6;
+    --context-on-error-container: #93000a;
+    --context-success: #075e54;
+    --context-radius: 1rem;
+    --context-shadow: 0 8px 24px -8px rgba(15, 67, 111, 0.18);
+}
+
+.app-shell {
+    min-height: 100vh;
+    background: var(--context-surface);
+    font-family: 'Manrope', sans-serif;
+    color: var(--context-on-surface);
+}
+
+.app-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid var(--context-outline-variant);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.app-brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--context-primary);
+    text-decoration: none;
+}
+
+.app-main {
+    padding: 1.5rem;
+}
+
+.tenant-switcher {
+    position: relative;
+}
+
+.tenant-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid var(--context-outline-variant);
+    border-radius: var(--context-radius);
+    background: var(--context-surface-container);
+    color: var(--context-on-surface);
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.tenant-trigger:hover:not(:disabled) {
+    border-color: var(--context-primary);
+    box-shadow: var(--context-shadow);
+}
+
+.tenant-trigger:disabled {
+    cursor: default;
+    opacity: 0.95;
+}
+
+.tenant-trigger .status-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--context-success);
+    flex-shrink: 0;
+}
+
+.tenant-badge-locked {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: var(--context-radius);
+    background: var(--context-surface-container);
+    color: var(--context-on-surface);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.tenant-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    width: min(22rem, 90vw);
+    background: #fff;
+    border: 1px solid var(--context-outline-variant);
+    border-radius: var(--context-radius);
+    box-shadow: var(--context-shadow);
+    padding: 0.75rem;
+    z-index: 200;
+}
+
+.tenant-search {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--context-outline-variant);
+    border-radius: calc(var(--context-radius) - 0.25rem);
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+}
+
+.tenant-search:focus {
+    outline: 2px solid var(--context-primary);
+    outline-offset: 1px;
+}
+
+.tenant-section-label {
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--context-outline);
+    margin: 0.5rem 0;
+}
+
+.tenant-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid transparent;
+    border-radius: calc(var(--context-radius) - 0.25rem);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+}
+
+.tenant-option:hover {
+    background: var(--context-surface-high);
+}
+
+.tenant-option.active {
+    border-color: var(--context-primary);
+    background: var(--context-surface-container);
+}
+
+.tenant-option-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--context-on-surface);
+}
+
+.tenant-role-badge {
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: var(--context-surface-high);
+    color: var(--context-primary);
+}
+
+.tenant-empty-state {
+    max-width: 32rem;
+    margin: 4rem auto;
+    text-align: center;
+    padding: 2rem;
+}
+
+.tenant-empty-state h2 {
+    color: var(--context-primary);
+    margin-bottom: 0.5rem;
+}
+
+.tenant-empty-state p {
+    color: var(--context-outline);
+    margin-bottom: 1.5rem;
+}
+
+.tenant-empty-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--context-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--context-radius);
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.context-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(11, 28, 48, 0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 1000;
+}
+
+.context-modal {
+    width: min(28rem, 100%);
+    background: #fff;
+    border-radius: var(--context-radius);
+    padding: 1.5rem;
+    box-shadow: 0 24px 48px -12px rgba(15, 67, 111, 0.25);
+}
+
+.context-modal h2 {
+    font-size: 1.125rem;
+    color: var(--context-primary-dark);
+    margin: 0 0 1rem;
+}
+
+.context-compare {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.context-row {
+    padding: 0.75rem;
+    border-radius: calc(var(--context-radius) - 0.25rem);
+    background: var(--context-surface-container);
+}
+
+.context-row label {
+    display: block;
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 0.75rem;
+    color: var(--context-outline);
+    margin-bottom: 0.25rem;
+}
+
+.context-row strong {
+    font-size: 0.9375rem;
+}
+
+.context-warning {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: calc(var(--context-radius) - 0.25rem);
+    background: var(--context-error-container);
+    color: var(--context-on-error-container);
+    font-size: 0.8125rem;
+    margin-bottom: 1.25rem;
+}
+
+.context-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.btn-ghost {
+    padding: 0.625rem 1rem;
+    border: 1px solid var(--context-outline-variant);
+    border-radius: calc(var(--context-radius) - 0.25rem);
+    background: transparent;
+    color: var(--context-on-surface);
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-primary {
+    padding: 0.625rem 1rem;
+    border: none;
+    border-radius: calc(var(--context-radius) - 0.25rem);
+    background: var(--context-primary);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .app-topbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .tenant-dropdown {
+        left: 0;
+        right: 0;
+        width: auto;
+    }
+}

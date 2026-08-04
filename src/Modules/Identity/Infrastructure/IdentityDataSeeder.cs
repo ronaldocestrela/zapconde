@@ -63,12 +63,15 @@ public static class IdentityDataSeeder
         CancellationToken ct)
     {
         const string email = "sindico@zapcond.com";
-        var user = await userManager.FindByEmailAsync(email);
+        var demoUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var user = await userManager.FindByEmailAsync(email)
+            ?? await userManager.FindByIdAsync(demoUserId.ToString());
+
         if (user is null)
         {
             user = new ApplicationUser
             {
-                Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                Id = demoUserId,
                 Email = email,
                 UserName = email,
                 EmailConfirmed = true,
@@ -76,7 +79,12 @@ public static class IdentityDataSeeder
                 IsActive = true
             };
 
-            await userManager.CreateAsync(user, "Senha@123");
+            var createResult = await userManager.CreateAsync(user, "Senha@123");
+            if (!createResult.Succeeded)
+            {
+                user = await userManager.FindByIdAsync(demoUserId.ToString())
+                    ?? throw new InvalidOperationException(string.Join("; ", createResult.Errors.Select(e => e.Description)));
+            }
         }
 
         const string blockedEmail = "bloqueado@zapcond.com";
@@ -98,14 +106,40 @@ public static class IdentityDataSeeder
             dbContext,
             user.Id,
             Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            tenantId: 1,
+            condoId: 10,
             SmartCondoRoles.Sindico,
+            "Condomínio Ville de Paris - Bloco A",
             ct);
 
         await EnsureMembershipAsync(
             dbContext,
             user.Id,
             Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+            tenantId: 2,
+            condoId: 20,
+            SmartCondoRoles.Administradora,
+            "Residencial Jardim das Flores",
+            ct);
+
+        await EnsureMembershipAsync(
+            dbContext,
+            user.Id,
+            Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+            tenantId: 3,
+            condoId: 30,
+            SmartCondoRoles.Sindico,
+            "Edifício Belvedere",
+            ct);
+
+        await EnsureMembershipAsync(
+            dbContext,
+            user.Id,
+            Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+            tenantId: 1,
+            condoId: 10,
             SmartCondoRoles.Portaria,
+            "Condomínio Ville de Paris - Portaria",
             ct);
     }
 
@@ -113,14 +147,35 @@ public static class IdentityDataSeeder
         IdentityDbContext dbContext,
         Guid userId,
         Guid membershipId,
+        int tenantId,
+        int condoId,
         string role,
+        string displayLabel,
         CancellationToken ct)
     {
-        var exists = await dbContext.UserCondoMemberships
+        var existing = await dbContext.UserCondoMemberships
             .IgnoreQueryFilters()
-            .AnyAsync(m => m.Id == membershipId || (m.UserId == userId && m.Role == role), ct);
+            .FirstOrDefaultAsync(m => m.Id == membershipId, ct);
 
-        if (exists)
+        if (existing is not null)
+        {
+            existing.DisplayLabel = displayLabel;
+            existing.TenantId = tenantId;
+            existing.CondoId = condoId;
+            existing.Role = role;
+            await dbContext.SaveChangesAsync(ct);
+            return;
+        }
+
+        var duplicateRole = await dbContext.UserCondoMemberships
+            .IgnoreQueryFilters()
+            .AnyAsync(m => m.Id != membershipId &&
+                           m.UserId == userId &&
+                           m.TenantId == tenantId &&
+                           m.CondoId == condoId &&
+                           m.Role == role, ct);
+
+        if (duplicateRole)
         {
             return;
         }
@@ -129,9 +184,10 @@ public static class IdentityDataSeeder
         {
             Id = membershipId,
             UserId = userId,
-            TenantId = 1,
-            CondoId = 10,
+            TenantId = tenantId,
+            CondoId = condoId,
             Role = role,
+            DisplayLabel = displayLabel,
             IsActive = true,
             IsTenantActive = true
         });

@@ -12,4 +12,6 @@ public interface IAuthService
     Task<Result<ForgotPasswordResultDto>> ForgotPasswordAsync(string email, CancellationToken ct = default);
 
     Task<Result<AuthTokenDto>> RefreshAsync(string refreshToken, CancellationToken ct = default);
+
+    Task<Result<IReadOnlyList<AuthProfileDto>>> GetProfilesAsync(Guid userId, CancellationToken ct = default);
 }

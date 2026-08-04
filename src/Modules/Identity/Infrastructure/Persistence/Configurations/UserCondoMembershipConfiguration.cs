@@ -16,6 +16,9 @@ public sealed class UserCondoMembershipConfiguration : IEntityTypeConfiguration<
             .HasMaxLength(64)
             .IsRequired();
 
+        builder.Property(x => x.DisplayLabel)
+            .HasMaxLength(256);
+
         builder.HasIndex(x => new { x.UserId, x.TenantId, x.CondoId, x.Role })
             .IsUnique();
 

@@ -13,7 +13,27 @@ public interface ICurrentTenantService
     int? TenantId { get; }
 
     /// <summary>
+    /// ID do condomínio atual extraído do token JWT ou header de Webhook.
+    /// </summary>
+    int? CondoId { get; }
+
+    /// <summary>
     /// Indica se há um tenant resolvido no contexto atual.
     /// </summary>
     bool IsResolved => TenantId.HasValue;
+
+    /// <summary>
+    /// Define o tenant atual no contexto da requisição.
+    /// </summary>
+    void SetTenantId(int tenantId);
+
+    /// <summary>
+    /// Define o condomínio atual no contexto da requisição.
+    /// </summary>
+    void SetCondoId(int condoId);
+
+    /// <summary>
+    /// Limpa tenant e condomínio do contexto atual.
+    /// </summary>
+    void Clear();
 }

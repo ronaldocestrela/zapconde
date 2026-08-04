@@ -165,6 +165,18 @@ public sealed class MultiTenantDbContextIntegrationTests : IAsyncLifetime
 internal class TestCurrentTenantService : ICurrentTenantService
 {
     public int? TenantId { get; set; }
+    public int? CondoId { get; set; }
+    public bool IsResolved => TenantId.HasValue;
+
+    public void SetTenantId(int tenantId) => TenantId = tenantId;
+
+    public void SetCondoId(int condoId) => CondoId = condoId;
+
+    public void Clear()
+    {
+        TenantId = null;
+        CondoId = null;
+    }
 }
 
 /// <summary>

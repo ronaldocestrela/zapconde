@@ -258,7 +258,20 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Asset logo baixado via `curl -L` em `wwwroot/images/auth/zapcond-logo.png`.
 
 
-* [] **Subfase 2.1.2:** Criar Middleware de Injeção de Contexto (`CurrentTenantService`) para extrair o `TenantId` do Token JWT ou do Header do Webhook.
+* [x] **Subfase 2.1.2:** Criar Middleware de Injeção de Contexto (`CurrentTenantService`) para extrair o `TenantId` do Token JWT ou do Header do Webhook.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - `ICurrentTenantService` estendido com `CondoId`, `SetTenantId`, `SetCondoId` e `Clear()`; constantes `TenantHttpHeaders` (`X-Tenant-Id`, `X-Condo-Id`).
+  - `TenantContextMiddleware` + `UseTenantContext()` registrado após `UseAuthentication` em `ApplicationBuilderExtensions`.
+  - Resolução: JWT autenticado (claims `TenantId`/`CondoId`) ou header em rotas `/api/webhooks/*`; deny-by-default.
+  - Endpoints: `GET /api/auth/context`, `GET /api/auth/profiles`, `GET /api/webhooks/context-probe` retornando `Result<T>`.
+  - Seed multi-tenant com `DisplayLabel` (Ville de Paris, Jardim das Flores, Belvedere) + migration `AddMembershipDisplayLabel`.
+  - BDD: `tests/LivingDoc/Features/Fase2_1_2_TenantContextMiddleware.feature`.
+  - Testes: unitários (`TenantContextMiddlewareTests`), integração (`TenantContextIntegrationTests`), arquitetura (`TenantContextArchitectureTests`) — Green.
+  - Blazor: `AppShellLayout`, `TenantSwitcher` (dropdown/recentes/busca), `ContextSwitchModal`, estados single-tenant/empty + `context.css` Stitch.
+  - Referências visuais Stitch em `wwwroot/images/context/references/`.
 
 
 

@@ -1,0 +1,245 @@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+@if (_pendingProfile is not null && _currentLabel is not null)
+{
+    <ContextSwitchModal CurrentLabel="@_currentLabel"
+                        NewLabel="@_pendingProfile.DisplayLabel"
+                        IsBusy="@_isSwitching"
+                        OnCancel="CancelSwitch"
+                        OnConfirm="ConfirmSwitchAsync" />
+}
+
+@if (!_ready)
+{
+    <span class="tenant-badge-locked">Carregando contexto...</span>
+}
+else if (Session.Context is null)
+{
+    <span class="tenant-badge-locked">
+        <span class="material-symbols-outlined" style="font-size:1rem;">lock</span>
+        Sem tenant ativo
+    </span>
+}
+else if (_profiles.Count <= 1)
+{
+    <span class="tenant-badge-locked" title="Único condomínio disponível">
+        <span class="material-symbols-outlined" style="font-size:1rem;">lock</span>
+        @_currentLabel
+    </span>
+}
+else
+{
+    <div class="tenant-switcher">
+        <button type="button" class="tenant-trigger" @onclick="ToggleDropdown" aria-expanded="@_dropdownOpen" aria-haspopup="listbox">
+            <span class="material-symbols-outlined" style="font-size:1.125rem;">apartment</span>
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>@_currentLabel</span>
+            <span class="material-symbols-outlined" style="font-size:1.125rem;">expand_more</span>
+        </button>
+
+        @if (_dropdownOpen)
+        {
+            <div class="tenant-dropdown" @onclick:stopPropagation="true">
+                <input class="tenant-search"
+                       type="search"
+                       placeholder="Buscar condomínio..."
+                       @bind="_search"
+                       @bind:event="oninput"
+                       aria-label="Buscar condomínio" />
+
+                @if (_recentProfiles.Any())
+                {
+                    <p class="tenant-section-label">Recentes</p>
+                    @foreach (var profile in _recentProfiles)
+                    {
+                        <button type="button"
+                                class="tenant-option @(IsActive(profile) ? "active" : "")"
+                                @onclick="() => RequestSwitch(profile)">
+                            <span class="tenant-option-name">@profile.DisplayLabel</span>
+                            <span class="tenant-role-badge">@MapRoleLabel(profile.Role)</span>
+                        </button>
+                    }
+                }
+
+                @if (_filteredProfiles.Any())
+                {
+                    <p class="tenant-section-label">Todos</p>
+                    @foreach (var profile in _filteredProfiles)
+                    {
+                        <button type="button"
+                                class="tenant-option @(IsActive(profile) ? "active" : "")"
+                                @onclick="() => RequestSwitch(profile)">
+                            <span class="tenant-option-name">@profile.DisplayLabel</span>
+                            <span class="tenant-role-badge">@MapRoleLabel(profile.Role)</span>
+                        </button>
+                    }
+                }
+                else
+                {
+                    <p class="tenant-section-label">Nenhum condomínio encontrado</p>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Inject] private AuthSession Session { get; set; } = default!;
+    [Inject] private AuthApiClient AuthApi { get; set; } = default!;
+    [Inject] private SessionAuthStateProvider AuthState { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private bool _ready;
+    private bool _dropdownOpen;
+    private bool _isSwitching;
+    private string _search = string.Empty;
+    private List<AuthProfileModel> _profiles = [];
+    private AuthProfileModel? _pendingProfile;
+    private string? _currentLabel;
+
+    private IEnumerable<AuthProfileModel> _filteredProfiles =>
+        _profiles
+            .Where(p => string.IsNullOrWhiteSpace(_search) ||
+                        p.DisplayLabel.Contains(_search, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(p => p.DisplayLabel);
+
+    private IEnumerable<AuthProfileModel> _recentProfiles =>
+        _profiles
+            .Where(p => !IsActive(p))
+            .Take(2);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _ready)
+        {
+            return;
+        }
+
+        try
+        {
+            await Session.EnsureLoadedAsync();
+            ApplySessionProfiles();
+            _currentLabel = ResolveCurrentLabel();
+        }
+        finally
+        {
+            _ready = true;
+            StateHasChanged();
+        }
+
+        await RefreshProfilesFromApiAsync();
+    }
+
+    private void ApplySessionProfiles()
+    {
+        _profiles = Session.Profiles.Count > 0
+            ? [..Session.Profiles]
+            : [];
+    }
+
+    private async Task RefreshProfilesFromApiAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            return;
+        }
+
+        try
+        {
+            var result = await AuthApi.GetProfilesAsync(Session.AccessToken);
+            if (!result.IsSuccess || result.Data is null || result.Data.Count == 0)
+            {
+                return;
+            }
+
+            _profiles = result.Data;
+            Session.Profiles = result.Data;
+            _currentLabel = ResolveCurrentLabel();
+            await Session.PersistAsync();
+            StateHasChanged();
+        }
+        catch
+        {
+            // Mantém cache local da sessão quando a API estiver indisponível.
+        }
+    }
+
+    private void ToggleDropdown() => _dropdownOpen = !_dropdownOpen;
+
+    private bool IsActive(AuthProfileModel profile) =>
+        Session.Context is not null &&
+        profile.TenantId == Session.Context.TenantId &&
+        profile.CondoId == Session.Context.CondoId &&
+        profile.Role == Session.Context.Role;
+
+    private void RequestSwitch(AuthProfileModel profile)
+    {
+        if (IsActive(profile))
+        {
+            _dropdownOpen = false;
+            return;
+        }
+
+        _pendingProfile = profile;
+        _dropdownOpen = false;
+    }
+
+    private void CancelSwitch() => _pendingProfile = null;
+
+    private async Task ConfirmSwitchAsync()
+    {
+        if (_pendingProfile is null || string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            return;
+        }
+
+        _isSwitching = true;
+
+        try
+        {
+            var result = await AuthApi.SelectProfileAsync(Session.AccessToken, _pendingProfile.MembershipId);
+            if (!result.IsSuccess || result.Data is null)
+            {
+                return;
+            }
+
+            Session.AccessToken = result.Data.AccessToken;
+            Session.RefreshToken = result.Data.RefreshToken;
+            Session.Context = new AuthContextModel(
+                result.Data.TenantId,
+                result.Data.CondoId,
+                result.Data.UserId,
+                result.Data.Role);
+            await Session.PersistAsync();
+            AuthState.NotifyChanged();
+
+            _pendingProfile = null;
+            _currentLabel = ResolveCurrentLabel();
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+        finally
+        {
+            _isSwitching = false;
+        }
+    }
+
+    private string? ResolveCurrentLabel()
+    {
+        if (Session.Context is null)
+        {
+            return null;
+        }
+
+        var match = _profiles.FirstOrDefault(IsActive);
+        return match?.DisplayLabel ?? $"Tenant {Session.Context.TenantId} / Condo {Session.Context.CondoId}";
+    }
+
+    private static string MapRoleLabel(string role) => role switch
+    {
+        "Sindico" => "Síndico",
+        "Administradora" => "Administradora",
+        "Condomino" => "Condômino",
+        "Portaria" => "Portaria",
+        _ => role
+    };
+}

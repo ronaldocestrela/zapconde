@@ -1,4 +1,5 @@
 ﻿@page "/"
+@layout AppShellLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject AuthSession Session
 @inject NavigationManager Navigation
@@ -7,17 +8,26 @@
 
 @if (!_sessionReady)
 {
-    <p style="padding:2rem;font-family:Manrope,sans-serif;">Carregando...</p>
+    <p>Carregando...</p>
 }
 else if (Session.Context is null)
 {
-    <p style="padding:2rem;font-family:Manrope,sans-serif;">Redirecionando para login...</p>
+    <section class="tenant-empty-state">
+        <span class="material-symbols-outlined" style="font-size:3rem;color:#0f436f;">domain_disabled</span>
+        <h2>Sem tenant ativo</h2>
+        <p>Selecione um perfil de acesso para visualizar os dados do seu condomínio.</p>
+        <a class="tenant-empty-cta" href="/selecionar-perfil">
+            <span class="material-symbols-outlined">link</span>
+            Solicitar Acesso ou Vincular Condomínio
+        </a>
+    </section>
 }
 else
 {
-    <section style="padding:2rem;font-family:Manrope,sans-serif;">
-        <h1 style="color:#0f436f;">ZapCond</h1>
-        <p>Bem-vindo! Perfil ativo: <strong>@Session.Context.Role</strong> (Tenant @Session.Context.TenantId / Condo @Session.Context.CondoId)</p>
+    <section>
+        <h1 style="color:#0f436f;margin-top:0;">Dashboard</h1>
+        <p>Bem-vindo! Perfil ativo: <strong>@Session.Context.Role</strong></p>
+        <p>Contexto: Tenant @Session.Context.TenantId / Condo @Session.Context.CondoId</p>
         <a href="/acesso-negado">Ver tela de acesso negado</a>
     </section>
 }
@@ -34,9 +44,15 @@ else
 
         await Session.EnsureLoadedAsync();
 
-        if (Session.Context is null)
+        if (string.IsNullOrWhiteSpace(Session.AccessToken))
         {
             Navigation.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        if (Session.Context is null && Session.Profiles.Count > 0)
+        {
+            Navigation.NavigateTo("/selecionar-perfil", replace: true);
             return;
         }
 

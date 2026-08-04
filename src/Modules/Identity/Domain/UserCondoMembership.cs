@@ -17,6 +17,8 @@ public class UserCondoMembership : ITenantScoped
 
     public string Role { get; set; } = string.Empty;
 
+    public string DisplayLabel { get; set; } = string.Empty;
+
     public bool IsActive { get; set; } = true;
 
     public bool IsTenantActive { get; set; } = true;

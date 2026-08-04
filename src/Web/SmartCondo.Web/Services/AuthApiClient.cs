@@ -40,6 +40,25 @@ public sealed class AuthApiClient(HttpClient httpClient)
         }
     }
 
+    public async Task<ApiResult<List<AuthProfileModel>>> GetProfilesAsync(string accessToken, CancellationToken ct = default)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/auth/profiles");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var response = await httpClient.SendAsync(request, ct);
+            return await ParseAsync<List<AuthProfileModel>>(response, ct);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ConnectionFailure<List<AuthProfileModel>>(ex);
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            return ConnectionFailure<List<AuthProfileModel>>(ex);
+        }
+    }
+
     public async Task<ApiResult<SelectProfileResponse>> SelectProfileAsync(string accessToken, Guid membershipId, CancellationToken ct = default)
     {
         try

@@ -1,0 +1,36 @@
+<div class="context-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="context-switch-title">
+    <div class="context-modal">
+        <h2 id="context-switch-title">Confirmar troca de contexto</h2>
+
+        <div class="context-compare">
+            <div class="context-row">
+                <label>Contexto atual</label>
+                <strong>@CurrentLabel</strong>
+            </div>
+            <div class="context-row">
+                <label>Novo contexto</label>
+                <strong>@NewLabel</strong>
+            </div>
+        </div>
+
+        <div class="context-warning" role="alert">
+            <span class="material-symbols-outlined" style="font-size:1.125rem;">warning</span>
+            <span>Atenção: A troca de contexto alterará os dados de lançamentos, boletos e chamados em exibição.</span>
+        </div>
+
+        <div class="context-modal-actions">
+            <button type="button" class="btn-ghost" disabled="@IsBusy" @onclick="OnCancel">Cancelar</button>
+            <button type="button" class="btn-primary" disabled="@IsBusy" @onclick="OnConfirm">
+                @(IsBusy ? "Trocando..." : "Confirmar Troca de Contexto")
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string CurrentLabel { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string NewLabel { get; set; } = string.Empty;
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnCancel { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnConfirm { get; set; }
+}

@@ -1,3 +1,4 @@
+using BuildingBlocks.Infrastructure.MultiTenancy;
 using FastEndpoints;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
@@ -26,6 +27,7 @@ public static class ApplicationBuilderExtensions
         }
 
         app.UseAuthentication();
+        app.UseTenantContext();
         app.UseAuthorization();
         app.UseFastEndpoints();
 
