@@ -1,10 +1,13 @@
+using BuildingBlocks.Infrastructure.Caching;
 using BuildingBlocks.Infrastructure.Messaging;
 using BuildingBlocks.Infrastructure.MultiTenancy;
+using BuildingBlocks.Shared.Caching;
 using BuildingBlocks.Shared.MultiTenancy;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using System.Globalization;
 
 namespace BuildingBlocks.Infrastructure.DependencyInjection;
@@ -31,9 +34,16 @@ public static class InfrastructureServiceCollectionExtensions
             Password = rabbitMqSection["Password"] ?? string.Empty
         };
 
+        var redisConnectionString = configuration.GetConnectionString("Redis");
+
         if (string.IsNullOrWhiteSpace(postgresConnectionString))
         {
             throw new InvalidOperationException("Connection string 'ConnectionStrings:Postgres' não foi configurada.");
+        }
+
+        if (string.IsNullOrWhiteSpace(redisConnectionString))
+        {
+            throw new InvalidOperationException("Connection string 'ConnectionStrings:Redis' não foi configurada.");
         }
 
         if (string.IsNullOrWhiteSpace(rabbitMqConnectionString))
@@ -59,10 +69,19 @@ public static class InfrastructureServiceCollectionExtensions
             });
         });
 
+        // Configuração Redis
+        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
+        services.AddScoped<ICacheService, RedisCacheService>();
+        services.AddSingleton<IDistributedLockService, RedisDistributedLockService>();
+        services.AddScoped<IChatSessionService, RedisChatSessionService>();
+
         services.AddHealthChecks()
             .AddCheck<RabbitMqBusHealthCheck>(
                 name: "rabbitmq",
-                tags: ["ready", "rabbitmq"]);
+                tags: ["ready", "rabbitmq"])
+            .AddCheck<RedisHealthCheck>(
+                name: "redis",
+                tags: ["ready", "redis"]);
 
         // Registra serviço de contexto de tenant (scoped para suportar isolamento por requisição)
         services.AddScoped<ICurrentTenantService, CurrentTenantService>();

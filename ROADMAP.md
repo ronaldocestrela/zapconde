@@ -202,7 +202,33 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Execução e aprovação de 100% dos testes da solução (55/55 aprovados: 35 arquitetura, 8 unidade, 12 integração).
 
 
-* [] **Subfase 1.3.3:** Configurar cliente Redis (`StackExchange.Redis`) para controle de cache, Distributed Locks e sessão de chat.
+* [x] **Subfase 1.3.3:** Configurar cliente Redis (`StackExchange.Redis`) para controle de cache, Distributed Locks e sessão de chat.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Dependências de Redis e Caching adicionadas:
+    - `src/BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj`: `StackExchange.Redis` `2.8.24`
+    - `tests/Tests.Integration/Tests.Integration.csproj`: `Testcontainers.Redis` `4.8.1`
+  - Abstrações criadas em `BuildingBlocks.Shared/Caching`:
+    - `ICacheService` (operações de cache com isolamento por tenant `tenant:{tenant_id}:{key}`)
+    - `IDistributedLockService` e `IDistributedLockHandle` (locks assíncronos descartáveis via `IAsyncDisposable`)
+    - `IChatSessionService` (gestão do estado conversacional de chat/WhatsApp com TTL configurável)
+  - Implementações de Infraestrutura em `BuildingBlocks.Infrastructure/Caching`:
+    - `RedisCacheService` (com serialização JSON via `System.Text.Json` e prefixação automática de tenant)
+    - `RedisDistributedLockService` e `RedisDistributedLockHandle` (baseado em `LockTakeAsync` / `LockReleaseAsync`)
+    - `RedisChatSessionService` (armazenamento efêmero de sessão com expiração)
+    - `RedisHealthCheck` (validação de operatividade e latência do Redis)
+  - Configuração e Composição na Injeção de Dependências:
+    - Seção `ConnectionStrings:Redis` adicionada nos arquivos `appsettings.json` e `appsettings.Development.json`
+    - `InfrastructureServiceCollectionExtensions.cs` atualizado com registro do `IConnectionMultiplexer`, `ICacheService`, `IDistributedLockService`, `IChatSessionService` e `RedisHealthCheck` sob as tags `ready` e `redis`
+  - Especificação BDD da subfase criada:
+    - `tests/LivingDoc/Features/Fase1_3_3_RedisCacheAndDistributedLock.feature`
+  - Suíte de Testes (TDD Red → Green):
+    - `tests/Tests.Architecture/RedisConfigurationArchitectureTests.cs` (validação de referências, interfaces e connection string)
+    - `tests/Tests.Unit/Infrastructure/RedisCacheAndLockUnitTests.cs` (testes unitários de chaves com tenant e descartabilidade de lock)
+    - `tests/Tests.Integration/Infrastructure/RedisIntegrationTests.cs` (testes de integração ponta a ponta com Redis real via Testcontainers)
+  - Execução e aprovação de 100% dos testes unitários e de arquitetura da solução (38 testes de arquitetura, 11 testes unitários aprovados).
 
 
 
