@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\BuildingBlocks\BuildingBlocks.Infrastructure\BuildingBlocks.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\BuildingBlocks.Shared\BuildingBlocks.Shared.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Modules.Identity.csproj" />
   </ItemGroup>
 
 </Project>

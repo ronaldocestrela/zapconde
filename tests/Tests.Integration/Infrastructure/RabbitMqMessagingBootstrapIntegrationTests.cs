@@ -74,7 +74,9 @@ public sealed class RabbitMqMessagingBootstrapIntegrationTests : IAsyncLifetime
             ["RabbitMQ:Port"] = rabbitPort.ToString(),
             ["RabbitMQ:VirtualHost"] = "/",
             ["RabbitMQ:Username"] = "guest",
-            ["RabbitMQ:Password"] = "guest"
+            ["RabbitMQ:Password"] = "guest",
+            ["Identity:SeedOnStartup"] = "false",
+            ["Identity:UseInMemoryDatabase"] = "true"
         };
 
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>

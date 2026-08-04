@@ -1,0 +1,28 @@
+﻿@page "/"
+@inject AuthSession Session
+@inject NavigationManager Navigation
+
+<PageTitle>ZapCond</PageTitle>
+
+@if (Session.Context is null)
+{
+    <p>Redirecionando para login...</p>
+}
+else
+{
+    <section style="padding:2rem;font-family:Manrope,sans-serif;">
+        <h1 style="color:#0f436f;">ZapCond</h1>
+        <p>Bem-vindo! Perfil ativo: <strong>@Session.Context.Role</strong> (Tenant @Session.Context.TenantId / Condo @Session.Context.CondoId)</p>
+        <a href="/acesso-negado">Ver tela de acesso negado</a>
+    </section>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (Session.Context is null)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+}

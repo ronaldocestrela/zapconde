@@ -131,7 +131,9 @@ public sealed class RedisIntegrationTests : IAsyncLifetime
             ["RabbitMQ:Port"] = "5672",
             ["RabbitMQ:VirtualHost"] = "/",
             ["RabbitMQ:Username"] = "guest",
-            ["RabbitMQ:Password"] = "guest"
+            ["RabbitMQ:Password"] = "guest",
+            ["Identity:SeedOnStartup"] = "false",
+            ["Identity:UseInMemoryDatabase"] = "true"
         };
 
         await using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>

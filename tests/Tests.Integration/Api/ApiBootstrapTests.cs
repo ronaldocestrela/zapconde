@@ -18,7 +18,8 @@ public class ApiBootstrapTests : IClassFixture<WebApplicationFactory<Program>>
     {
         _factory = factory.WithWebHostBuilder(builder =>
         {
-            builder.UseEnvironment("Development");
+            builder.UseEnvironment("Testing");
+            builder.UseSetting("Identity:SeedOnStartup", "false");
         });
 
         _client = _factory.CreateClient();

@@ -1,0 +1,19 @@
+@page "/acesso-negado"
+@layout AuthLayout
+
+<PageTitle>ZapCond - Acesso Negado</PageTitle>
+
+<div class="auth-card" style="text-align:center;">
+    <div class="access-denied-icon">
+        <span class="material-symbols-outlined">gpp_bad</span>
+    </div>
+    <h1 style="color:var(--primary);font-size:clamp(1.75rem,4vw,2rem);margin:0 0 0.5rem;">Acesso Negado</h1>
+    <p style="color:var(--on-surface-variant);margin-bottom:2rem;">
+        Você não tem permissão para visualizar esta página. Se acredita que isso é um erro, entre em contato com o síndico.
+    </p>
+    <a class="btn-primary" href="/login" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;text-decoration:none;">
+        <span class="material-symbols-outlined">arrow_back</span>
+        Fazer Login
+    </a>
+    <p style="margin-top:1rem;color:var(--outline);font-size:0.75rem;">Erro 403 - Permissão Insuficiente</p>
+</div>

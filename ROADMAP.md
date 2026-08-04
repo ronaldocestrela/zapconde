@@ -243,7 +243,19 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 ### 2.1. ASP.NET Core Identity e JWT
 
-* [] **Subfase 2.1.1:** Mapear e aplicar tabelas do Identity customizadas (gerando JWT com claims obrigatórias: `TenantId`, `CondoId`, `UserId`, `Role`).
+* [x] **Subfase 2.1.1:** Mapear e aplicar tabelas do Identity customizadas (gerando JWT com claims obrigatórias: `TenantId`, `CondoId`, `UserId`, `Role`).
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Módulo `Modules.Identity` com `ApplicationUser`, `ApplicationRole`, `UserCondoMembership`, `UserRefreshToken` e `SmartCondoClaimTypes`.
+  - `IdentityDbContext` + migration `InitialIdentityOpenIddict` (Identity + OpenIddict EF Core).
+  - OpenIddict configurado como authorization server; JWT emitido via `IdentityTokenService` com claims `TenantId`, `CondoId`, `UserId`, `Role`.
+  - FastEndpoints: `POST /api/auth/login`, `/select-profile`, `/forgot-password`, `/refresh` retornando `Result<T>`.
+  - BDD: `tests/LivingDoc/Features/Fase2_1_1_IdentityJwt.feature`.
+  - Testes: unitários, arquitetura e integração (`IdentityAuthIntegrationTests`) — Green.
+  - App Blazor `src/Web/SmartCondo.Web` com telas Stitch: Login (desktop/mobile), Recuperar Senha, Selecionar Perfil, Acesso Negado + CSS tokens Manrope/`#0f436f`.
+  - Asset logo baixado via `curl -L` em `wwwroot/images/auth/zapcond-logo.png`.
 
 
 * [] **Subfase 2.1.2:** Criar Middleware de Injeção de Contexto (`CurrentTenantService`) para extrair o `TenantId` do Token JWT ou do Header do Webhook.

@@ -14,17 +14,15 @@ public static class ApplicationBuilderExtensions
     /// </summary>
     public static WebApplication UseApiPipeline(this WebApplication app)
     {
-        // Documentação OpenAPI apenas em desenvolvimento
-        if (app.Environment.IsDevelopment())
+        if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
         {
             app.MapOpenApi();
             app.MapScalarApiReference("/scalar");
         }
 
-        // Redirecionamento HTTPS
         app.UseHttpsRedirection();
-
-        // Pipeline do FastEndpoints
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.UseFastEndpoints();
 
         app.MapHealthChecks("/health/live", new HealthCheckOptions

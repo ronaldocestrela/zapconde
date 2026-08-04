@@ -1,5 +1,6 @@
 using FastEndpoints;
 using BuildingBlocks.Infrastructure.DependencyInjection;
+using Modules.Identity.Infrastructure;
 
 namespace SmartCondo.Api.Configuration;
 
@@ -15,9 +16,16 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddInfrastructure(configuration);
+        services.AddIdentityModule(configuration);
 
-        // FastEndpoints para gerenciamento de endpoints
-        services.AddFastEndpoints();
+        services.AddFastEndpoints(config =>
+        {
+            config.Assemblies =
+            [
+                typeof(Program).Assembly,
+                typeof(Modules.Identity.Endpoints.LoginEndpoint).Assembly
+            ];
+        });
 
         return services;
     }

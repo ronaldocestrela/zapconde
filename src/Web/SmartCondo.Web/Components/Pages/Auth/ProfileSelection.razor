@@ -1,0 +1,126 @@
+@page "/selecionar-perfil"
+@layout AuthLayout
+@inject AuthApiClient AuthApi
+@inject AuthSession Session
+@inject SessionAuthStateProvider AuthState
+@inject NavigationManager Navigation
+
+<PageTitle>ZapCond - Selecione seu perfil</PageTitle>
+
+<div class="auth-card">
+    <div class="auth-logo">
+        <img src="images/auth/zapcond-logo.png" alt="ZapCond Logo" />
+    </div>
+    <div class="auth-title">
+        <h1>Selecione seu perfil</h1>
+        <p>Como você deseja acessar o ZapCond hoje?</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="auth-error-banner" role="alert">
+            <span class="material-symbols-outlined">error</span>
+            <span>@_errorMessage</span>
+        </div>
+    }
+
+    <div class="role-grid">
+        @foreach (var role in _roles)
+        {
+            var profile = Session.Profiles.FirstOrDefault(p => MapRoleLabel(p.Role) == role.Label);
+            var isAvailable = profile is not null;
+            <button type="button"
+                    class="role-card @(_selectedRole == role.Label ? "selected" : "")"
+                    disabled="@(!isAvailable)"
+                    @onclick="() => SelectRole(role.Label, profile)">
+                <div class="role-icon">
+                    <span class="material-symbols-outlined">@role.Icon</span>
+                </div>
+                <span>@role.Label</span>
+            </button>
+        }
+    </div>
+
+    <button class="btn-primary" style="margin-top:1.5rem;" disabled="@(_selectedMembershipId is null || _isSubmitting)" @onclick="ContinueAsync">
+        Continuar
+        <span class="material-symbols-outlined">arrow_forward</span>
+    </button>
+
+    <p style="text-align:center;margin-top:1rem;">
+        <a class="auth-link" href="/login">Voltar ao login</a>
+    </p>
+</div>
+
+@code {
+    private Guid? _selectedMembershipId;
+    private string? _selectedRole;
+    private string? _errorMessage;
+    private bool _isSubmitting;
+
+    private readonly List<RoleOption> _roles =
+    [
+        new("Síndico", "admin_panel_settings"),
+        new("Administradora", "business_center"),
+        new("Morador", "home"),
+        new("Porteiro", "badge")
+    ];
+
+    protected override void OnInitialized()
+    {
+        if (string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+    private void SelectRole(string label, AuthProfileModel? profile)
+    {
+        if (profile is null) return;
+        _selectedRole = label;
+        _selectedMembershipId = profile.MembershipId;
+    }
+
+    private async Task ContinueAsync()
+    {
+        if (_selectedMembershipId is null || string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            return;
+        }
+
+        _isSubmitting = true;
+        _errorMessage = null;
+        try
+        {
+            var result = await AuthApi.SelectProfileAsync(Session.AccessToken, _selectedMembershipId.Value);
+            if (!result.IsSuccess || result.Data is null)
+            {
+                _errorMessage = result.Message;
+                return;
+            }
+
+            Session.AccessToken = result.Data.AccessToken;
+            Session.RefreshToken = result.Data.RefreshToken;
+            Session.Context = new AuthContextModel(
+                result.Data.TenantId,
+                result.Data.CondoId,
+                result.Data.UserId,
+                result.Data.Role);
+
+            AuthState.NotifyChanged();
+            Navigation.NavigateTo("/");
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private static string MapRoleLabel(string role) => role switch
+    {
+        "Portaria" => "Porteiro",
+        "Condomino" => "Morador",
+        _ => role
+    };
+
+    private sealed record RoleOption(string Label, string Icon);
+}

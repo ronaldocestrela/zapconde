@@ -1,0 +1,141 @@
+@page "/login"
+@layout AuthLayout
+@inject AuthApiClient AuthApi
+@inject AuthSession Session
+@inject NavigationManager Navigation
+
+<PageTitle>ZapCond - Login</PageTitle>
+
+<div class="auth-card desktop-only">
+    <div class="auth-logo">
+        <img src="images/auth/zapcond-logo.png" alt="ZapCond Logo" />
+    </div>
+    <div class="auth-title">
+        <h2>Bem-vindo de volta</h2>
+        <p>Faça login para acessar seu refúgio.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="auth-error-banner" role="alert">
+            <span class="material-symbols-outlined">error</span>
+            <span>@_errorMessage</span>
+        </div>
+    }
+
+    <EditForm Model="_model" OnValidSubmit="HandleLoginAsync">
+        <div class="auth-field">
+            <label for="email">E-mail</label>
+            <div class="auth-input-wrap">
+                <span class="material-symbols-outlined">mail</span>
+                <InputText id="email" @bind-Value="_model.Email" class="auth-input" placeholder="seu@email.com" />
+            </div>
+        </div>
+        <div class="auth-field">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <label for="password">Senha</label>
+                <a class="auth-link" href="/recuperar-senha">Esqueceu a senha?</a>
+            </div>
+            <div class="auth-input-wrap">
+                <span class="material-symbols-outlined">lock</span>
+                <InputText id="password" type="password" @bind-Value="_model.Password" class="@PasswordClass" placeholder="••••••••" />
+            </div>
+            @if (_showPasswordError)
+            {
+                <span class="field-error">A senha é obrigatória.</span>
+            }
+        </div>
+        <button class="btn-primary" type="submit" disabled="@_isSubmitting">@(_isSubmitting ? "Entrando..." : "Entrar")</button>
+    </EditForm>
+</div>
+
+<div class="auth-card mobile-login-card mobile-only">
+    <div class="auth-logo">
+        <img src="images/auth/zapcond-logo.png" alt="ZapCond Logo" />
+    </div>
+    <div class="auth-title">
+        <h1>Bem-vindo de volta</h1>
+        <p>Acesse seu refúgio digital com segurança.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="auth-error-banner" role="alert">
+            <span class="material-symbols-outlined">error</span>
+            <span>@_errorMessage</span>
+        </div>
+    }
+
+    <EditForm Model="_model" OnValidSubmit="HandleLoginAsync">
+        <div class="auth-field">
+            <label for="email-mobile">E-mail</label>
+            <div class="auth-input-wrap">
+                <span class="material-symbols-outlined">mail</span>
+                <InputText id="email-mobile" @bind-Value="_model.Email" class="auth-input" placeholder="seu@email.com" />
+            </div>
+        </div>
+        <div class="auth-field">
+            <label for="password-mobile">Senha</label>
+            <div class="auth-input-wrap">
+                <span class="material-symbols-outlined">lock</span>
+                <InputText id="password-mobile" type="password" @bind-Value="_model.Password" class="auth-input" placeholder="••••••••" />
+            </div>
+        </div>
+        <button class="btn-primary" type="submit" disabled="@_isSubmitting">Entrar</button>
+    </EditForm>
+</div>
+
+@code {
+    private readonly LoginModel _model = new();
+    private string? _errorMessage;
+    private bool _isSubmitting;
+    private bool _showPasswordError;
+
+    private string PasswordClass => _showPasswordError ? "auth-input invalid" : "auth-input";
+
+    private async Task HandleLoginAsync()
+    {
+        _errorMessage = null;
+        _showPasswordError = string.IsNullOrWhiteSpace(_model.Password);
+
+        if (_showPasswordError || string.IsNullOrWhiteSpace(_model.Email))
+        {
+            if (string.IsNullOrWhiteSpace(_model.Email))
+            {
+                _errorMessage = "Informe seu e-mail.";
+            }
+            return;
+        }
+
+        _isSubmitting = true;
+        try
+        {
+            var result = await AuthApi.LoginAsync(_model.Email.Trim(), _model.Password);
+            if (!result.IsSuccess || result.Data is null)
+            {
+                _errorMessage = result.StatusCode switch
+                {
+                    403 => "Usuário bloqueado ou tenant inativo.",
+                    401 => "Credenciais inválidas. Por favor, verifique seu e-mail e senha.",
+                    _ => result.Message
+                };
+                return;
+            }
+
+            Session.AccessToken = result.Data.AccessToken;
+            Session.RefreshToken = result.Data.RefreshToken;
+            Session.Profiles = result.Data.Profiles;
+            Navigation.NavigateTo("/selecionar-perfil");
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private sealed class LoginModel
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}
