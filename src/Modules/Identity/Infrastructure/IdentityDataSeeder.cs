@@ -19,15 +19,6 @@ public static class IdentityDataSeeder
         var scopeManager = scope.ServiceProvider.GetRequiredService<IOpenIddictScopeManager>();
         var authOptions = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<AuthOptions>>().Value;
 
-        if (dbContext.Database.IsRelational())
-        {
-            await dbContext.Database.MigrateAsync(ct);
-        }
-        else
-        {
-            await dbContext.Database.EnsureCreatedAsync(ct);
-        }
-
         foreach (var role in SmartCondoRoles.All)
         {
             if (!await roleManager.RoleExistsAsync(role))

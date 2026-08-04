@@ -76,6 +76,7 @@ public sealed class RabbitMqMessagingBootstrapIntegrationTests : IAsyncLifetime
             ["RabbitMQ:Username"] = "guest",
             ["RabbitMQ:Password"] = "guest",
             ["Identity:SeedOnStartup"] = "false",
+            ["Database:MigrateOnStartup"] = "false",
             ["Identity:UseInMemoryDatabase"] = "true"
         };
 

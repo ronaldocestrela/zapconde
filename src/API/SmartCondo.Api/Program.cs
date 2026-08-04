@@ -9,10 +9,17 @@ builder.Services
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment() &&
-    app.Configuration.GetValue<bool>("Identity:SeedOnStartup"))
+if (app.Environment.IsDevelopment())
 {
-    await IdentityDataSeeder.SeedAsync(app.Services);
+    if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+    {
+        await IdentityDbMigrator.MigrateAsync(app.Services, app.Configuration);
+    }
+
+    if (app.Configuration.GetValue<bool>("Identity:SeedOnStartup"))
+    {
+        await IdentityDataSeeder.SeedAsync(app.Services);
+    }
 }
 
 app.UseApiPipeline();

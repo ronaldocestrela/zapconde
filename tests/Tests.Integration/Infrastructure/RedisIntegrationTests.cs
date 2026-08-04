@@ -133,6 +133,7 @@ public sealed class RedisIntegrationTests : IAsyncLifetime
             ["RabbitMQ:Username"] = "guest",
             ["RabbitMQ:Password"] = "guest",
             ["Identity:SeedOnStartup"] = "false",
+            ["Database:MigrateOnStartup"] = "false",
             ["Identity:UseInMemoryDatabase"] = "true"
         };
 

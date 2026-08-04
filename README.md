@@ -67,7 +67,16 @@ URLs úteis:
 - OpenAPI / Scalar: http://localhost:5127/scalar
 - Health resumido: http://localhost:5127/api/health
 
-Com `Identity:SeedOnStartup` ativo no Development, o seed de identidade roda na inicialização.
+Com `Database:MigrateOnStartup` e `Identity:SeedOnStartup` ativos no Development, as migrations e o seed de identidade rodam na inicialização (nesta ordem).
+
+> **Nota sobre logs no primeiro arranque:** ao aplicar migrations em um banco vazio, o EF Core pode registrar um `fail: Microsoft.EntityFrameworkCore.Database.Command[20102]` no `SELECT` de `__EFMigrationsHistory` (a tabela ainda não existe). Isso é esperado. Em seguida devem aparecer a criação da tabela de histórico, a aplicação das migrations e `Application started`.
+
+Se a API **não subir**, verifique:
+
+1. `docker compose ps` — Postgres healthy
+2. Banco `smartcondo_dev` existe (criado pelo compose)
+3. Connection string em `appsettings.Development.json` aponta para `smartcondo_dev`
+4. A **exception completa** abaixo do log `20102` (ex.: `database does not exist`, Postgres offline)
 
 ### 4. Subir o frontend Blazor (opcional)
 
