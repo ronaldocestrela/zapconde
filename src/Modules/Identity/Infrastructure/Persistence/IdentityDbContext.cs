@@ -21,6 +21,10 @@ public class IdentityDbContext : IdentityDbContext<ApplicationUser, ApplicationR
 
     public DbSet<UserRefreshToken> UserRefreshTokens => Set<UserRefreshToken>();
 
+    public DbSet<Administradora> Administradoras => Set<Administradora>();
+
+    public DbSet<Condominio> Condominios => Set<Condominio>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -30,5 +34,13 @@ public class IdentityDbContext : IdentityDbContext<ApplicationUser, ApplicationR
 
         builder.Entity<UserCondoMembership>().HasQueryFilter(m =>
             m.TenantId == _currentTenantService.TenantId);
+
+        builder.Entity<Administradora>().HasQueryFilter(a =>
+            !_currentTenantService.TenantId.HasValue ||
+            a.Id == _currentTenantService.TenantId);
+
+        builder.Entity<Condominio>().HasQueryFilter(c =>
+            !_currentTenantService.TenantId.HasValue ||
+            c.TenantId == _currentTenantService.TenantId);
     }
 }

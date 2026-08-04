@@ -1,0 +1,496 @@
+@page "/onboarding"
+@layout AuthLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@implements IDisposable
+@inject OnboardingApiClient OnboardingApi
+@inject NavigationManager Navigation
+@inject IWebHostEnvironment Environment
+
+<PageTitle>ZapCond - Onboarding</PageTitle>
+
+<div class="onboarding-shell">
+    <div class="onboarding-modal">
+        <header class="onboarding-topbar">
+            <h1>ZapCond</h1>
+            <div class="onboarding-topbar-actions">
+                @if (_draftSavedAt.HasValue)
+                {
+                    <span class="onboarding-draft-badge">
+                        <span class="material-symbols-outlined" style="font-size:1rem">cloud_done</span>
+                        Rascunho salvo automaticamente às @_draftSavedAt.Value.ToLocalTime().ToString("HH:mm")
+                    </span>
+                }
+                <button class="btn-onboarding-ghost" type="button" @onclick="SaveDraftAsync">Salvar Rascunho</button>
+                <button class="btn-onboarding-text" type="button" aria-label="Sair" @onclick="ExitWizard">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </header>
+
+        @if (_showRollbackBanner)
+        {
+            <div class="onboarding-alert onboarding-alert-rollback" style="margin:1rem 1.5rem 0;">
+                <span class="material-symbols-outlined">error</span>
+                <div>
+                    <strong>Falha na transação de banco de dados.</strong>
+                    <p style="margin:0.25rem 0 0;">O processo de criação foi revertido (rollback efetuado) sem alterar seus registros.</p>
+                    <button class="btn-onboarding-primary" style="margin-top:0.75rem;" type="button" @onclick="RetryCreate">Tentar Novamente</button>
+                </div>
+            </div>
+        }
+
+        <div class="onboarding-body">
+            <nav class="onboarding-stepper" aria-label="Progresso do cadastro">
+                @for (var i = 0; i < _steps.Length; i++)
+                {
+                    var stepNum = i + 1;
+                    var css = stepNum == _currentStep ? "active" : stepNum < _currentStep ? "completed" : "";
+                    <div class="onboarding-step @css">
+                        <span class="onboarding-step-number">@(stepNum < _currentStep ? "✓" : stepNum.ToString())</span>
+                        <span class="onboarding-step-label">@_steps[i]</span>
+                    </div>
+                }
+            </nav>
+
+            <main class="onboarding-content">
+                @if (_showSuccess)
+                {
+                    <div class="onboarding-success-card" style="margin:2rem auto;">
+                        <div class="onboarding-success-icon">
+                            <span class="material-symbols-outlined">celebration</span>
+                        </div>
+                        <h2>Tenant Criado com Sucesso!</h2>
+                        <p>@_successMessage</p>
+                        <p style="font-size:0.9rem;color:#42474f;">@_credentialsMessage</p>
+                        <button class="btn-onboarding-primary" type="button" @onclick="GoToLogin">
+                            Acessar Painel do Condomínio
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="onboarding-form-card">
+                        @if (_currentStep == 1)
+                        {
+                            <h2>Dados da Administradora</h2>
+                            <p class="subtitle">Informe os dados cadastrais da administradora responsável.</p>
+                            @if (_showCnpjConflict)
+                            {
+                                <div class="onboarding-alert onboarding-alert-conflict">
+                                    <span class="material-symbols-outlined">warning</span>
+                                    <div>
+                                        <p style="margin:0;">CNPJ já cadastrado no sistema. Verifique os dados ou solicite a recuperação de acesso.</p>
+                                        <button class="btn-onboarding-ghost" style="margin-top:0.5rem;" type="button">Solicitar Suporte</button>
+                                    </div>
+                                </div>
+                            }
+                            <div class="onboarding-field">
+                                <label>Razão Social</label>
+                                <input class="onboarding-input @FieldClass(_model.Administradora.RazaoSocial)" @bind="_model.Administradora.RazaoSocial" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>CNPJ</label>
+                                <input class="onboarding-input @CnpjFieldClass()" @bind="_model.Administradora.Cnpj" @bind:after="CheckCnpjAsync" />
+                                @if (!string.IsNullOrEmpty(_cnpjStatus))
+                                {
+                                    <span class="onboarding-field-hint">@_cnpjStatus</span>
+                                }
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Nome Fantasia</label>
+                                <input class="onboarding-input" @bind="_model.Administradora.NomeFantasia" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Plano de Licença</label>
+                                <select class="onboarding-input onboarding-select" @bind="_model.Administradora.LicensePlan">
+                                    <option value="0">Starter</option>
+                                    <option value="1">Professional</option>
+                                    <option value="2">Enterprise</option>
+                                </select>
+                            </div>
+                        }
+                        else if (_currentStep == 2)
+                        {
+                            <h2>Dados do Condomínio</h2>
+                            <p class="subtitle">Informe os dados principais do condomínio.</p>
+                            <div class="onboarding-field">
+                                <label>Nome do Condomínio</label>
+                                <input class="onboarding-input @FieldClass(_model.Condominio.Nome)" @bind="_model.Condominio.Nome" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Tipo</label>
+                                <select class="onboarding-input onboarding-select" @bind="_model.Condominio.Tipo">
+                                    <option value="0">Residencial</option>
+                                    <option value="1">Comercial</option>
+                                    <option value="2">Misto</option>
+                                </select>
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Total de Unidades</label>
+                                <input type="number" min="1" class="onboarding-input" @bind="_model.Condominio.TotalUnits" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Número de Blocos</label>
+                                <input type="number" min="1" class="onboarding-input" @bind="_model.Condominio.NumberOfBlocks" />
+                            </div>
+                        }
+                        else if (_currentStep == 3)
+                        {
+                            <h2>Endereço & Localização</h2>
+                            <p class="subtitle">Informe o endereço do condomínio.</p>
+                            <div class="onboarding-field">
+                                <label>CEP</label>
+                                <input class="onboarding-input" @bind="_model.Endereco.Cep" @bind:after="LookupCepAsync" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Logradouro</label>
+                                <input class="onboarding-input" @bind="_model.Endereco.Logradouro" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Número</label>
+                                <input class="onboarding-input" @bind="_model.Endereco.Numero" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Bairro</label>
+                                <input class="onboarding-input" @bind="_model.Endereco.Bairro" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Cidade</label>
+                                <input class="onboarding-input" @bind="_model.Endereco.Cidade" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>UF</label>
+                                <input class="onboarding-input" maxlength="2" @bind="_model.Endereco.Uf" />
+                            </div>
+                        }
+                        else if (_currentStep == 4)
+                        {
+                            <h2>Contatos e Responsáveis</h2>
+                            <p class="subtitle">Defina o administrador master do condomínio.</p>
+                            <div class="onboarding-field">
+                                <label>Nome do Síndico / Admin Master</label>
+                                <input class="onboarding-input" @bind="_model.Contatos.MasterAdminName" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>E-mail Corporativo</label>
+                                <input type="email" class="onboarding-input" @bind="_model.Contatos.CorporateEmail" />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Telefone / WhatsApp</label>
+                                <input class="onboarding-input" @bind="_model.Contatos.PhoneWhatsApp" placeholder="+55..." />
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Telefone de Emergência</label>
+                                <input class="onboarding-input" @bind="_model.Contatos.EmergencyPhone" />
+                            </div>
+                        }
+                        else if (_currentStep == 5)
+                        {
+                            <h2>Configurações Iniciais</h2>
+                            <p class="subtitle">Regras financeiras e integrações iniciais.</p>
+                            <div class="onboarding-field">
+                                <label>Dia de Vencimento (1-31)</label>
+                                <input type="number" min="1" max="31" class="onboarding-input @(_model.Configuracoes.DiaVencimento is >= 1 and <= 31 ? "" : "invalid")" @bind="_model.Configuracoes.DiaVencimento" />
+                            </div>
+                            <div class="onboarding-toggle-row">
+                                <span>Juros por atraso</span>
+                                <label class="onboarding-toggle">
+                                    <input type="checkbox" @bind="_model.Configuracoes.JurosEnabled" />
+                                    <span class="onboarding-toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="onboarding-toggle-row">
+                                <span>Multa por atraso</span>
+                                <label class="onboarding-toggle">
+                                    <input type="checkbox" @bind="_model.Configuracoes.MultaEnabled" />
+                                    <span class="onboarding-toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="onboarding-field">
+                                <label>Gateway Bancário</label>
+                                <select class="onboarding-input onboarding-select" @bind="_model.Configuracoes.BankGateway">
+                                    <option value="0">Nenhum (configurar depois)</option>
+                                    <option value="1">Asaas</option>
+                                    <option value="2">Manual</option>
+                                </select>
+                            </div>
+                            <div class="onboarding-toggle-row">
+                                <span>Assistente IA WhatsApp</span>
+                                <label class="onboarding-toggle">
+                                    <input type="checkbox" @bind="_model.Configuracoes.WhatsAppAiEnabled" />
+                                    <span class="onboarding-toggle-slider"></span>
+                                </label>
+                            </div>
+                        }
+                        else
+                        {
+                            <h2>Revisão Final & Confirmação</h2>
+                            <p class="subtitle">Confira os dados antes de criar o tenant.</p>
+                            @RenderReview("Administradora", 1, ReviewAdmin())
+                            @RenderReview("Condomínio", 2, ReviewCondo())
+                            @RenderReview("Endereço", 3, ReviewAddress())
+                            @RenderReview("Contatos", 4, ReviewContacts())
+                            @RenderReview("Configurações", 5, ReviewConfig())
+                        }
+
+                        @if (!string.IsNullOrEmpty(_errorMessage))
+                        {
+                            <div class="onboarding-field-error" role="alert">@_errorMessage</div>
+                        }
+
+                        <div class="onboarding-actions">
+                            @if (_currentStep > 1)
+                            {
+                                <button class="btn-onboarding-text" type="button" @onclick="PreviousStep">Voltar</button>
+                            }
+                            else
+                            {
+                                <span></span>
+                            }
+                            @if (_currentStep < 6)
+                            {
+                                <button class="btn-onboarding-primary" type="button" @onclick="NextStep" disabled="@(_currentStep == 1 && _showCnpjConflict)">Continuar</button>
+                            }
+                            else
+                            {
+                                <button class="btn-onboarding-primary" type="button" @onclick="CreateTenantAsync" disabled="@_isSubmitting">
+                                    @(_isSubmitting ? "Criando..." : "Criar Tenant")
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    @if (Environment.IsDevelopment())
+                    {
+                        <aside class="onboarding-e2e-panel">
+                            <h4>Visual E2E Test Checklist</h4>
+                            <ul>
+                                <li>Stepper Navigation Flow</li>
+                                <li>Form Validation Error Highlights</li>
+                                <li>Auto-save Draft Trigger</li>
+                                <li>CNPJ Conflict Alert Visibility</li>
+                                <li>Rollback Notification Rendering</li>
+                            </ul>
+                        </aside>
+                    }
+                }
+            </main>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly string[] _steps =
+    [
+        "Dados da Administradora",
+        "Dados do Condomínio",
+        "Endereço & Localização",
+        "Contatos e Responsáveis",
+        "Configurações Iniciais",
+        "Revisão Final"
+    ];
+
+    private CreateTenantModel _model = new();
+    private int _currentStep = 1;
+    private DateTime? _draftSavedAt;
+    private string _cnpjStatus = string.Empty;
+    private bool _showCnpjConflict;
+    private bool _showRollbackBanner;
+    private bool _showSuccess;
+    private string _successMessage = string.Empty;
+    private string _credentialsMessage = string.Empty;
+    private string _errorMessage = string.Empty;
+    private bool _isSubmitting;
+    private System.Timers.Timer? _autoSaveTimer;
+
+    protected override void OnInitialized()
+    {
+        _model.DraftId = Guid.NewGuid();
+        _autoSaveTimer = new System.Timers.Timer(30000);
+        _autoSaveTimer.Elapsed += async (_, _) => await InvokeAsync(SaveDraftAsync);
+        _autoSaveTimer.AutoReset = true;
+        _autoSaveTimer.Start();
+    }
+
+    public void Dispose() => _autoSaveTimer?.Dispose();
+
+    private void ExitWizard() => Navigation.NavigateTo("/login");
+
+    private void GoToLogin() => Navigation.NavigateTo("/login");
+
+    private static string FieldClass(string value) =>
+        string.IsNullOrWhiteSpace(value) ? "invalid" : "valid";
+
+    private string CnpjFieldClass()
+    {
+        if (_showCnpjConflict) return "invalid";
+        if (!string.IsNullOrWhiteSpace(_cnpjStatus) && _cnpjStatus.Contains("disponível", StringComparison.OrdinalIgnoreCase)) return "valid";
+        return string.Empty;
+    }
+
+    private async Task CheckCnpjAsync()
+    {
+        _showCnpjConflict = false;
+        _cnpjStatus = "Consultando CNPJ...";
+        var result = await OnboardingApi.GetCnpjStatusAsync(_model.Administradora.Cnpj);
+        if (result.StatusCode == 409)
+        {
+            _showCnpjConflict = true;
+            _cnpjStatus = result.Message;
+        }
+        else if (result.IsSuccess)
+        {
+            _cnpjStatus = "CNPJ disponível para cadastro.";
+        }
+        else
+        {
+            _cnpjStatus = result.Message;
+        }
+    }
+
+    private async Task LookupCepAsync()
+    {
+        var digits = new string(_model.Endereco.Cep.Where(char.IsDigit).ToArray());
+        if (digits.Length != 8) return;
+
+        var result = await OnboardingApi.LookupCepAsync(digits);
+        if (result.IsSuccess && result.Data is not null)
+        {
+            _model.Endereco.Logradouro = result.Data.Logradouro;
+            _model.Endereco.Bairro = result.Data.Bairro;
+            _model.Endereco.Cidade = result.Data.Cidade;
+            _model.Endereco.Uf = result.Data.Uf;
+        }
+    }
+
+    private async Task SaveDraftAsync()
+    {
+        _model.CurrentStep = _currentStep;
+        var result = await OnboardingApi.SaveDraftAsync(_model);
+        if (result.IsSuccess && result.Data is not null)
+        {
+            _model.DraftId = result.Data.DraftId;
+            _draftSavedAt = result.Data.SavedAt;
+        }
+    }
+
+    private async Task NextStep()
+    {
+        _errorMessage = string.Empty;
+        if (_currentStep == 1 && _showCnpjConflict) return;
+        if (_currentStep < 6) _currentStep++;
+        _model.CurrentStep = _currentStep;
+        await SaveDraftAsync();
+    }
+
+    private void PreviousStep()
+    {
+        if (_currentStep > 1) _currentStep--;
+        _model.CurrentStep = _currentStep;
+    }
+
+    private void GoToStep(int step) => _currentStep = step;
+
+    private async Task CreateTenantAsync()
+    {
+        _isSubmitting = true;
+        _showRollbackBanner = false;
+        _errorMessage = string.Empty;
+
+        var result = await OnboardingApi.CreateTenantAsync(_model);
+        _isSubmitting = false;
+
+        if (result.IsSuccess && result.Data is not null)
+        {
+            _showSuccess = true;
+            _successMessage = $"Condomínio {result.Data.CondominioNome} criado (Tenant {result.Data.TenantId}).";
+            _credentialsMessage = result.Data.CredentialsDispatchedMessage;
+            return;
+        }
+
+        if (result.StatusCode == 500 && result.Message.Contains("rollback", StringComparison.OrdinalIgnoreCase))
+        {
+            _showRollbackBanner = true;
+        }
+
+        _errorMessage = result.Message;
+    }
+
+    private void RetryCreate()
+    {
+        _showRollbackBanner = false;
+        _ = CreateTenantAsync();
+    }
+
+    private IEnumerable<(string Label, string Value)> ReviewAdmin() =>
+    [
+        ("Razão Social", _model.Administradora.RazaoSocial),
+        ("CNPJ", _model.Administradora.Cnpj),
+        ("Nome Fantasia", _model.Administradora.NomeFantasia),
+        ("Plano", ((string[])["Starter", "Professional", "Enterprise"])[_model.Administradora.LicensePlan])
+    ];
+
+    private IEnumerable<(string Label, string Value)> ReviewCondo() =>
+    [
+        ("Nome", _model.Condominio.Nome),
+        ("Tipo", ((string[])["Residencial", "Comercial", "Misto"])[_model.Condominio.Tipo]),
+        ("Unidades", _model.Condominio.TotalUnits.ToString()),
+        ("Blocos", _model.Condominio.NumberOfBlocks.ToString())
+    ];
+
+    private IEnumerable<(string Label, string Value)> ReviewAddress() =>
+    [
+        ("CEP", _model.Endereco.Cep),
+        ("Logradouro", $"{_model.Endereco.Logradouro}, {_model.Endereco.Numero}"),
+        ("Bairro", _model.Endereco.Bairro),
+        ("Cidade/UF", $"{_model.Endereco.Cidade}/{_model.Endereco.Uf}")
+    ];
+
+    private IEnumerable<(string Label, string Value)> ReviewContacts() =>
+    [
+        ("Responsável", _model.Contatos.MasterAdminName),
+        ("E-mail", _model.Contatos.CorporateEmail),
+        ("WhatsApp", _model.Contatos.PhoneWhatsApp),
+        ("Emergência", _model.Contatos.EmergencyPhone)
+    ];
+
+    private IEnumerable<(string Label, string Value)> ReviewConfig() =>
+    [
+        ("Vencimento", $"Dia {_model.Configuracoes.DiaVencimento}"),
+        ("Juros", _model.Configuracoes.JurosEnabled ? "Ativo" : "Inativo"),
+        ("Multa", _model.Configuracoes.MultaEnabled ? "Ativo" : "Inativo"),
+        ("Gateway", ((string[])["Nenhum", "Asaas", "Manual"])[_model.Configuracoes.BankGateway]),
+        ("WhatsApp IA", _model.Configuracoes.WhatsAppAiEnabled ? "Ativo" : "Inativo")
+    ];
+
+    private RenderFragment RenderReview(string title, int step, IEnumerable<(string Label, string Value)> items) => __builder =>
+    {
+        __builder.OpenElement(0, "div");
+        __builder.AddAttribute(1, "class", "onboarding-review-section");
+        __builder.OpenElement(2, "h3");
+        __builder.AddContent(3, title);
+        __builder.CloseElement();
+        __builder.OpenElement(4, "button");
+        __builder.AddAttribute(5, "type", "button");
+        __builder.AddAttribute(6, "class", "onboarding-review-edit");
+        __builder.AddAttribute(7, "onclick", EventCallback.Factory.Create(this, () => GoToStep(step)));
+        __builder.OpenElement(8, "span");
+        __builder.AddAttribute(9, "class", "material-symbols-outlined");
+        __builder.AddContent(10, "edit");
+        __builder.CloseElement();
+        __builder.CloseElement();
+        __builder.OpenElement(11, "dl");
+        var seq = 12;
+        foreach (var (label, value) in items)
+        {
+            __builder.OpenElement(seq++, "dt");
+            __builder.AddContent(seq++, label);
+            __builder.CloseElement();
+            __builder.OpenElement(seq++, "dd");
+            __builder.AddContent(seq++, value);
+            __builder.CloseElement();
+        }
+        __builder.CloseElement();
+        __builder.CloseElement();
+    };
+}

@@ -19,6 +19,11 @@ builder.Services.AddHttpClient<AuthApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+builder.Services.AddHttpClient<OnboardingApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
 
 var app = builder.Build();
 

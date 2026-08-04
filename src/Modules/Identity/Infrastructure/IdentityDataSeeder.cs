@@ -62,6 +62,8 @@ public static class IdentityDataSeeder
         IdentityDbContext dbContext,
         CancellationToken ct)
     {
+        await EnsureAdministradoraCondominioAsync(dbContext, ct);
+
         const string email = "sindico@zapcond.com";
         var demoUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var user = await userManager.FindByEmailAsync(email)
@@ -191,6 +193,59 @@ public static class IdentityDataSeeder
             IsActive = true,
             IsTenantActive = true
         });
+
+        await dbContext.SaveChangesAsync(ct);
+    }
+
+    private static async Task EnsureAdministradoraCondominioAsync(IdentityDbContext dbContext, CancellationToken ct)
+    {
+        var seeds = new[]
+        {
+            (TenantId: 1, CondoId: 10, Razao: "Administradora Ville de Paris LTDA", Cnpj: "07.526.557/0001-00", Fantasia: "Ville Admin", Nome: "Condomínio Ville de Paris"),
+            (TenantId: 2, CondoId: 20, Razao: "Administradora Jardim das Flores LTDA", Cnpj: "11.444.777/0001-61", Fantasia: "Jardim Admin", Nome: "Residencial Jardim das Flores"),
+            (TenantId: 3, CondoId: 30, Razao: "Administradora Belvedere LTDA", Cnpj: "04.252.011/0001-10", Fantasia: "Belvedere Admin", Nome: "Edifício Belvedere")
+        };
+
+        foreach (var seed in seeds)
+        {
+            if (!await dbContext.Administradoras.IgnoreQueryFilters().AnyAsync(a => a.Id == seed.TenantId, ct))
+            {
+                dbContext.Administradoras.Add(Administradora.Create(
+                    seed.TenantId, seed.Razao, seed.Cnpj, seed.Fantasia, LicensePlan.Professional));
+            }
+
+            if (!await dbContext.Condominios.IgnoreQueryFilters().AnyAsync(c => c.Id == seed.CondoId, ct))
+            {
+                dbContext.Condominios.Add(Condominio.Create(
+                    seed.CondoId,
+                    seed.TenantId,
+                    seed.Nome,
+                    CondominioTipo.Residencial,
+                    totalUnits: 100,
+                    numberOfBlocks: 2,
+                    new Endereco
+                    {
+                        Cep = "01310100",
+                        Logradouro = "Av Paulista",
+                        Numero = "1000",
+                        Bairro = "Bela Vista",
+                        Cidade = "São Paulo",
+                        Uf = "SP"
+                    },
+                    masterAdminName: "Administrador Demo",
+                    corporateEmail: "admin@zapcond.com",
+                    phoneWhatsApp: "+5511999999999",
+                    emergencyPhone: "+5511888888888",
+                    new ConfiguracoesIniciais
+                    {
+                        DiaVencimento = 10,
+                        JurosEnabled = true,
+                        MultaEnabled = true,
+                        BankGateway = BankGateway.None,
+                        WhatsAppAiEnabled = true
+                    }));
+            }
+        }
 
         await dbContext.SaveChangesAsync(ct);
     }

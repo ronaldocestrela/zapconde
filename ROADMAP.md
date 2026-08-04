@@ -277,7 +277,20 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 ### 2.2. Cadastro de Domínio Condominial
 
-* [] **Subfase 2.2.1:** Entidade `Condominio` e `Administradora` (Criação de Tenant).
+* [x] **Subfase 2.2.1:** Entidade `Condominio` e `Administradora` (Criação de Tenant).
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Entidades `Administradora`, `Condominio`, `Endereco`, `ConfiguracoesIniciais`, enums (`LicensePlan`, `CondominioTipo`, `BankGateway`) e `CnpjValidator` em `Modules.Identity.Domain`.
+  - EF Core: configs + migration `AddAdministradoraCondominio`; query filters em `IdentityDbContext`; seed demo alinhado a memberships (tenants 1/2/3).
+  - Serviços: `TenantOnboardingService` (transação), `OnboardingDraftService` (Redis), `CnpjLookupService`, `CepLookupService` (ViaCEP/stub Testing).
+  - FastEndpoints `Result<T>`: `POST/GET /api/tenants/onboarding/draft`, `GET /api/tenants/cnpj/{cnpj}/status`, `GET /api/tenants/cep/{cep}`, `POST /api/tenants/onboarding`.
+  - BDD: `tests/LivingDoc/Features/Fase2_2_1_TenantOnboarding.feature`.
+  - Testes: unitários (`AdministradoraTests`, `CondominioTests`, `CnpjLookupServiceTests`), arquitetura (`TenantOnboardingArchitectureTests`), integração (`TenantOnboardingIntegrationTests`) — Green (122 testes totais da solução).
+  - Infra Testing: `InMemoryCacheService` para rascunhos sem Redis local (`Infrastructure:UseInMemoryCache`).
+  - Blazor: página `/onboarding` wizard 6 etapas + `OnboardingApiClient` + `onboarding.css` (tokens `#2E5B88`, `#A3C9A8`, `#F4EAE1`); CTA `/sem-tenant` → `/onboarding`.
+  - Design Stitch: referência HTML em `stitch_assets/onboarding/wizard-reference.html`.
 * [] **Subfase 2.2.2:** Entidade `Bloco`, `Unidade` (Apartamentos/Casas) e mapeamento dos tipos de moradores (Proprietário / Inquilino).
 
 

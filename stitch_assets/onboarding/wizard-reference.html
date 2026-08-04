@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZapCond - Onboarding Wizard (Stitch Reference)</title>
+  <link rel="stylesheet" href="../../../src/Web/SmartCondo.Web/wwwroot/css/stitch/onboarding.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+</head>
+<body class="onboarding-shell">
+  <div class="onboarding-modal">
+    <header class="onboarding-topbar">
+      <h1>ZapCond</h1>
+      <div class="onboarding-topbar-actions">
+        <span class="onboarding-draft-badge">
+          <span class="material-symbols-outlined" style="font-size:1rem">cloud_done</span>
+          Rascunho salvo automaticamente às 14:32
+        </span>
+        <button class="btn-onboarding-ghost">Salvar Rascunho</button>
+        <button class="btn-onboarding-text" aria-label="Sair">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    </header>
+    <div class="onboarding-body">
+      <nav class="onboarding-stepper" aria-label="Progresso do cadastro">
+        <div class="onboarding-step completed"><span class="onboarding-step-number">✓</span><span class="onboarding-step-label">Dados da Administradora</span></div>
+        <div class="onboarding-step active"><span class="onboarding-step-number">2</span><span class="onboarding-step-label">Dados do Condomínio</span></div>
+        <div class="onboarding-step"><span class="onboarding-step-number">3</span><span class="onboarding-step-label">Endereço & Localização</span></div>
+        <div class="onboarding-step"><span class="onboarding-step-number">4</span><span class="onboarding-step-label">Contatos e Responsáveis</span></div>
+        <div class="onboarding-step"><span class="onboarding-step-number">5</span><span class="onboarding-step-label">Configurações Iniciais</span></div>
+        <div class="onboarding-step"><span class="onboarding-step-number">6</span><span class="onboarding-step-label">Revisão Final</span></div>
+      </nav>
+      <main class="onboarding-content">
+        <div class="onboarding-form-card">
+          <h2>Dados do Condomínio</h2>
+          <p class="subtitle">Informe os dados principais do condomínio que será gerenciado.</p>
+          <div class="onboarding-field">
+            <label for="nome">Nome do Condomínio</label>
+            <input id="nome" class="onboarding-input valid" value="Residencial Jardim das Flores" />
+            <span class="onboarding-field-check material-symbols-outlined">check_circle</span>
+          </div>
+          <div class="onboarding-field">
+            <label for="tipo">Tipo</label>
+            <select id="tipo" class="onboarding-input onboarding-select"><option>Residencial</option></select>
+          </div>
+          <div class="onboarding-actions">
+            <button class="btn-onboarding-text">Voltar</button>
+            <button class="btn-onboarding-primary">Continuar</button>
+          </div>
+        </div>
+        <aside class="onboarding-e2e-panel">
+          <h4>Visual E2E Test Checklist</h4>
+          <ul>
+            <li>Stepper Navigation Flow</li>
+            <li>Form Validation Error Highlights</li>
+            <li>Auto-save Draft Trigger</li>
+            <li>CNPJ Conflict Alert Visibility</li>
+            <li>Rollback Notification Rendering</li>
+          </ul>
+        </aside>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

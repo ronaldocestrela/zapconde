@@ -69,19 +69,29 @@ public static class InfrastructureServiceCollectionExtensions
             });
         });
 
-        // Configuração Redis
-        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
-        services.AddScoped<ICacheService, RedisCacheService>();
-        services.AddSingleton<IDistributedLockService, RedisDistributedLockService>();
-        services.AddScoped<IChatSessionService, RedisChatSessionService>();
+        // Configuração Redis / Cache
+        var useInMemoryCache = configuration.GetValue<bool>("Infrastructure:UseInMemoryCache");
+        if (useInMemoryCache)
+        {
+            services.AddSingleton<ICacheService, InMemoryCacheService>();
+        }
+        else
+        {
+            services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
+            services.AddScoped<ICacheService, RedisCacheService>();
+            services.AddSingleton<IDistributedLockService, RedisDistributedLockService>();
+            services.AddScoped<IChatSessionService, RedisChatSessionService>();
+
+            services.AddHealthChecks()
+                .AddCheck<RedisHealthCheck>(
+                    name: "redis",
+                    tags: ["ready", "redis"]);
+        }
 
         services.AddHealthChecks()
             .AddCheck<RabbitMqBusHealthCheck>(
                 name: "rabbitmq",
-                tags: ["ready", "rabbitmq"])
-            .AddCheck<RedisHealthCheck>(
-                name: "redis",
-                tags: ["ready", "redis"]);
+                tags: ["ready", "rabbitmq"]);
 
         // Registra serviço de contexto de tenant (scoped para suportar isolamento por requisição)
         services.AddScoped<ICurrentTenantService, CurrentTenantService>();

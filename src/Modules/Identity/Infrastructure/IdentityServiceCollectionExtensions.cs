@@ -95,6 +95,16 @@ public static class IdentityServiceCollectionExtensions
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IIdentityTokenService, IdentityTokenService>();
+        services.AddScoped<IOnboardingDraftService, OnboardingDraftService>();
+        services.AddScoped<ICnpjLookupService, CnpjLookupService>();
+        services.AddScoped<ICepLookupService, CepLookupService>();
+        services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
+
+        services.AddHttpClient("ViaCep", client =>
+        {
+            client.BaseAddress = new Uri("https://viacep.com.br/ws/");
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
 
         return services;
     }
