@@ -134,7 +134,7 @@ else
 
             await Session.PersistAsync();
             AuthState.NotifyChanged();
-            Navigation.NavigateTo("/", replace: true);
+            Navigation.NavigateTo("/", forceLoad: true);
         }
         catch (Exception)
         {

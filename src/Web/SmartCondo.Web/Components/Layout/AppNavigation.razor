@@ -1,0 +1,73 @@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject AuthSession Session
+@implements IDisposable
+
+@if (_ready && Session.Context is not null)
+{
+    <button type="button"
+            class="nav-toggle"
+            aria-label="@(_mobileNavOpen ? "Fechar menu" : "Abrir menu")"
+            aria-expanded="@_mobileNavOpen"
+            @onclick="ToggleMobileNav">
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+    </button>
+
+    @if (_mobileNavOpen)
+    {
+        <button type="button"
+                class="nav-overlay"
+                aria-label="Fechar menu"
+                @onclick="CloseMobileNav"></button>
+    }
+
+    <aside class="app-sidebar @(_mobileNavOpen ? "open" : "")" aria-label="Menu lateral">
+        <a class="sidebar-brand" href="/">
+            <span class="material-symbols-outlined sidebar-brand-icon" aria-hidden="true">shield</span>
+            <span>ZapCond</span>
+        </a>
+        <div class="sidebar-nav-wrap">
+            <NavMenu Role="@Session.Context.Role" OnNavigate="CloseMobileNav" />
+        </div>
+    </aside>
+}
+
+@code {
+    private bool _ready;
+    private bool _mobileNavOpen;
+
+    protected override void OnInitialized()
+    {
+        Session.Changed += OnSessionChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _ready)
+        {
+            return;
+        }
+
+        await Session.EnsureLoadedAsync();
+        _ready = true;
+        StateHasChanged();
+    }
+
+    private void OnSessionChanged()
+    {
+        if (Session.Context is null)
+        {
+            _mobileNavOpen = false;
+        }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleMobileNav() => _mobileNavOpen = !_mobileNavOpen;
+
+    private void CloseMobileNav() => _mobileNavOpen = false;
+
+    public void Dispose()
+    {
+        Session.Changed -= OnSessionChanged;
+    }
+}

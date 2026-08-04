@@ -1,13 +1,30 @@
 @inherits LayoutComponentBase
 
 <div class="app-shell">
-    <header class="app-topbar">
-        <a class="app-brand" href="/">ZapCond</a>
-        <TenantSwitcher />
-    </header>
-    <main class="app-main">
-        @Body
-    </main>
+    <AppNavigation />
+    <div class="app-shell-body">
+        <header class="app-topbar">
+            <div class="topbar-start">
+                <a class="app-brand app-brand-compact" href="/">ZapCond</a>
+            </div>
+
+            <div class="topbar-center">
+                <TenantSwitcher />
+            </div>
+
+            <div class="topbar-actions">
+                <button type="button" class="topbar-icon-btn" aria-label="Notificações" disabled title="Em breve">
+                    <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+                    <span class="topbar-icon-badge" aria-hidden="true">0</span>
+                </button>
+                <UserMenu />
+            </div>
+        </header>
+
+        <main class="app-main">
+            @Body
+        </main>
+    </div>
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>

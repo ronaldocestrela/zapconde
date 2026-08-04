@@ -1,0 +1,14 @@
+<section class="module-stub">
+    <div class="module-stub-icon">
+        <span class="material-symbols-outlined" aria-hidden="true">@Icon</span>
+    </div>
+    <h1>@Title</h1>
+    <p>@Description</p>
+    <span class="module-stub-badge">Em breve</span>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Description { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = "construction";
+}

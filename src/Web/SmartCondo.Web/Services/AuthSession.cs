@@ -7,6 +7,10 @@ public sealed class AuthSession(ProtectedSessionStorage storage)
     private const string StorageKey = "smartcondo.auth";
     private bool _loaded;
 
+    public event Action? Changed;
+
+    public bool IsLoaded => _loaded;
+
     public string? AccessToken { get; set; }
     public string? RefreshToken { get; set; }
     public List<AuthProfileModel> Profiles { get; set; } = [];
@@ -29,12 +33,14 @@ public sealed class AuthSession(ProtectedSessionStorage storage)
         }
 
         _loaded = true;
+        NotifyChanged();
     }
 
     public async Task PersistAsync()
     {
         await storage.SetAsync(StorageKey, ToSnapshot());
         _loaded = true;
+        NotifyChanged();
     }
 
     public async Task ClearAsync()
@@ -45,6 +51,7 @@ public sealed class AuthSession(ProtectedSessionStorage storage)
         Profiles = [];
         Context = null;
         _loaded = true;
+        NotifyChanged();
     }
 
     private AuthSnapshot ToSnapshot() => new()
@@ -54,6 +61,8 @@ public sealed class AuthSession(ProtectedSessionStorage storage)
         Profiles = Profiles,
         Context = Context
     };
+
+    private void NotifyChanged() => Changed?.Invoke();
 
     private sealed class AuthSnapshot
     {

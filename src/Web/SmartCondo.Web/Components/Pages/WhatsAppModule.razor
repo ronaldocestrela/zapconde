@@ -1,0 +1,47 @@
+@page "/whatsapp"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject AuthSession Session
+@inject NavigationManager Navigation
+
+<PageTitle>ZapCond - WhatsApp / IA</PageTitle>
+
+@if (!_sessionReady)
+{
+    <p>Carregando...</p>
+}
+else
+{
+    <ModuleStub Title="WhatsApp / IA"
+                Description="Configuração de IA, RAG e monitoramento de conversas estará disponível em breve."
+                Icon="smart_toy" />
+}
+
+@code {
+    private bool _sessionReady;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _sessionReady)
+        {
+            return;
+        }
+
+        await Session.EnsureLoadedAsync();
+
+        if (string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            Navigation.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        if (Session.Context is null)
+        {
+            Navigation.NavigateTo("/selecionar-perfil", replace: true);
+            return;
+        }
+
+        _sessionReady = true;
+        StateHasChanged();
+    }
+}

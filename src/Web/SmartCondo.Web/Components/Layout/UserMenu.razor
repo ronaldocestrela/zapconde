@@ -1,0 +1,127 @@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject AuthSession Session
+@inject SessionAuthStateProvider AuthState
+@inject NavigationManager Navigation
+@implements IDisposable
+
+@if (_ready && Session.Context is not null)
+{
+<div class="user-menu">
+    <button type="button"
+            class="user-menu-trigger"
+            @onclick="ToggleDropdown"
+            aria-expanded="@_dropdownOpen"
+            aria-haspopup="menu">
+        <span class="user-avatar" aria-hidden="true">@GetInitials()</span>
+        <span class="user-menu-label">
+            <span class="user-menu-name">@GetDisplayName()</span>
+            <span class="user-menu-role">@GetRoleLabel()</span>
+        </span>
+        <span class="material-symbols-outlined user-menu-chevron" aria-hidden="true">expand_more</span>
+    </button>
+
+    @if (_dropdownOpen)
+    {
+        <div class="user-menu-dropdown" role="menu" @onclick:stopPropagation="true">
+            <button type="button" class="user-menu-option" role="menuitem" @onclick="GoToProfileSelection">
+                <span class="material-symbols-outlined" aria-hidden="true">switch_account</span>
+                Trocar perfil
+            </button>
+            <button type="button" class="user-menu-option user-menu-option-danger" role="menuitem" @onclick="SignOutAsync">
+                <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+                Sair
+            </button>
+        </div>
+    }
+</div>
+}
+
+@code {
+    private bool _ready;
+    private bool _dropdownOpen;
+
+    protected override void OnInitialized()
+    {
+        Session.Changed += OnSessionChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _ready)
+        {
+            return;
+        }
+
+        await Session.EnsureLoadedAsync();
+        _ready = true;
+        StateHasChanged();
+    }
+
+    private void OnSessionChanged()
+    {
+        if (Session.Context is null)
+        {
+            _dropdownOpen = false;
+        }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleDropdown() => _dropdownOpen = !_dropdownOpen;
+
+    private string GetDisplayName()
+    {
+        if (Session.Context is null)
+        {
+            return "Usuário";
+        }
+
+        var profile = Session.Profiles.FirstOrDefault(p =>
+            p.TenantId == Session.Context.TenantId &&
+            p.CondoId == Session.Context.CondoId &&
+            p.Role == Session.Context.Role);
+
+        return profile?.DisplayLabel.Split('-').FirstOrDefault()?.Trim() ?? "Usuário";
+    }
+
+    private string GetRoleLabel() => Session.Context?.Role switch
+    {
+        SmartCondoRoles.Sindico => "Síndico",
+        SmartCondoRoles.Administradora => "Administradora",
+        SmartCondoRoles.Condomino => "Condômino",
+        SmartCondoRoles.Portaria => "Portaria",
+        SmartCondoRoles.Zelador => "Zelador",
+        _ => Session.Context?.Role ?? string.Empty
+    };
+
+    private string GetInitials()
+    {
+        var name = GetDisplayName();
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+        {
+            return $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant();
+        }
+
+        return name.Length > 0 ? name[..1].ToUpperInvariant() : "U";
+    }
+
+    private void GoToProfileSelection()
+    {
+        _dropdownOpen = false;
+        Navigation.NavigateTo("/selecionar-perfil");
+    }
+
+    private async Task SignOutAsync()
+    {
+        _dropdownOpen = false;
+        await Session.ClearAsync();
+        AuthState.NotifyChanged();
+        Navigation.NavigateTo("/login", replace: true);
+    }
+
+    public void Dispose()
+    {
+        Session.Changed -= OnSessionChanged;
+    }
+}

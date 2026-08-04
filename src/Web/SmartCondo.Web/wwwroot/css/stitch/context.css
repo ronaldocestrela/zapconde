@@ -28,6 +28,7 @@
 .app-topbar {
     display: flex;
     align-items: center;
+    gap: 1rem;
     justify-content: space-between;
     padding: 0.75rem 1.5rem;
     background: #fff;
@@ -303,10 +304,9 @@
 }
 
 @media (max-width: 640px) {
-    .app-topbar {
+    .app-topbar.no-context {
         flex-direction: column;
         align-items: stretch;
-        gap: 0.75rem;
     }
 
     .tenant-dropdown {

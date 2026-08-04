@@ -1,0 +1,63 @@
+<div class="nav-menu-root">
+    <nav class="app-nav" aria-label="Navegação principal">
+        @foreach (var group in _groups)
+        {
+            <p class="nav-section-label">@NavMenuItems.GetSectionLabel(group.Key)</p>
+            @foreach (var item in group)
+            {
+                <NavLink class="nav-item squish-effect"
+                         href="@item.Href"
+                         Match="@GetMatch(item.Href)"
+                         ActiveClass="active"
+                         aria-current="@GetAriaCurrent(item.Href)"
+                         @onclick="HandleNavigate">
+                    <span class="material-symbols-outlined nav-icon" aria-hidden="true">@item.Icon</span>
+                    <span class="nav-label">@item.Label</span>
+                </NavLink>
+            }
+        }
+    </nav>
+
+    @if (_footerItem is not null)
+    {
+        <nav class="app-nav-footer" aria-label="Configurações">
+            <NavLink class="nav-item nav-item-footer squish-effect"
+                     href="@_footerItem.Href"
+                     Match="NavLinkMatch.Prefix"
+                     ActiveClass="active"
+                     @onclick="HandleNavigate">
+                <span class="material-symbols-outlined nav-icon" aria-hidden="true">@_footerItem.Icon</span>
+                <span class="nav-label">@_footerItem.Label</span>
+            </NavLink>
+        </nav>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Role { get; set; }
+    [Parameter] public EventCallback OnNavigate { get; set; }
+
+    private IEnumerable<IGrouping<NavSection, NavMenuItem>> _groups = [];
+    private NavMenuItem? _footerItem;
+
+    protected override void OnParametersSet()
+    {
+        _groups = NavMenuItems.GetGroupedMainItemsForRole(Role);
+        _footerItem = NavMenuItems.GetFooterItemForRole(Role);
+    }
+
+    private static NavLinkMatch GetMatch(string href) =>
+        href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix;
+
+    private static string? GetAriaCurrent(string href) =>
+        href == "/" ? "page" : null;
+
+    private async Task HandleNavigate()
+    {
+        if (OnNavigate.HasDelegate)
+        {
+            await OnNavigate.InvokeAsync();
+        }
+    }
+
+}
