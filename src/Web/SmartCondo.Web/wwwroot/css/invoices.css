@@ -1,0 +1,270 @@
+/* ==========================================================================
+   Financial & Invoices Module - Stitch Design System Integration
+   Project: ZapCondo AI Management (ID: 13499280582130189383)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap');
+
+.financial-container {
+    font-family: 'Inter', sans-serif;
+    background-color: #f7f9fb;
+    color: #191c1e;
+    min-height: 100vh;
+    padding: 1.5rem;
+}
+
+.financial-title {
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #191c1e;
+    letter-spacing: -0.02em;
+}
+
+/* Metric Cards */
+.financial-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.metric-card {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    border: 1px solid #e0e3e5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: #44474a;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.metric-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #191c1e;
+}
+
+.metric-subtext {
+    font-size: 0.75rem;
+    color: #75777a;
+    margin-top: 0.25rem;
+}
+
+/* Filter & Action Bar */
+.financial-toolbar {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #e0e3e5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.financial-search-input {
+    border: 1px solid #c5c6ca;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    min-width: 240px;
+}
+
+.financial-select {
+    border: 1px solid #c5c6ca;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    background-color: #ffffff;
+}
+
+.btn-primary-stitch {
+    background-color: #006494;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary-stitch:hover {
+    background-color: #004b71;
+}
+
+.btn-secondary-stitch {
+    background-color: #e6e8ea;
+    color: #191c1e;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-secondary-stitch:hover {
+    background-color: #d8dadc;
+}
+
+/* Table Styling */
+.invoices-table-card {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    border: 1px solid #e0e3e5;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.invoices-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.invoices-table th {
+    background-color: #f2f4f6;
+    color: #44474a;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #e0e3e5;
+}
+
+.invoices-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f2f4f6;
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+.invoices-table tr:hover {
+    background-color: #f7f9fb;
+}
+
+.font-mono-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+}
+
+/* Status Badges */
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-pago {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-pendente {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-vencido {
+    background-color: #ffdad6;
+    color: #93000a;
+}
+
+.badge-cancelado {
+    background-color: #e0e3e5;
+    color: #454749;
+}
+
+/* Modal - Invoice Detail & Payment Breakdown */
+.modal-backdrop-stitch {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 1rem;
+}
+
+.modal-dialog-stitch {
+    background-color: #ffffff;
+    border-radius: 1rem;
+    max-width: 680px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header-stitch {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e0e3e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-body-stitch {
+    padding: 1.5rem;
+}
+
+.breakdown-card {
+    background-color: #f7f9fb;
+    border: 1px solid #e0e3e5;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #e0e3e5;
+    font-size: 0.875rem;
+}
+
+.breakdown-item:last-child {
+    border-bottom: none;
+}
+
+.breakdown-total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+    border-top: 2px solid #191c1e;
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+.pix-copia-cola-box {
+    background-color: #f2f4f6;
+    border: 1px solid #c5c6ca;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    word-break: break-all;
+    user-select: all;
+}

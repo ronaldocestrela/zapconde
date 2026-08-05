@@ -1,6 +1,7 @@
 using FastEndpoints;
 using BuildingBlocks.Infrastructure.DependencyInjection;
 using Modules.Identity.Infrastructure;
+using Modules.Financial.Infrastructure;
 
 namespace SmartCondo.Api.Configuration;
 
@@ -17,13 +18,15 @@ public static class ServiceCollectionExtensions
     {
         services.AddInfrastructure(configuration);
         services.AddIdentityModule(configuration);
+        services.AddFinancialModule(configuration);
 
         services.AddFastEndpoints(config =>
         {
             config.Assemblies =
             [
                 typeof(Program).Assembly,
-                typeof(Modules.Identity.Endpoints.LoginEndpoint).Assembly
+                typeof(Modules.Identity.Endpoints.LoginEndpoint).Assembly,
+                typeof(Modules.Financial.Endpoints.GetInvoicesEndpoint).Assembly
             ];
         });
 
@@ -32,7 +35,6 @@ public static class ServiceCollectionExtensions
 
     /// <summary>
     /// Configura documentação OpenAPI
-    /// (será expandido na Subfase 1.1.3)
     /// </summary>
     public static IServiceCollection AddApiDocumentation(this IServiceCollection services)
     {

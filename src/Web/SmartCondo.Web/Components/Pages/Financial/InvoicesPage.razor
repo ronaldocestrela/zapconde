@@ -1,0 +1,375 @@
+@page "/financeiro"
+@page "/financeiro/faturas"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Modules.Financial.Application.DTOs
+@using Modules.Financial.Domain.Enums
+@using SmartCondo.Web.Services
+@inject FinancialApiClient FinancialApi
+@inject AuthSession Session
+@inject NavigationManager Navigation
+
+<PageTitle>ZapCond - Gestão Financeira & Faturas</PageTitle>
+<link href="css/invoices.css" rel="stylesheet" />
+
+@if (!_sessionReady)
+{
+    <div class="p-8 text-center text-gray-500">
+        <p>Verificando sessão e dados do condomínio...</p>
+    </div>
+}
+else
+{
+    <div class="financial-container">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="financial-title">Gestão Financeira & Faturas</h1>
+                <p class="text-sm text-gray-500 m-0">Controle de faturas condominiais, boletos e pagamentos via PIX</p>
+            </div>
+            <button type="button" class="btn-primary-stitch" @onclick="OpenCreateModal">
+                <span>+ Emitir Nova Fatura</span>
+            </button>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="financial-metrics-grid">
+            <div class="metric-card">
+                <span class="metric-label">Total Empreendimento</span>
+                <div class="metric-value">R$ @TotalFaturado.ToString("N2")</div>
+                <span class="metric-subtext">@Invoices.Count() faturas emitidas</span>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">Arrecadado (Pagas)</span>
+                <div class="metric-value text-green-700">R$ @TotalPago.ToString("N2")</div>
+                <span class="metric-subtext">@Invoices.Count(i => i.Status == StatusFatura.Pago) faturas quitadas</span>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">A Receber (Pendentes)</span>
+                <div class="metric-value text-amber-700">R$ @TotalPendente.ToString("N2")</div>
+                <span class="metric-subtext">@Invoices.Count(i => i.Status == StatusFatura.Pendente) faturas em aberto</span>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">Inadimplência</span>
+                <div class="metric-value text-red-700">R$ @TotalVencido.ToString("N2")</div>
+                <span class="metric-subtext">@Invoices.Count(i => i.Status == StatusFatura.Vencido) faturas vencidas</span>
+            </div>
+        </div>
+
+        <!-- Toolbar Filters -->
+        <div class="financial-toolbar">
+            <div class="flex flex-wrap items-center gap-3">
+                <input type="text" class="financial-search-input" placeholder="Buscar por morador ou unidade..." @bind="SearchTerm" @bind:event="oninput" />
+                
+                <select class="financial-select" @bind="SelectedCompetencia">
+                    <option value="">Todas Competências</option>
+                    <option value="2026-08">2026-08</option>
+                    <option value="2026-07">2026-07</option>
+                    <option value="2026-06">2026-06</option>
+                </select>
+
+                <select class="financial-select" @bind="SelectedStatus">
+                    <option value="">Todos Status</option>
+                    <option value="@((int)StatusFatura.Pendente)">Pendente</option>
+                    <option value="@((int)StatusFatura.Pago)">Pago</option>
+                    <option value="@((int)StatusFatura.Vencido)">Vencido</option>
+                    <option value="@((int)StatusFatura.Cancelado)">Cancelado</option>
+                </select>
+            </div>
+
+            <button type="button" class="btn-secondary-stitch text-xs" @onclick="LoadInvoicesAsync">
+                🔄 Atualizar
+            </button>
+        </div>
+
+        <!-- Table -->
+        @if (IsLoading)
+        {
+            <div class="p-8 text-center text-gray-500">
+                <span>Carregando faturas do condomínio...</span>
+            </div>
+        }
+        else if (!FilteredInvoices.Any())
+        {
+            <div class="invoices-table-card p-12 text-center text-gray-500">
+                <p class="text-base font-semibold mb-1">Nenhuma fatura encontrada</p>
+                <p class="text-xs text-gray-400">Altere os filtros ou clique em "+ Emitir Nova Fatura" para registrar cobranças.</p>
+            </div>
+        }
+        else
+        {
+            <div class="invoices-table-card">
+                <table class="invoices-table">
+                    <thead>
+                        <tr>
+                            <th>Nº Fatura</th>
+                            <th>Morador / Unidade</th>
+                            <th>Competência</th>
+                            <th>Vencimento</th>
+                            <th>Valor Total</th>
+                            <th>Status</th>
+                            <th class="text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inv in FilteredInvoices)
+                        {
+                            <tr>
+                                <td class="font-mono text-xs font-semibold text-blue-900">@inv.NumeroFatura</td>
+                                <td>
+                                    <strong class="block text-gray-900">@inv.NomeMorador</strong>
+                                    <span class="text-xs text-gray-500">@inv.BlocoNumeroUnidade</span>
+                                </td>
+                                <td class="font-mono text-xs text-gray-700">@inv.Competencia</td>
+                                <td class="font-mono text-xs text-gray-700">@inv.DataVencimento.ToString("dd/MM/yyyy")</td>
+                                <td class="font-mono-amount text-gray-900">R$ @inv.TotalFinal.ToString("N2")</td>
+                                <td>
+                                    <span class="@GetStatusBadgeClass(inv.Status)">@inv.StatusDescricao</span>
+                                </td>
+                                <td class="text-right">
+                                    <button type="button" class="btn-secondary-stitch text-xs py-1 px-2" @onclick="() => OpenDetailAsync(inv.Id)">
+                                        Ver Detalhes & PIX
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <!-- Modal Detalhe & Payment Breakdown -->
+    <InvoiceDetailModal IsOpen="IsDetailOpen" Invoice="SelectedDetail" OnClose="CloseDetailModal" OnCancel="HandleCancelInvoiceAsync" />
+
+    <!-- Modal Criar Fatura -->
+    @if (IsCreateOpen)
+    {
+        <div class="modal-backdrop-stitch" @onclick="CloseCreateModal">
+            <div class="modal-dialog-stitch" @onclick:stopPropagation="true">
+                <div class="modal-header-stitch">
+                    <h3 class="m-0 font-semibold text-lg">Emitir Nova Fatura</h3>
+                    <button type="button" class="text-gray-400 hover:text-gray-600 font-bold text-xl cursor-pointer bg-transparent border-0" @onclick="CloseCreateModal">&times;</button>
+                </div>
+
+                <div class="modal-body-stitch">
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="text-xs font-medium text-gray-700 block mb-1">Unidade ID</label>
+                            <input type="number" class="financial-search-input w-full" @bind="NewUnidadeId" />
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-700 block mb-1">Morador ID</label>
+                            <input type="number" class="financial-search-input w-full" @bind="NewMoradorId" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="text-xs font-medium text-gray-700 block mb-1">Competência</label>
+                            <input type="text" class="financial-search-input w-full" placeholder="2026-08" @bind="NewCompetencia" />
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-700 block mb-1">Vencimento</label>
+                            <input type="date" class="financial-search-input w-full" @bind="NewVencimento" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-xs font-medium text-gray-700 block mb-1">Valor Taxa Condominial Ordinária (R$)</label>
+                        <input type="number" step="0.01" class="financial-search-input w-full" @bind="NewValorTaxa" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="text-xs font-medium text-gray-700 block mb-1">Observações</label>
+                        <textarea class="financial-search-input w-full" rows="2" @bind="NewObservacoes"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-3 border-t border-gray-200">
+                        <button type="button" class="btn-secondary-stitch" @onclick="CloseCreateModal">Cancelar</button>
+                        <button type="button" class="btn-primary-stitch" @onclick="SubmitCreateInvoiceAsync">Emitir Fatura</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private bool _sessionReady;
+    private List<FaturaSummaryDto> Invoices { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+    private string SearchTerm { get; set; } = string.Empty;
+    private string SelectedCompetencia { get; set; } = string.Empty;
+    private string SelectedStatus { get; set; } = string.Empty;
+
+    // Modal Detalhe
+    private bool IsDetailOpen { get; set; }
+    private FaturaDetailDto? SelectedDetail { get; set; }
+
+    // Modal Criar
+    private bool IsCreateOpen { get; set; }
+    private int NewUnidadeId { get; set; } = 101;
+    private int NewMoradorId { get; set; } = 5;
+    private string NewCompetencia { get; set; } = "2026-08";
+    private DateTime NewVencimento { get; set; } = DateTime.Today.AddDays(10);
+    private decimal NewValorTaxa { get; set; } = 450.00m;
+    private string NewObservacoes { get; set; } = "Fatura mensal condominial";
+
+    private decimal TotalFaturado => Invoices.Sum(i => i.TotalFinal);
+    private decimal TotalPago => Invoices.Where(i => i.Status == StatusFatura.Pago).Sum(i => i.TotalFinal);
+    private decimal TotalPendente => Invoices.Where(i => i.Status == StatusFatura.Pendente).Sum(i => i.TotalFinal);
+    private decimal TotalVencido => Invoices.Where(i => i.Status == StatusFatura.Vencido).Sum(i => i.TotalFinal);
+
+    private IEnumerable<FaturaSummaryDto> FilteredInvoices => Invoices.Where(i =>
+    {
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            var match = i.NumeroFatura.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        i.NomeMorador.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        i.BlocoNumeroUnidade.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase);
+            if (!match) return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(SelectedCompetencia) && i.Competencia != SelectedCompetencia)
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(SelectedStatus) && int.TryParse(SelectedStatus, out var statusInt))
+        {
+            if ((int)i.Status != statusInt) return false;
+        }
+
+        return true;
+    });
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _sessionReady)
+        {
+            return;
+        }
+
+        await Session.EnsureLoadedAsync();
+
+        if (string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            Navigation.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        if (Session.Context is null)
+        {
+            Navigation.NavigateTo("/selecionar-perfil", replace: true);
+            return;
+        }
+
+        _sessionReady = true;
+        await LoadInvoicesAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadInvoicesAsync()
+    {
+        IsLoading = true;
+        var res = await FinancialApi.GetInvoicesAsync();
+        if (res.IsSuccess && res.Data != null)
+        {
+            Invoices = res.Data.ToList();
+        }
+        else
+        {
+            // Seed inicial demo caso API ainda esteja vazia
+            Invoices = GetDemoInvoices();
+        }
+        IsLoading = false;
+    }
+
+    private async Task OpenDetailAsync(int id)
+    {
+        var res = await FinancialApi.GetInvoiceByIdAsync(id);
+        if (res.IsSuccess && res.Data != null)
+        {
+            SelectedDetail = res.Data;
+            IsDetailOpen = true;
+        }
+        else
+        {
+            // Fallback demo
+            var summary = Invoices.FirstOrDefault(i => i.Id == id);
+            if (summary != null)
+            {
+                SelectedDetail = new FaturaDetailDto(
+                    summary.Id, summary.CondoId, summary.UnidadeId, summary.BlocoNumeroUnidade,
+                    summary.MoradorId, summary.NomeMorador, summary.Competencia, summary.NumeroFatura,
+                    summary.DataEmissao, summary.DataVencimento, summary.ValorOriginal, summary.ValorDesconto,
+                    summary.ValorMulta, summary.ValorJuros, summary.TotalFinal, summary.Status,
+                    summary.StatusDescricao, summary.DataPagamento, "Taxa ordinária + Fundo de Reserva",
+                    new List<ItemCobrancaDto>
+                    {
+                        new(1, "Taxa Condominial Ordinária", TipoItemCobranca.TaxaCondominial, "TaxaCondominial", summary.ValorOriginal * 0.9m, 1, summary.ValorOriginal * 0.9m),
+                        new(2, "Fundo de Reserva (10%)", TipoItemCobranca.FundoReserva, "FundoReserva", summary.ValorOriginal * 0.1m, 1, summary.ValorOriginal * 0.1m)
+                    },
+                    new BoletoDto(1, "34190123456", "34191.79001 01234.567890 12345.678901 8 90000000050000", "34198900000000050000", "00020126580014br.gov.bcb.pix0136zapcondo-pix-demo", "", "", summary.TotalFinal, summary.DataVencimento, summary.DataEmissao, summary.DataPagamento, StatusBoleto.Gerado, "Gerado")
+                );
+                IsDetailOpen = true;
+            }
+        }
+    }
+
+    private void CloseDetailModal()
+    {
+        IsDetailOpen = false;
+        SelectedDetail = null;
+    }
+
+    private async Task HandleCancelInvoiceAsync(int id)
+    {
+        await FinancialApi.CancelInvoiceAsync(id);
+        await LoadInvoicesAsync();
+    }
+
+    private void OpenCreateModal() => IsCreateOpen = true;
+    private void CloseCreateModal() => IsCreateOpen = false;
+
+    private async Task SubmitCreateInvoiceAsync()
+    {
+        var req = new CreateFaturaRequest(
+            CondoId: 1,
+            UnidadeId: NewUnidadeId,
+            MoradorId: NewMoradorId,
+            Competencia: NewCompetencia,
+            DataVencimento: NewVencimento,
+            Observacoes: NewObservacoes,
+            Itens: new List<CreateItemCobrancaRequest>
+            {
+                new("Taxa Condominial Ordinária", TipoItemCobranca.TaxaCondominial, NewValorTaxa, 1)
+            }
+        );
+
+        var res = await FinancialApi.CreateInvoiceAsync(req);
+        if (res.IsSuccess)
+        {
+            CloseCreateModal();
+            await LoadInvoicesAsync();
+        }
+    }
+
+    private string GetStatusBadgeClass(StatusFatura status) => status switch
+    {
+        StatusFatura.Pago => "badge-status badge-pago",
+        StatusFatura.Pendente => "badge-status badge-pendente",
+        StatusFatura.Vencido => "badge-status badge-vencido",
+        StatusFatura.Cancelado => "badge-status badge-cancelado",
+        _ => "badge-status badge-cancelado"
+    };
+
+    private static List<FaturaSummaryDto> GetDemoInvoices() => new()
+    {
+        new(1, 1, 101, "Bloco A - Apt 101", 5, "Carlos Eduardo Silva", "2026-08", "FAT-202608-101", DateTime.Today.AddDays(-5), DateTime.Today.AddDays(10), 450.00m, 0, 0, 0, 450.00m, StatusFatura.Pendente, "Pendente", null, true),
+        new(2, 1, 102, "Bloco A - Apt 102", 6, "Mariana Oliveira", "2026-08", "FAT-202608-102", DateTime.Today.AddDays(-5), DateTime.Today.AddDays(10), 520.00m, 0, 0, 0, 520.00m, StatusFatura.Pago, "Pago", DateTime.Today.AddDays(-1), true),
+        new(3, 1, 201, "Bloco B - Apt 201", 7, "Roberto Santos", "2026-07", "FAT-202607-201", DateTime.Today.AddDays(-35), DateTime.Today.AddDays(-5), 480.00m, 0, 15.00m, 5.00m, 500.00m, StatusFatura.Vencido, "Vencido", null, true)
+    };
+}

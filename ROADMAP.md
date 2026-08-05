@@ -334,7 +334,19 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 ### 3.1. Motor Financeiro e Cobrança
 
-* [] **Subfase 3.1.1:** [FN-FIN-01] Mapear entidades `Fatura`, `Boleto` e `ItemCobranca`.
+* [x] **Subfase 3.1.1:** [FN-FIN-01] Mapear entidades `Fatura`, `Boleto` e `ItemCobranca`.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Entidades de domínio `Fatura`, `Boleto`, `ItemCobranca` e enums (`StatusFatura`, `StatusBoleto`, `TipoItemCobranca`) com isolamento multi-tenant (`ITenantScoped`).
+  - Mapeamentos EF Core 10 e `FinancialDbContext` herdando de `MultiTenantDbContext` com Global Query Filter automático por `TenantId`.
+  - Serviço `InvoiceService` e interface `IInvoiceService` implementando a camada de aplicação com envelope padronizado `Result` / `Result<T>`.
+  - FastEndpoints na API: `GET /api/financial/invoices`, `GET /api/financial/invoices/{id}`, `POST /api/financial/invoices` e `POST /api/financial/invoices/{id}/cancel`.
+  - BDD: `tests/LivingDoc/Features/Fase3_1_1_FaturaBoletoItemCobranca.feature`.
+  - Suíte de testes TDD: `FinancialDomainTests`, `FinancialArchitectureTests`, `FinancialIntegrationTests` (com PostgreSQL real via Testcontainers) — 100% aprovados.
+  - Blazor UI: Páginas `/financeiro/faturas` e modal de detalhe/breakdown fidelizados ao design Stitch (telas `c42737e5cd7d470cb33958b9c365137a` e `030806297a4443d09003456026e4915d`).
+
 * [] **Subfase 3.1.2:** [TDD] Criar testes unitários para o cálculo de multas, juros pró-rata e desconto até o vencimento.
 
 

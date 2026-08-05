@@ -1,0 +1,138 @@
+@using Modules.Financial.Application.DTOs
+@using Modules.Financial.Domain.Enums
+
+@if (IsOpen && Invoice != null)
+{
+    <div class="modal-backdrop-stitch" @onclick="CloseModal">
+        <div class="modal-dialog-stitch" @onclick:stopPropagation="true">
+            <div class="modal-header-stitch">
+                <div>
+                    <h3 class="m-0 font-semibold text-lg">Fatura @Invoice.NumeroFatura</h3>
+                    <p class="text-sm text-gray-500 m-0">@Invoice.NomeMorador • @Invoice.BlocoNumeroUnidade • Comp: @Invoice.Competencia</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="@GetStatusBadgeClass(Invoice.Status)">@Invoice.StatusDescricao</span>
+                    <button type="button" class="text-gray-400 hover:text-gray-600 font-bold text-xl cursor-pointer bg-transparent border-0" @onclick="CloseModal">&times;</button>
+                </div>
+            </div>
+
+            <div class="modal-body-stitch">
+                <!-- Datas e Prazos -->
+                <div class="grid grid-cols-2 gap-4 mb-4 text-sm bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div>
+                        <span class="text-gray-500 block">Data de Emissão</span>
+                        <strong class="font-mono text-gray-800">@Invoice.DataEmissao.ToString("dd/MM/yyyy HH:mm")</strong>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block">Data de Vencimento</span>
+                        <strong class="font-mono text-gray-800">@Invoice.DataVencimento.ToString("dd/MM/yyyy")</strong>
+                    </div>
+                </div>
+
+                <!-- Detalhamento de Itens -->
+                <h4 class="font-semibold text-sm mb-2 text-gray-700">Composição da Cobrança</h4>
+                <div class="breakdown-card mb-4">
+                    @foreach (var item in Invoice.Itens)
+                    {
+                        <div class="breakdown-item">
+                            <div>
+                                <span class="font-medium text-gray-800 block">@item.Descricao</span>
+                                <span class="text-xs text-gray-500">@item.TipoDescricao • Qtd: @item.Quantidade x R$ @item.ValorUnitario.ToString("N2")</span>
+                            </div>
+                            <span class="font-mono-amount text-gray-900">R$ @item.Subtotal.ToString("N2")</span>
+                        </div>
+                    }
+
+                    <div class="breakdown-total">
+                        <span>Total Final</span>
+                        <span class="font-mono-amount text-blue-900">R$ @Invoice.TotalFinal.ToString("N2")</span>
+                    </div>
+                </div>
+
+                <!-- Dados do Boleto & PIX -->
+                @if (Invoice.Boleto != null)
+                {
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-sm text-blue-900 m-0 mb-2 flex items-center gap-2">
+                            <span>💳 Pagamento via PIX / Boleto</span>
+                        </h4>
+                        
+                        <div class="mb-3">
+                            <label class="text-xs text-gray-600 block mb-1">Linha Digitável</label>
+                            <div class="pix-copia-cola-box bg-white font-mono text-xs p-2 rounded border border-gray-300">
+                                @Invoice.Boleto.LinhaDigitavel
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="text-xs text-gray-600 block mb-1">Chave PIX Copia e Cola</label>
+                            <div class="flex gap-2">
+                                <input type="text" class="pix-copia-cola-box flex-1 bg-white font-mono text-xs p-2 rounded border border-gray-300" readonly value="@Invoice.Boleto.CodigoPixCopiaECola" />
+                                <button type="button" class="btn-secondary-stitch text-xs px-3 py-1" @onclick="CopyPixToClipboard">
+                                    @(CopiedPix ? "Copiado!" : "Copiar")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Invoice.Observacoes))
+                {
+                    <div class="mb-4 text-xs text-gray-600 bg-gray-100 p-3 rounded">
+                        <strong>Observações:</strong> @Invoice.Observacoes
+                    </div>
+                }
+
+                <div class="flex justify-end gap-3 pt-3 border-t border-gray-200">
+                    @if (Invoice.Status == StatusFatura.Pendente)
+                    {
+                        <button type="button" class="btn-secondary-stitch text-red-600 border border-red-200 hover:bg-red-50" @onclick="OnCancelInvoice">
+                            Cancelar Fatura
+                        </button>
+                    }
+                    <button type="button" class="btn-secondary-stitch" @onclick="CloseModal">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public FaturaDetailDto? Invoice { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<int> OnCancel { get; set; }
+
+    private bool CopiedPix { get; set; }
+
+    private async Task CloseModal()
+    {
+        CopiedPix = false;
+        await OnClose.InvokeAsync();
+    }
+
+    private void CopyPixToClipboard()
+    {
+        CopiedPix = true;
+    }
+
+    private async Task OnCancelInvoice()
+    {
+        if (Invoice != null)
+        {
+            await OnCancel.InvokeAsync(Invoice.Id);
+            await CloseModal();
+        }
+    }
+
+    private string GetStatusBadgeClass(StatusFatura status) => status switch
+    {
+        StatusFatura.Pago => "badge-status badge-pago",
+        StatusFatura.Pendente => "badge-status badge-pendente",
+        StatusFatura.Vencido => "badge-status badge-vencido",
+        StatusFatura.Cancelado => "badge-status badge-cancelado",
+        _ => "badge-status badge-cancelado"
+    };
+}

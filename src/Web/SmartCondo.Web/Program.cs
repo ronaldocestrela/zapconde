@@ -34,6 +34,11 @@ builder.Services.AddHttpClient<PhoneVerificationApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(15);
 });
+builder.Services.AddHttpClient<FinancialApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 var app = builder.Build();
 

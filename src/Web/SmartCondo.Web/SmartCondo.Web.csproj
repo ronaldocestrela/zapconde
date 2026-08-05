@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Modules\Identity\Modules.Identity.csproj" />
+    <ProjectReference Include="..\..\Modules\Financial\Modules.Financial.csproj" />
   </ItemGroup>
 
 </Project>

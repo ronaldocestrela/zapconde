@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ZapCond - Invoice Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&amp;family=Inter:wght@400;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed": "#002204",
+                    "on-primary-fixed": "#1a1c1e",
+                    "background": "#f7f9fb",
+                    "inverse-surface": "#2d3133",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#5d5e61",
+                    "on-tertiary-fixed-variant": "#005313",
+                    "inverse-primary": "#c6c6c9",
+                    "on-tertiary-container": "#32973b",
+                    "tertiary": "#000100",
+                    "secondary-container": "#83c8fd",
+                    "surface-bright": "#f7f9fb",
+                    "outline-variant": "#c5c6ca",
+                    "primary": "#000101",
+                    "on-primary-fixed-variant": "#454749",
+                    "surface-container-high": "#e6e8ea",
+                    "error": "#ba1a1a",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#1a1c1e",
+                    "on-secondary": "#ffffff",
+                    "surface-variant": "#e0e3e5",
+                    "surface": "#f7f9fb",
+                    "on-surface-variant": "#44474a",
+                    "surface-container": "#eceef0",
+                    "secondary": "#006494",
+                    "tertiary-fixed": "#94f990",
+                    "secondary-fixed": "#cbe6ff",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-surface": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "tertiary-container": "#002204",
+                    "on-secondary-container": "#00547d",
+                    "outline": "#75777a",
+                    "secondary-fixed-dim": "#8ecdff",
+                    "primary-fixed-dim": "#c6c6c9",
+                    "surface-dim": "#d8dadc",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-primary-container": "#838486",
+                    "on-secondary-fixed": "#001e30",
+                    "on-error": "#ffffff",
+                    "on-background": "#191c1e",
+                    "on-secondary-fixed-variant": "#004b71",
+                    "primary-fixed": "#e2e2e5",
+                    "tertiary-fixed-dim": "#78dc77",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "lg": "24px",
+                    "sm": "8px",
+                    "gutter": "24px",
+                    "container-max": "1280px",
+                    "md": "16px",
+                    "unit": "4px",
+                    "xs": "4px",
+                    "xl": "32px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "data-display": ["JetBrains Mono"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "data-display": ["16px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Minimalist scrollbar for drawer */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #e0e3e5; border-radius: 9999px; }
+        .slide-in-right { animation: slideInRight 0.3s cubic-bezier(0.2, 0, 0, 1) forwards; }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background h-full font-body-md overflow-hidden flex relative">
+<!-- JSON: SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen py-md px-sm w-64 fixed h-full left-0 border-r border-outline-variant bg-surface-container-low z-40">
+<div class="flex items-center gap-sm px-sm mb-lg">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A small, minimalist geometric logo representing a modern financial building, rendered in stark black and white, suitable for a professional corporate dashboard context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB20iNLqJItBdnuQdd6_ijSIOWeNzkx_YQWhIcqwusiwcEC0uZHRb6A2jwykz1TXLqVpBa25NtqZUZF8tTzkYwGEWtlEdDmrnrVQ1nBAT7EMAx1GktYEA0RWV2CLZE8R4vS_DNNE60if9oxmX5DjfHOsXedgRig-MBLmkjF7OH-39ytWx_WvScaHYN74KvkTDF8XhHVU-U_56hsri-Y1spBNAf4mf9K4p7s1b8WtsTqVcylAsh6WxdWA"/>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">ZapCond Admin</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Financial Control</p>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-sm px-md rounded-lg font-label-sm text-label-sm mb-lg flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            New Transaction
+        </button>
+<nav class="flex-1 flex flex-col gap-xs font-label-sm text-label-sm">
+<!-- Active Tab: Dashboard -->
+<a class="flex items-center gap-md px-md py-sm bg-secondary-container text-on-secondary-container rounded-lg opacity-100 scale-95 duration-150 transition-all" href="#">
+<span class="material-symbols-outlined" data-weight="fill">dashboard</span>
+                Overview
+            </a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+                Accounts
+            </a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">payments</span>
+                Payments
+            </a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">group</span>
+                Clients
+            </a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                Analytics
+            </a>
+</nav>
+<div class="mt-auto flex flex-col gap-xs font-label-sm text-label-sm pt-md border-t border-outline-variant">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+                Help Center
+            </a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">logout</span>
+                Log Out
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 ml-0 md:ml-64 flex flex-col h-screen overflow-hidden relative z-0">
+<!-- JSON: TopNavBar -->
+<header class="flex justify-between items-center w-full px-lg h-16 sticky top-0 z-30 bg-surface-container-lowest text-primary border-b border-outline-variant">
+<div class="flex items-center gap-md md:hidden">
+<span class="font-headline-md text-headline-md font-bold text-primary">ZapCond</span>
+</div>
+<div class="hidden md:flex flex-1 items-center gap-lg font-body-md text-body-md">
+<nav class="flex gap-md h-full items-end">
+<!-- Dashboard is active, but SideNav is taking precedence for layout context. TopNav acts as secondary breadcrumb/filter row here if needed, but per instructions, we map active to Dashboard -->
+<a class="text-secondary border-b-2 border-secondary pb-1 opacity-80 duration-200" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors pb-[6px]" href="#">Invoices</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors pb-[6px]" href="#">Properties</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors pb-[6px]" href="#">Reports</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors pb-[6px]" href="#">Settings</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<button class="bg-primary text-on-primary font-label-sm text-label-sm py-[6px] px-sm rounded hover:opacity-90 transition-opacity hidden md:block">
+                    Create Invoice
+                </button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-sm rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-sm rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">help</span>
+</button>
+<img alt="User profile" class="w-8 h-8 rounded-full ml-sm object-cover border border-outline-variant" data-alt="A sharp, high-contrast portrait of a professional corporate administrator in a modern office setting, bright lighting, conveying trust." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0S0EALYqehAc-BybuCH062iK5atZ1KhPILBUxJzdIFvLHPogbPAWwqSxStu1d5u2Ztmz2lQ9qWTlgsKFEXxJkJf6x8n-HDQBa3C68JwNL_RGPCVVS1O1Vho1ed7-Zhu_nYE2ZoNMFTOlpWQAd_gICEPRBU_z5HNslXKu525QDutiiopUzwh-IlwO3ixHWsqvxw9BOrw766-Ze78A906bYcfqIFi1wfWr3hk78n5UCE9disItpygLl-A"/>
+</div>
+</header>
+<!-- Canvas (Dashboard Background) -->
+<main class="flex-1 overflow-y-auto p-lg bg-surface">
+<!-- Simulated Dashboard Content behind the overlay -->
+<div class="max-w-container-max mx-auto opacity-40 transition-opacity">
+<h2 class="font-headline-lg text-headline-lg mb-lg">Overview</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
+<div class="bg-surface-container-lowest p-md rounded-2xl border border-outline-variant shadow-sm h-32"></div>
+<div class="bg-surface-container-lowest p-md rounded-2xl border border-outline-variant shadow-sm h-32"></div>
+<div class="bg-surface-container-lowest p-md rounded-2xl border border-outline-variant shadow-sm h-32"></div>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm h-96"></div>
+</div>
+</main>
+</div>
+<!-- Backdrop Overlay -->
+<div class="fixed inset-0 bg-primary/20 backdrop-blur-[2px] z-40 transition-opacity"></div>
+<!-- Invoice Detail & Breakdown Drawer (Slide-out panel) -->
+<aside class="fixed top-0 right-0 h-full w-full max-w-[480px] bg-surface-container-lowest border-l border-outline-variant shadow-2xl z-50 flex flex-col slide-in-right overflow-hidden">
+<!-- Drawer Header -->
+<div class="flex items-center justify-between px-lg py-md border-b border-outline-variant bg-surface-container-lowest">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Invoice Detail</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-xs">ID #INV-84920-A</p>
+</div>
+<button aria-label="Close panel" class="p-sm rounded-full hover:bg-surface-container text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Drawer Content Scrollable Area -->
+<div class="flex-1 overflow-y-auto p-lg flex flex-col gap-lg bg-background">
+<!-- Real-time Status Indicator -->
+<div class="flex items-center gap-sm bg-tertiary-fixed/10 p-sm rounded-lg border border-tertiary-fixed/20">
+<div class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></div>
+<span class="font-label-sm text-label-sm text-on-tertiary-fixed-variant">Conciliação Automática Ativa</span>
+</div>
+<!-- Metadata Cards (Bento Style) -->
+<div class="grid grid-cols-2 gap-sm">
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-xs">Unit</span>
+<span class="font-body-md text-body-md font-semibold text-on-surface">Apt 402, Bloco B</span>
+</div>
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-xs">Expiration</span>
+<span class="font-body-md text-body-md font-semibold text-error flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">warning</span> Overdue
+                    </span>
+</div>
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant col-span-2 flex justify-between items-center">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-xs">Payer CPF</span>
+<span class="font-data-display text-data-display text-on-surface">***.492.184-**</span>
+</div>
+<button class="text-secondary hover:bg-secondary/10 p-sm rounded-full transition-colors">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Itemized Financial Breakdown Card -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden">
+<div class="p-md border-b border-outline-variant bg-surface-container-low flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant">receipt_long</span>
+<h4 class="font-body-md text-body-md font-semibold text-on-surface">Financial Breakdown</h4>
+</div>
+<div class="p-sm flex flex-col font-data-display text-data-display text-[14px]">
+<!-- Breakdown Rows -->
+<div class="flex justify-between items-center p-sm rounded hover:bg-surface transition-colors">
+<span class="text-on-surface-variant font-body-md text-[14px]">Base Fee</span>
+<span class="text-on-surface">R$ 650,00</span>
+</div>
+<div class="flex justify-between items-center p-sm rounded hover:bg-surface transition-colors bg-primary/2">
+<span class="text-on-surface-variant font-body-md text-[14px]">Water/Gas</span>
+<span class="text-on-surface">R$ 85,20</span>
+</div>
+<div class="flex justify-between items-center p-sm rounded hover:bg-surface transition-colors">
+<span class="text-on-surface-variant font-body-md text-[14px]">Party Room</span>
+<span class="text-on-surface">R$ 120,00</span>
+</div>
+<div class="flex justify-between items-center p-sm rounded hover:bg-surface transition-colors bg-error/5">
+<span class="text-error font-body-md text-[14px] flex items-center gap-xs"><span class="material-symbols-outlined text-[14px]">add</span> Fine (2%)</span>
+<span class="text-error">R$ 17,10</span>
+</div>
+<div class="flex justify-between items-center p-sm rounded hover:bg-surface transition-colors bg-error/5">
+<span class="text-error font-body-md text-[14px] flex items-center gap-xs"><span class="material-symbols-outlined text-[14px]">add</span> Interest (1%)</span>
+<span class="text-error">R$ 8,55</span>
+</div>
+<div class="flex justify-between items-center p-sm rounded hover:bg-surface transition-colors bg-tertiary-fixed/10">
+<span class="text-tertiary-container font-body-md text-[14px] flex items-center gap-xs"><span class="material-symbols-outlined text-[14px]">remove</span> Discount</span>
+<span class="text-tertiary-container">R$ -30,00</span>
+</div>
+</div>
+<div class="p-md border-t border-outline-variant bg-surface-container flex justify-between items-center">
+<span class="font-headline-md text-headline-md font-bold text-on-surface">Total</span>
+<span class="font-data-display text-[24px] font-bold text-secondary">R$ 850,85</span>
+</div>
+</div>
+<!-- Payment Methods Section -->
+<div class="flex flex-col gap-md">
+<!-- PIX Box -->
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant flex flex-col gap-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-sm text-on-surface">
+<span class="material-symbols-outlined">qr_code_2</span>
+<span class="font-body-md text-body-md font-semibold">PIX Copia e Cola</span>
+</div>
+<img class="w-12 h-12 rounded bg-surface p-xs border border-outline-variant" data-alt="A clean, minimalist QR code graphic generated for a generic payment link, sharp black lines on a white background, integrated into a modern financial app interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPbB76iTY37o5Tx086n8Y6DuBgVrpHNbpSazLPAe0GxNW7DA4nwl8lW6qrZBZCHf5Yo9yhztmBCLRYDmkEA9-B13cWBzgQb1ENDJD6B6kI8jUHAXAcl-PrYi1VTGuIsKs0ALBFTrJC5Yv2lzENgxAjBuzCiReV7OOObWx0v4G_CspOQoQ7POui7TVMYzojYNieTcnaAk5kREh2Bzf3ioUoxLqIFpBWLnQvcLe4EDjw-a3sKzixERI3Gg"/>
+</div>
+<div class="flex items-center gap-xs bg-surface p-xs rounded border border-outline-variant mt-xs">
+<input class="flex-1 bg-transparent border-none font-data-display text-[12px] text-on-surface-variant focus:ring-0 truncate p-0 pl-xs" readonly="" type="text" value="00020101021226770014BR.GOV.BCB.PIX..."/>
+<button class="bg-primary text-on-primary p-xs rounded flex items-center justify-center hover:bg-on-surface transition-colors w-8 h-8 flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Bank Barcode -->
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-sm">Boleto Barcode</span>
+<div class="font-data-display text-[13px] text-on-surface tracking-tighter break-all">
+                        34191.09008 63396.832742 09615.150008 3 89750000085085
+                    </div>
+</div>
+</div>
+</div>
+<!-- Drawer Footer Actions -->
+<div class="p-lg border-t border-outline-variant bg-surface-container-lowest flex gap-md">
+<button class="flex-1 bg-surface text-on-surface border border-outline-variant py-sm px-md rounded-lg font-label-sm text-label-sm hover:bg-surface-container transition-colors flex justify-center items-center gap-sm">
+<span class="material-symbols-outlined text-[18px]">share</span> Share
+            </button>
+<button class="flex-[2] bg-primary text-on-primary py-sm px-md rounded-lg font-label-sm text-label-sm hover:opacity-90 transition-opacity flex justify-center items-center gap-sm shadow-sm">
+<span class="material-symbols-outlined text-[18px]">download</span> Baixar PDF
+            </button>
+</div>
+</aside>
+</body></html>
