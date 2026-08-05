@@ -1,3 +1,4 @@
+using BuildingBlocks.Shared.Enums;
 using BuildingBlocks.Shared.MultiTenancy;
 using Modules.Financial.Domain.Enums;
 
@@ -17,7 +18,12 @@ public class Boleto : ITenantScoped
     public string CodigoBarras { get; set; } = string.Empty;
     public string CodigoPixCopiaECola { get; set; } = string.Empty;
     public string QrCodeUrl { get; set; } = string.Empty;
+    public string PixQrCodeBase64 { get; set; } = string.Empty;
     public string PdfUrl { get; set; } = string.Empty;
+
+    public string ExternalChargeId { get; set; } = string.Empty;
+    public PaymentGatewayProvider GatewayProvider { get; set; } = PaymentGatewayProvider.None;
+    public DateTime? DataUltimaSincronizacaoGateway { get; set; }
 
     public decimal Valor { get; set; }
     public DateTime DataVencimento { get; set; }
@@ -62,16 +68,38 @@ public class Boleto : ITenantScoped
         };
     }
 
+    public void VincularCobrancaGateway(
+        string externalChargeId,
+        PaymentGatewayProvider provider,
+        string linhaDigitavel,
+        string codigoBarras,
+        string codigoPix,
+        string qrCodeBase64,
+        string pdfUrl)
+    {
+        ExternalChargeId = externalChargeId;
+        GatewayProvider = provider;
+        if (!string.IsNullOrWhiteSpace(linhaDigitavel)) LinhaDigitavel = linhaDigitavel;
+        if (!string.IsNullOrWhiteSpace(codigoBarras)) CodigoBarras = codigoBarras;
+        if (!string.IsNullOrWhiteSpace(codigoPix)) CodigoPixCopiaECola = codigoPix;
+        if (!string.IsNullOrWhiteSpace(qrCodeBase64)) PixQrCodeBase64 = qrCodeBase64;
+        if (!string.IsNullOrWhiteSpace(pdfUrl)) PdfUrl = pdfUrl;
+        DataUltimaSincronizacaoGateway = DateTime.UtcNow;
+    }
+
     public void RegistrarPagamento(DateTime dataPagamento)
     {
         DataPagamento = dataPagamento.Kind == DateTimeKind.Utc
             ? dataPagamento
             : DateTime.SpecifyKind(dataPagamento, DateTimeKind.Utc);
         Status = StatusBoleto.Pago;
+        DataUltimaSincronizacaoGateway = DateTime.UtcNow;
     }
 
     public void Cancelar()
     {
         Status = StatusBoleto.Cancelado;
+        DataUltimaSincronizacaoGateway = DateTime.UtcNow;
     }
 }
+

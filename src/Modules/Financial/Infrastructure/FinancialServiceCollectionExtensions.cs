@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Modules.Financial.Application.Services;
 using Modules.Financial.Infrastructure.Persistence;
+using Modules.Financial.Infrastructure.Services;
 
 namespace Modules.Financial.Infrastructure;
 
@@ -29,6 +30,12 @@ public static class FinancialServiceCollectionExtensions
         services.AddSingleton<Domain.Services.CalculadoraFinanceira>();
         services.AddScoped<IInvoiceService, InvoiceService>();
         services.AddScoped<IFinancialCalculationService, FinancialCalculationService>();
+
+        // Gateway de Pagamento, Stubs e Webhooks
+        services.AddSingleton<MockPaymentGatewayService>();
+        services.AddHttpClient<IPaymentGatewayService, AsaasPaymentGatewayService>();
+        services.AddScoped<IPaymentWebhookService, PaymentWebhookService>();
+        services.AddScoped<IInvoicePaymentApplicationService, InvoicePaymentApplicationService>();
 
         return services;
     }

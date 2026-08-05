@@ -363,7 +363,19 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 
 
-* [] **Subfase 3.1.3:** Integração com Gateway de Pagamento/PIX (Ex: Asaas, Juno/Ebanx ou Conta Simples).
+* [x] **Subfase 3.1.3:** Integração com Gateway de Pagamento/PIX (Ex: Asaas, Juno/Ebanx ou Conta Simples).
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio e Mapeamento: Atualização da entidade `Boleto` com propriedades de cobrança externa (`ExternalChargeId`, `GatewayProvider`, `PixQrCodeBase64`, `DataUltimaSincronizacaoGateway`) e enums `PaymentGatewayProvider` e `GatewayChargeStatus`.
+  - Abstração & Infraestrutura: Interface `IPaymentGatewayService`, `AsaasPaymentGatewayService` (integração REST API v3 do Asaas) e `MockPaymentGatewayService` para ambiente dev/testes sem chaves externas.
+  - Idempotência & Webhooks: `PaymentWebhookService` com validação de token de acesso (`X-Asaas-Access-Token`), idempotência garantida via Redis cache (`ICacheService`) e conciliação automática de faturas pagas/canceladas.
+  - Serviço de Aplicação: `InvoicePaymentApplicationService` + `IInvoicePaymentApplicationService` encapsulado com Result Pattern (`Result<T>`) e isolamento multi-tenant (`ITenantScoped`).
+  - FastEndpoints API: `POST /api/financial/invoices/{id}/generate-payment`, `GET /api/financial/invoices/{id}/payment-info`, `POST /api/financial/invoices/{id}/sync-payment` e `POST /api/financial/webhooks/asaas`.
+  - BDD: `tests/LivingDoc/Features/Fase3_1_3_IntegracaoGatewayPagamentoPix.feature`.
+  - Suíte de testes TDD: `PaymentGatewayDomainTests`, `PaymentGatewayArchitectureTests` e `PaymentGatewayIntegrationTests` (com PostgreSQL e Redis real via Testcontainers) — 100% aprovados.
+  - Blazor UI (Stitch): Modal/Drawer `PaymentModal.razor` integrado em `/financeiro/faturas` com abas para QR Code PIX visual em Base64, chave Copia e Cola, Linha Digitável, download de PDF e acionamento de sincronização manual em tempo real.
 
 
 

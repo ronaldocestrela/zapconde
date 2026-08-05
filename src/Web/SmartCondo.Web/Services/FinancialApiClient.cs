@@ -77,6 +77,45 @@ public sealed class FinancialApiClient(HttpClient httpClient)
         }
     }
 
+    public async Task<ApiResult<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>> GeneratePaymentAsync(int faturaId, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsync($"/api/financial/invoices/{faturaId}/generate-payment", null, ct);
+            return await ParseAsync<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>> GetPaymentInfoAsync(int faturaId, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/financial/invoices/{faturaId}/payment-info", ct);
+            return await ParseAsync<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>> SyncPaymentAsync(int faturaId, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsync($"/api/financial/invoices/{faturaId}/sync-payment", null, ct);
+            return await ParseAsync<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>(ex);
+        }
+    }
+
     private static async Task<ApiResult<T>> ParseAsync<T>(HttpResponseMessage response, CancellationToken ct)
     {
         var statusCode = (int)response.StatusCode;

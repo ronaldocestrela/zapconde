@@ -129,9 +129,12 @@ else
                                 <td>
                                     <span class="@GetStatusBadgeClass(inv.Status)">@inv.StatusDescricao</span>
                                 </td>
-                                <td class="text-right">
+                                <td class="text-right flex justify-end gap-2">
                                     <button type="button" class="btn-secondary-stitch text-xs py-1 px-2" @onclick="() => OpenDetailAsync(inv.Id)">
-                                        Ver Detalhes & PIX
+                                        Detalhes
+                                    </button>
+                                    <button type="button" class="btn-primary-stitch text-xs py-1 px-2 font-semibold" style="background: #2E5B88; border: none; color: white; border-radius: 6px; padding: 4px 8px; cursor: pointer;" @onclick="() => OpenPaymentAsync(inv.Id)">
+                                        ⚡ PIX & Boleto
                                     </button>
                                 </td>
                             </tr>
@@ -144,6 +147,9 @@ else
 
     <!-- Modal Detalhe & Payment Breakdown -->
     <InvoiceDetailModal IsOpen="IsDetailOpen" Invoice="SelectedDetail" OnClose="CloseDetailModal" OnCancel="HandleCancelInvoiceAsync" />
+
+    <!-- Modal de Cobranca & PIX (Gateway Asaas / Mock) -->
+    <PaymentModal IsOpen="IsPaymentOpen" PaymentInfo="SelectedPaymentInfo" OnClose="ClosePaymentModal" OnSyncRequested="SyncPaymentAsync" />
 
     <!-- Modal Criar Fatura -->
     @if (IsCreateOpen)
@@ -179,8 +185,8 @@ else
                     </div>
 
                     <div class="mb-3">
-                        <label class="text-xs font-medium text-gray-700 block mb-1">Valor Taxa Condominial Ordinária (R$)</label>
-                        <input type="number" step="0.01" class="financial-search-input w-full" @bind="NewValorTaxa" />
+                        <label class="text-xs font-medium text-gray-700 block mb-1">Valor da Taxa Condominial (R$)</label>
+                        <input type="number" step="0.01" class="financial-search-input w-full font-mono font-semibold text-blue-900" @bind="NewValorTaxa" />
                     </div>
 
                     <div class="mb-4">
@@ -189,8 +195,8 @@ else
                     </div>
 
                     <div class="flex justify-end gap-2 pt-3 border-t border-gray-200">
-                        <button type="button" class="btn-secondary-stitch" @onclick="CloseCreateModal">Cancelar</button>
-                        <button type="button" class="btn-primary-stitch" @onclick="SubmitCreateInvoiceAsync">Emitir Fatura</button>
+                        <button type="button" class="btn-secondary-stitch text-xs" @onclick="CloseCreateModal">Cancelar</button>
+                        <button type="button" class="btn-primary-stitch text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold" @onclick="SubmitCreateInvoiceAsync">Emitir Fatura</button>
                     </div>
                 </div>
             </div>
@@ -209,6 +215,10 @@ else
     // Modal Detalhe
     private bool IsDetailOpen { get; set; }
     private FaturaDetailDto? SelectedDetail { get; set; }
+
+    // Modal Payment & PIX
+    private bool IsPaymentOpen { get; set; }
+    private Modules.Financial.Application.Dtos.PaymentInfoResponseDto? SelectedPaymentInfo { get; set; }
 
     // Modal Criar
     private bool IsCreateOpen { get; set; }
@@ -323,6 +333,61 @@ else
     {
         IsDetailOpen = false;
         SelectedDetail = null;
+    }
+
+    private async Task OpenPaymentAsync(int id)
+    {
+        var res = await FinancialApi.GetPaymentInfoAsync(id);
+        if (res.IsSuccess && res.Data != null)
+        {
+            SelectedPaymentInfo = res.Data;
+            IsPaymentOpen = true;
+        }
+        else
+        {
+            // Demo fallback
+            var summary = Invoices.FirstOrDefault(i => i.Id == id);
+            var valor = summary?.TotalFinal ?? 450.00m;
+            var dtVenc = summary?.DataVencimento ?? DateTime.Today.AddDays(10);
+            var svgText = $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"#2E5B88\"/><text x=\"50%\" y=\"50%\" fill=\"#FFFFFF\" font-size=\"14\" text-anchor=\"middle\">PIX {valor:C2}</text></svg>";
+            var qrCodeBase64 = $"data:image/svg+xml;base64,{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(svgText))}";
+
+            SelectedPaymentInfo = new Modules.Financial.Application.Dtos.PaymentInfoResponseDto(
+                FaturaId: id,
+                BoletoId: 10,
+                ExternalChargeId: $"pay_mock_{id}",
+                Provider: BuildingBlocks.Shared.Enums.PaymentGatewayProvider.Mock,
+                LinhaDigitavel: "34191.79001 01043.510047 91020.150008 8 90000000045000",
+                CodigoBarras: "3419890000000004500017900101043510049102015000",
+                CodigoPixCopiaECola: "00020126580014BR.GOV.BCB.PIX0136zapcondo-demo-key-52040000530398654450.005802BR5915SmartCondo SaaS6009SAO PAULO62070503***6304ABCD",
+                PixQrCodeBase64: qrCodeBase64,
+                PdfUrl: $"https://sandbox.zapcondo.com.br/boletos/pdf/pay_mock_{id}.pdf",
+                StatusBoleto: summary?.Status.ToString() ?? "Gerado",
+                StatusFatura: summary?.Status.ToString() ?? "Pendente",
+                ValorOriginal: valor,
+                TotalFinal: valor,
+                DataVencimento: dtVenc,
+                DataPagamento: summary?.DataPagamento,
+                DataUltimaSincronizacao: DateTime.UtcNow
+            );
+            IsPaymentOpen = true;
+        }
+    }
+
+    private void ClosePaymentModal()
+    {
+        IsPaymentOpen = false;
+        SelectedPaymentInfo = null;
+    }
+
+    private async Task SyncPaymentAsync(int faturaId)
+    {
+        var res = await FinancialApi.SyncPaymentAsync(faturaId);
+        if (res.IsSuccess && res.Data != null)
+        {
+            SelectedPaymentInfo = res.Data;
+            await LoadInvoicesAsync();
+        }
     }
 
     private async Task HandleCancelInvoiceAsync(int id)

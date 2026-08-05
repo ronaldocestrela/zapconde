@@ -40,6 +40,16 @@ public class BoletoConfiguration : IEntityTypeConfiguration<Boleto>
         builder.Property(b => b.PdfUrl)
             .HasMaxLength(300);
 
+        builder.Property(b => b.PixQrCodeBase64)
+            .HasColumnType("text");
+
+        builder.Property(b => b.ExternalChargeId)
+            .HasMaxLength(100);
+
+        builder.Property(b => b.GatewayProvider)
+            .HasConversion<int>()
+            .IsRequired();
+
         builder.Property(b => b.Valor)
             .HasPrecision(18, 2)
             .IsRequired();
@@ -50,5 +60,6 @@ public class BoletoConfiguration : IEntityTypeConfiguration<Boleto>
 
         builder.HasIndex(b => new { b.TenantId, b.FaturaId }).IsUnique();
         builder.HasIndex(b => new { b.TenantId, b.NossoNumero }).IsUnique();
+        builder.HasIndex(b => new { b.TenantId, b.ExternalChargeId });
     }
 }
