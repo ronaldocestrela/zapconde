@@ -1,0 +1,191 @@
+/* Financial Simulator Styles matching Stitch Design System */
+.simulator-container {
+    padding: 1.5rem;
+    background-color: var(--bg-surface, #f7f9fb);
+    min-height: calc(100vh - 64px);
+    font-family: 'Manrope', sans-serif;
+}
+
+.simulator-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.simulator-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f436f;
+    margin: 0;
+}
+
+.simulator-subtitle {
+    font-size: 0.875rem;
+    color: #42474f;
+    margin-top: 0.25rem;
+}
+
+/* Grid Layout */
+.simulator-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .simulator-grid {
+        grid-template-columns: 360px 1fr;
+    }
+}
+
+/* Cards */
+.sim-card {
+    background: #ffffff;
+    border: 1px solid #c2c7d0;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sim-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f436f;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Form inputs */
+.sim-form-group {
+    margin-bottom: 1rem;
+}
+
+.sim-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #191c1e;
+    margin-bottom: 0.35rem;
+}
+
+.sim-input, .sim-select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #c2c7d0;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    color: #191c1e;
+    background-color: #ffffff;
+    transition: border-color 0.2s;
+}
+
+.sim-input:focus, .sim-select:focus {
+    outline: none;
+    border-color: #2e5b88;
+    box-shadow: 0 0 0 3px rgba(46, 91, 136, 0.15);
+}
+
+.sim-range {
+    width: 100%;
+    accent-color: #2e5b88;
+}
+
+/* KPI Summary Cards */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.kpi-card {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #e0e3e5;
+    text-align: center;
+}
+
+.kpi-card.highlight {
+    background-color: #2e5b88;
+    color: #ffffff;
+    border-color: #0f436f;
+}
+
+.kpi-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+.kpi-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin-top: 0.25rem;
+}
+
+/* Audit Trail / Memory */
+.audit-box {
+    background-color: #f2f4f6;
+    border-left: 4px solid #2e5b88;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    font-family: monospace, sans-serif;
+    font-size: 0.85rem;
+    color: #191c1e;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+/* Table */
+.sim-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.sim-table th {
+    background-color: #eceef0;
+    color: #0f436f;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid #c2c7d0;
+}
+
+.sim-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e0e3e5;
+    font-size: 0.9rem;
+}
+
+.sim-table tr:hover {
+    background-color: #f7f9fb;
+}
+
+/* Badges */
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-status.success {
+    background-color: #c2e9c7;
+    color: #00210c;
+}
+
+.badge-status.overdue {
+    background-color: #ffdad6;
+    color: #93000a;
+}

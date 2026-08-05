@@ -119,4 +119,24 @@ public class Fatura : ITenantScoped
             Status = StatusFatura.ParcialmentePago;
         }
     }
+
+    public ValueObjects.CalculoFinanceiroResultado AplicarCalculoAtualizado(
+        Services.CalculadoraFinanceira calculadora,
+        DateTime dataCalculo,
+        ValueObjects.ParametrosCalculoFinanceiro? parametrosCustomizados = null)
+    {
+        var parametros = parametrosCustomizados ?? new ValueObjects.ParametrosCalculoFinanceiro(
+            valorOriginal: ValorOriginal > 0 ? ValorOriginal : 1m,
+            dataVencimento: DataVencimento,
+            dataCalculo: dataCalculo,
+            valorDescontoPontualidade: ValorDesconto
+        );
+
+        var resultado = calculadora.CalcularEncargos(parametros);
+        ValorMulta = resultado.ValorMulta;
+        ValorJuros = resultado.ValorJuros;
+        ValorDesconto = resultado.ValorDesconto;
+        return resultado;
+    }
 }
+

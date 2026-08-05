@@ -347,7 +347,20 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Suíte de testes TDD: `FinancialDomainTests`, `FinancialArchitectureTests`, `FinancialIntegrationTests` (com PostgreSQL real via Testcontainers) — 100% aprovados.
   - Blazor UI: Páginas `/financeiro/faturas` e modal de detalhe/breakdown fidelizados ao design Stitch (telas `c42737e5cd7d470cb33958b9c365137a` e `030806297a4443d09003456026e4915d`).
 
-* [] **Subfase 3.1.2:** [TDD] Criar testes unitários para o cálculo de multas, juros pró-rata e desconto até o vencimento.
+* [x] **Subfase 3.1.2:** [TDD] Criar testes unitários para o cálculo de multas, juros pró-rata e desconto até o vencimento.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio: Value Objects `ParametrosCalculoFinanceiro`, `CalculoFinanceiroResultado` e Domain Service `CalculadoraFinanceira` determinístico com suporte a multa (2%), juros pró-rata dia (1% a.m.) e desconto de pontualidade com formatação `pt-BR`.
+  - Atualização da entidade `Fatura` com método `AplicarCalculoAtualizado`.
+  - Serviço de Aplicação: `FinancialCalculationService` + `IFinancialCalculationService` com Result Pattern (`Result<T>`) e isolamento multi-tenant (`ITenantScoped`).
+  - FastEndpoints API: `POST /api/financial/simulator/calculate`, `POST /api/financial/invoices/{id}/simulate` e `GET /api/financial/invoices/{id}/projection`.
+  - BDD: `tests/LivingDoc/Features/Fase3_1_2_CalculoMultaJurosDesconto.feature`.
+  - Suíte de testes TDD: `FinancialCalculationDomainTests`, `FinancialCalculationArchitectureTests` e `FinancialCalculationIntegrationTests` (com PostgreSQL real via Testcontainers) — 100% aprovados.
+  - Blazor UI: Página `/financeiro/simulador` com sliders de parâmetros, KPI Cards, memória de cálculo textual (trilha de auditoria) e tabela de projeções futuras fidelizada ao design do Stitch (telas `bcfc4ae7656347469cd286ab1a22af4c` e `6110ad872ff743eda6d65708b4c49944`) + `simulator.css` com tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
+  - Navegação: Atualização de `NavMenuItems.cs` e `NavMenu.razor` integrando a rota `/financeiro/simulador`.
+
 
 
 * [] **Subfase 3.1.3:** Integração com Gateway de Pagamento/PIX (Ex: Asaas, Juno/Ebanx ou Conta Simples).

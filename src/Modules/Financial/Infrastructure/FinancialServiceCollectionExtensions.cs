@@ -26,8 +26,11 @@ public static class FinancialServiceCollectionExtensions
             options.UseNpgsql(connectionString);
         });
 
+        services.AddSingleton<Domain.Services.CalculadoraFinanceira>();
         services.AddScoped<IInvoiceService, InvoiceService>();
+        services.AddScoped<IFinancialCalculationService, FinancialCalculationService>();
 
         return services;
     }
 }
+

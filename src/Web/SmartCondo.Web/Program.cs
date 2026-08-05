@@ -39,6 +39,7 @@ builder.Services.AddHttpClient<FinancialApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+builder.Services.AddSingleton<Modules.Financial.Domain.Services.CalculadoraFinanceira>();
 
 var app = builder.Build();
 

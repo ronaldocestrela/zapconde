@@ -1,0 +1,236 @@
+@page "/financeiro/simulador"
+@using Modules.Financial.Application.DTOs
+@using Modules.Financial.Domain.Services
+@using Modules.Financial.Domain.ValueObjects
+@rendermode InteractiveServer
+
+<PageTitle>Simulador Financeiro de Encargos - SmartCondo</PageTitle>
+
+<div class="simulator-container">
+    <!-- Header -->
+    <div class="simulator-header">
+        <div>
+            <h1 class="simulator-title">
+                <span class="material-symbols-outlined align-middle me-2 text-primary">calculate</span>
+                Simulador de Encargos e Reajuste Financeiro
+            </h1>
+            <p class="simulator-subtitle">
+                Calcule juros pró-rata dia, multa por atraso e desconto de pontualidade com memória de cálculo auditável.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/financeiro/faturas" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+                <span class="material-symbols-outlined">receipt_long</span>
+                Ver Faturas
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="simulator-grid">
+        <!-- Sidebar Form -->
+        <div class="sim-card">
+            <div class="sim-card-title">
+                <span class="material-symbols-outlined text-primary">tune</span>
+                Parâmetros do Cálculo
+            </div>
+
+            <div class="sim-form-group">
+                <label class="sim-label">Valor Original (R$)</label>
+                <input type="number" class="sim-input" step="0.01" min="0.01" @bind="ValorOriginal" @bind:after="Recalcular" />
+            </div>
+
+            <div class="sim-form-group">
+                <label class="sim-label">Data de Vencimento</label>
+                <input type="date" class="sim-input" @bind="DataVencimento" @bind:after="Recalcular" />
+            </div>
+
+            <div class="sim-form-group">
+                <label class="sim-label">Data de Simulação / Quitação</label>
+                <input type="date" class="sim-input" @bind="DataSimulacao" @bind:after="Recalcular" />
+            </div>
+
+            <div class="sim-form-group">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="sim-label mb-0">Multa por Atraso (%)</label>
+                    <span class="badge bg-primary-subtle text-primary fw-bold">@PercentualMulta.ToString("N1")%</span>
+                </div>
+                <input type="range" class="sim-range" min="0" max="10" step="0.5" @bind="PercentualMulta" @bind:after="Recalcular" />
+            </div>
+
+            <div class="sim-form-group">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="sim-label mb-0">Juros de Mora (% a.m.)</label>
+                    <span class="badge bg-primary-subtle text-primary fw-bold">@PercentualJurosMensal.ToString("N1")% a.m.</span>
+                </div>
+                <input type="range" class="sim-range" min="0" max="5" step="0.1" @bind="PercentualJurosMensal" @bind:after="Recalcular" />
+            </div>
+
+            <div class="sim-form-group">
+                <label class="sim-label">Desconto Pontualidade (R$)</label>
+                <input type="number" class="sim-input" step="0.01" min="0" @bind="ValorDescontoPontualidade" @bind:after="Recalcular" />
+            </div>
+
+            <button class="btn btn-primary w-100 mt-2 d-flex items-center justify-content-center gap-1" @onclick="Recalcular">
+                <span class="material-symbols-outlined">refresh</span>
+                Atualizar Simulação
+            </button>
+        </div>
+
+        <!-- Main Content Panel -->
+        <div>
+            <!-- KPI Summary Grid -->
+            <div class="kpi-grid">
+                <div class="kpi-card highlight">
+                    <div class="kpi-label">Total a Pagar</div>
+                    <div class="kpi-value">R$ @Resultado.ValorTotalCalculado.ToString("N2")</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Multa (@PercentualMulta%)</div>
+                    <div class="kpi-value text-danger">R$ @Resultado.ValorMulta.ToString("N2")</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Juros Pró-Rata</div>
+                    <div class="kpi-value text-danger">R$ @Resultado.ValorJuros.ToString("N2")</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Desconto Aplicado</div>
+                    <div class="kpi-value text-success">R$ @Resultado.ValorDesconto.ToString("N2")</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Atraso em Dias</div>
+                    <div class="kpi-value">
+                        @if (Resultado.DiasAtraso > 0)
+                        {
+                            <span class="badge-status overdue">@Resultado.DiasAtraso dia(s)</span>
+                        }
+                        else
+                        {
+                            <span class="badge-status success">Em Dia</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memory of Calculation (Audit Trail) -->
+            <div class="sim-card mb-4">
+                <div class="sim-card-title">
+                    <span class="material-symbols-outlined text-primary">description</span>
+                    Trilha de Auditoria & Memória de Cálculo Textual
+                </div>
+                <div class="audit-box">@Resultado.MemoriaCalculoTextual</div>
+            </div>
+
+            <!-- Projection Table -->
+            <div class="sim-card">
+                <div class="sim-card-title">
+                    <span class="material-symbols-outlined text-primary">timeline</span>
+                    Projeção Futura de Débitos por Dias de Atraso
+                </div>
+                <div class="table-responsive">
+                    <table class="sim-table">
+                        <thead>
+                            <tr>
+                                <th>Cenário / Atraso</th>
+                                <th>Data Prevista</th>
+                                <th>Multa (R$)</th>
+                                <th>Juros (R$)</th>
+                                <th>Desconto (R$)</th>
+                                <th>Total Final (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var proj in ObterProjecoes())
+                            {
+                                <tr class="@(proj.DiasAtraso == Resultado.DiasAtraso ? "table-active font-weight-bold" : "")">
+                                    <td>
+                                        @if (proj.DiasAtraso == 0)
+                                        {
+                                            <span class="badge bg-success-subtle text-success fw-bold">No Vencimento</span>
+                                        }
+                                        else
+                                        {
+                                            <span>+@proj.DiasAtraso dia(s)</span>
+                                        }
+                                    </td>
+                                    <td>@proj.DataProjecao.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-danger">R$ @proj.ValorMulta.ToString("N2")</td>
+                                    <td class="text-danger">R$ @proj.ValorJuros.ToString("N2")</td>
+                                    <td class="text-success">R$ @proj.ValorDesconto.ToString("N2")</td>
+                                    <td><strong>R$ @proj.ValorTotal.ToString("N2")</strong></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Microsoft.AspNetCore.Components.Inject]
+    public CalculadoraFinanceira? Calculadora { get; set; }
+
+    private CalculadoraFinanceira Calc => Calculadora ?? new CalculadoraFinanceira();
+
+    private decimal ValorOriginal { get; set; } = 850.00m;
+    private DateTime DataVencimento { get; set; } = DateTime.Today.AddDays(-10);
+    private DateTime DataSimulacao { get; set; } = DateTime.Today;
+    private decimal PercentualMulta { get; set; } = 2.0m;
+    private decimal PercentualJurosMensal { get; set; } = 1.0m;
+    private decimal ValorDescontoPontualidade { get; set; } = 20.00m;
+
+    private CalculoFinanceiroResultado Resultado { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        Recalcular();
+    }
+
+    private void Recalcular()
+    {
+        if (ValorOriginal <= 0) ValorOriginal = 100m;
+
+        var parametros = new ParametrosCalculoFinanceiro(
+            valorOriginal: ValorOriginal,
+            dataVencimento: DataVencimento,
+            dataCalculo: DataSimulacao,
+            percentualMulta: PercentualMulta,
+            percentualJurosMensal: PercentualJurosMensal,
+            valorDescontoPontualidade: ValorDescontoPontualidade
+        );
+
+        Resultado = Calc.CalcularEncargos(parametros);
+    }
+
+    private IEnumerable<ProjecaoItem> ObterProjecoes()
+    {
+        var intervalos = new[] { 0, 7, 15, 30, 60 };
+        var list = new List<ProjecaoItem>();
+
+        foreach (var dias in intervalos)
+        {
+            var dt = DataVencimento.AddDays(dias);
+            var p = new ParametrosCalculoFinanceiro(
+                valorOriginal: ValorOriginal,
+                dataVencimento: DataVencimento,
+                dataCalculo: dt,
+                percentualMulta: PercentualMulta,
+                percentualJurosMensal: PercentualJurosMensal,
+                valorDescontoPontualidade: ValorDescontoPontualidade
+            );
+            var res = Calc.CalcularEncargos(p);
+
+            list.Add(new ProjecaoItem(dias, dt, res.ValorMulta, res.ValorJuros, res.ValorDesconto, res.ValorTotalCalculado));
+        }
+
+        return list;
+    }
+
+    private record ProjecaoItem(int DiasAtraso, DateTime DataProjecao, decimal ValorMulta, decimal ValorJuros, decimal ValorDesconto, decimal ValorTotal);
+}
