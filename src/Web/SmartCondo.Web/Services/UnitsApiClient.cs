@@ -6,17 +6,12 @@ namespace SmartCondo.Web.Services;
 
 public sealed class UnitsApiClient(HttpClient httpClient, AuthSession session)
 {
-    private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
-
     public async Task<ApiResult<List<BlockModel>>> GetBlocksAsync(CancellationToken ct = default)
     {
         try
         {
             var response = await SendAuthorizedAsync(HttpMethod.Get, "/api/blocks", null, ct);
-            return await ParseAsync<List<BlockModel>>(response, ct);
+            return await UnitsApiResponseParser.ParseAsync<List<BlockModel>>(response, ct);
         }
         catch (Exception ex)
         {
@@ -30,7 +25,7 @@ public sealed class UnitsApiClient(HttpClient httpClient, AuthSession session)
         {
             var qs = BuildQuery(query);
             var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/units{qs}", null, ct);
-            return await ParseAsync<List<UnitListItemModel>>(response, ct);
+            return await UnitsApiResponseParser.ParseAsync<List<UnitListItemModel>>(response, ct);
         }
         catch (Exception ex)
         {
@@ -43,7 +38,7 @@ public sealed class UnitsApiClient(HttpClient httpClient, AuthSession session)
         try
         {
             var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/units", request, ct);
-            return await ParseAsync<UnitCreatedModel>(response, ct);
+            return await UnitsApiResponseParser.ParseAsync<UnitCreatedModel>(response, ct);
         }
         catch (Exception ex)
         {
@@ -56,7 +51,7 @@ public sealed class UnitsApiClient(HttpClient httpClient, AuthSession session)
         try
         {
             var response = await SendAuthorizedAsync(HttpMethod.Put, $"/api/units/{unitId}", request, ct);
-            return await ParseAsync<UnitListItemModel>(response, ct);
+            return await UnitsApiResponseParser.ParseAsync<UnitListItemModel>(response, ct);
         }
         catch (Exception ex)
         {
@@ -69,7 +64,7 @@ public sealed class UnitsApiClient(HttpClient httpClient, AuthSession session)
         try
         {
             var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/units/{unitId}/transfer", request, ct);
-            return await ParseAsync<object>(response, ct);
+            return await UnitsApiResponseParser.ParseAsync<object>(response, ct);
         }
         catch (Exception ex)
         {
@@ -82,7 +77,7 @@ public sealed class UnitsApiClient(HttpClient httpClient, AuthSession session)
         try
         {
             var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/units/{unitId}/history", null, ct);
-            return await ParseAsync<List<UnitHistoryItemModel>>(response, ct);
+            return await UnitsApiResponseParser.ParseAsync<List<UnitHistoryItemModel>>(response, ct);
         }
         catch (Exception ex)
         {
@@ -107,7 +102,7 @@ public sealed class UnitsApiClient(HttpClient httpClient, AuthSession session)
             }
 
             var response = await httpClient.SendAsync(request, ct);
-            return await ParseAsync<ImportPreviewModel>(response, ct);
+            return await UnitsApiResponseParser.ParseAsync<ImportPreviewModel>(response, ct);
         }
         catch (Exception ex)
         {
@@ -120,7 +115,7 @@ public sealed class UnitsApiClient(HttpClient httpClient, AuthSession session)
         try
         {
             var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/units/import/commit", request, ct);
-            return await ParseAsync<ImportCommitResultModel>(response, ct);
+            return await UnitsApiResponseParser.ParseAsync<ImportCommitResultModel>(response, ct);
         }
         catch (Exception ex)
         {
@@ -164,7 +159,19 @@ public sealed class UnitsApiClient(HttpClient httpClient, AuthSession session)
         return new ApiResult<T>(false, default, $"Não foi possível conectar à API em {baseUrl}. {ex.Message}", 0);
     }
 
-    private static async Task<ApiResult<T>> ParseAsync<T>(HttpResponseMessage response, CancellationToken ct)
+}
+
+/// <summary>
+/// Converte tanto o envelope Result do ZapCond quanto respostas ProblemDetails da API.
+/// </summary>
+public static class UnitsApiResponseParser
+{
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    public static async Task<ApiResult<T>> ParseAsync<T>(HttpResponseMessage response, CancellationToken ct = default)
     {
         var statusCode = (int)response.StatusCode;
         var json = await response.Content.ReadAsStringAsync(ct);
@@ -174,23 +181,104 @@ public sealed class UnitsApiClient(HttpClient httpClient, AuthSession session)
             return new ApiResult<T>(false, default, $"Resposta vazia da API (HTTP {statusCode}).", statusCode);
         }
 
-        using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var root = doc.RootElement;
-        var isSuccess = root.GetProperty("isSuccess").GetBoolean();
-        var message = root.TryGetProperty("message", out var msg) ? msg.GetString() ?? string.Empty : string.Empty;
-
-        if (!isSuccess)
+        System.Text.Json.JsonDocument doc;
+        try
         {
-            return new ApiResult<T>(false, default, message, statusCode);
+            doc = System.Text.Json.JsonDocument.Parse(json);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return new ApiResult<T>(
+                false,
+                default,
+                $"A API retornou uma resposta inválida (HTTP {statusCode}).",
+                statusCode);
         }
 
-        if (!root.TryGetProperty("data", out var data))
+        using (doc)
         {
-            return new ApiResult<T>(true, default, message, statusCode);
+            var root = doc.RootElement;
+
+            if (!root.TryGetProperty("isSuccess", out var isSuccessElement) ||
+                isSuccessElement.ValueKind is not System.Text.Json.JsonValueKind.True and
+                    not System.Text.Json.JsonValueKind.False)
+            {
+                return new ApiResult<T>(
+                    false,
+                    default,
+                    ExtractProblemDetails(root, statusCode),
+                    statusCode);
+            }
+
+            var isSuccess = isSuccessElement.GetBoolean();
+            var message = root.TryGetProperty("message", out var msg)
+                ? msg.GetString() ?? string.Empty
+                : string.Empty;
+
+            if (!isSuccess)
+            {
+                return new ApiResult<T>(false, default, message, statusCode);
+            }
+
+            if (!root.TryGetProperty("data", out var data) ||
+                data.ValueKind == System.Text.Json.JsonValueKind.Null)
+            {
+                return new ApiResult<T>(true, default, message, statusCode);
+            }
+
+            try
+            {
+                var payload = System.Text.Json.JsonSerializer.Deserialize<T>(data.GetRawText(), JsonOptions);
+                return new ApiResult<T>(true, payload, message, statusCode);
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                return new ApiResult<T>(
+                    false,
+                    default,
+                    $"Não foi possível interpretar os dados retornados pela API (HTTP {statusCode}).",
+                    statusCode);
+            }
+        }
+    }
+
+    private static string ExtractProblemDetails(System.Text.Json.JsonElement root, int statusCode)
+    {
+        var messages = new List<string>();
+
+        if (root.TryGetProperty("detail", out var detail) &&
+            detail.ValueKind == System.Text.Json.JsonValueKind.String &&
+            !string.IsNullOrWhiteSpace(detail.GetString()))
+        {
+            messages.Add(detail.GetString()!);
         }
 
-        var payload = System.Text.Json.JsonSerializer.Deserialize<T>(data.GetRawText(), JsonOptions);
-        return new ApiResult<T>(true, payload, message, statusCode);
+        if (root.TryGetProperty("errors", out var errors) &&
+            errors.ValueKind == System.Text.Json.JsonValueKind.Object)
+        {
+            foreach (var error in errors.EnumerateObject())
+            {
+                if (error.Value.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    messages.AddRange(error.Value.EnumerateArray()
+                        .Where(item => item.ValueKind == System.Text.Json.JsonValueKind.String)
+                        .Select(item => item.GetString()!)
+                        .Where(message => !string.IsNullOrWhiteSpace(message)));
+                }
+            }
+        }
+
+        if (messages.Count == 0 &&
+            root.TryGetProperty("title", out var title) &&
+            title.ValueKind == System.Text.Json.JsonValueKind.String &&
+            !string.IsNullOrWhiteSpace(title.GetString()))
+        {
+            messages.Add(title.GetString()!);
+        }
+
+        return messages.Count > 0
+            ? string.Join(" ", messages.Distinct())
+            : $"A API retornou uma resposta inesperada (HTTP {statusCode}).";
     }
 }
 

@@ -34,6 +34,34 @@ public sealed class UnitResidentIntegrationTests : IClassFixture<IdentityWebAppl
     }
 
     [Fact]
+    public async Task CreateUnit_WithPayloadSerializedByBlazor_Should_Return201()
+    {
+        await _factory.ResetDatabaseAsync();
+        var client = await CreateAuthenticatedClientAsync();
+        var payload = new
+        {
+            blocoCodigo = "Bloco A",
+            numero = "103",
+            status = "Vaga",
+            moradorNome = "Maria Souza",
+            moradorCpf = "11144477735",
+            moradorEmail = "maria@test.com",
+            moradorTelefone = "+5511988887777",
+            papel = "Proprietario",
+            dataInicio = new DateTime(2024, 2, 1),
+            dependencias = new[] { "Pets" }
+        };
+
+        var response = await client.PostAsJsonAsync("/api/units", payload);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().Contain("\"isSuccess\":true");
+        json.Should().Contain("\"unitId\":");
+        json.Should().Contain("\"residentId\":");
+    }
+
+    [Fact]
     public async Task CreateUnit_WithDuplicateNumber_Should_Return409()
     {
         await _factory.ResetDatabaseAsync();
