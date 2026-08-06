@@ -1,0 +1,63 @@
+@using Modules.Operations.Application.DTOs
+@using Microsoft.JSInterop
+
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white border-0 py-3">
+                <h5 class="modal-title d-flex align-items-center gap-2 fw-bold">
+                    <span class="material-symbols-outlined text-warning">description</span>
+                    Ata Oficial da Assembleia — @Assembleia.Titulo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="OnClose"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted small">
+                        <strong>Lavrada em:</strong> @(Assembleia.AtaGeradaEm.HasValue ? Assembleia.AtaGeradaEm.Value.ToString("dd/MM/yyyy HH:mm:ss") + " UTC" : "N/A")
+                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" @onclick="CopyAtaToClipboard">
+                        <span class="material-symbols-outlined fs-6">content_copy</span>
+                        <span>Copiar Texto da Ata</span>
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(CopiedMessage))
+                {
+                    <div class="alert alert-info py-2 small mb-3">
+                        @CopiedMessage
+                    </div>
+                }
+
+                <div class="ata-content-box">@AtaTexto</div>
+            </div>
+
+            <div class="modal-footer bg-light border-0 py-3">
+                <button type="button" class="btn btn-secondary" @onclick="OnClose">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public AssembleiaDto Assembleia { get; set; } = default!;
+    [Parameter] public string AtaTexto { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    private string? CopiedMessage;
+
+    private async Task CopyAtaToClipboard()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", AtaTexto);
+            CopiedMessage = "Ata copiada para a área de transferência com sucesso!";
+        }
+        catch
+        {
+            CopiedMessage = "Selecione o texto acima para copiar manualmente.";
+        }
+    }
+}

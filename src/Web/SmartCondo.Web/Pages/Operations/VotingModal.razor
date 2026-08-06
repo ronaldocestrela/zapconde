@@ -1,0 +1,186 @@
+@using Modules.Operations.Application.DTOs
+@using Modules.Operations.Domain.Enums
+
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0 py-3">
+                <div>
+                    <h5 class="modal-title d-flex align-items-center gap-2 fw-bold mb-1">
+                        <span class="material-symbols-outlined">how_to_vote</span>
+                        Votação da Assembleia — @Assembleia.Titulo
+                    </h5>
+                    <div class="small opacity-75 d-flex align-items-center gap-3">
+                        <span><strong>Tipo:</strong> @Assembleia.Tipo</span>
+                        <span>•</span>
+                        <span><strong>Status:</strong> @Assembleia.Status</span>
+                        <span>•</span>
+                        <span><strong>Participação:</strong> @Assembleia.QuorumUnidadesParticipantes unidade(s)</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" @onclick="OnClose"></button>
+            </div>
+
+            <div class="modal-body p-4 bg-light" style="max-height: 80vh; overflow-y: auto;">
+                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined">error</span>
+                        <span>@ErrorMessage</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+                {
+                    <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        <span>@SuccessMessage</span>
+                    </div>
+                }
+
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="fw-bold text-secondary mb-2">Edital / Informações Gerais</h6>
+                        <p class="text-muted mb-0">@(string.IsNullOrWhiteSpace(Assembleia.Descricao) ? "Sem edital cadastrado." : Assembleia.Descricao)</p>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3 d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined">ballot</span>
+                    Pautas em Deliberação (@Assembleia.Pautas.Count)
+                </h6>
+
+                @foreach (var pauta in Assembleia.Pautas.OrderBy(p => p.Ordem))
+                {
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-1">Pauta #@pauta.Ordem: @pauta.Titulo</h5>
+                                    <p class="text-muted mb-0 small">@pauta.Descricao</p>
+                                </div>
+                                <span class="badge bg-info text-dark">@pauta.TipoVotacao</span>
+                            </div>
+
+                            <!-- Live Results Progress Bars -->
+                            <div class="bg-light p-3 rounded mb-3 border">
+                                <div class="d-flex justify-content-between text-muted small fw-semibold mb-2">
+                                    <span>Apuração Parcial de Votos (@pauta.TotalVotos voto(s))</span>
+                                    <span>Quórum: @pauta.Votos.Select(v => v.UnidadeId).Distinct().Count() unidade(s)</span>
+                                </div>
+
+                                @foreach (var opcao in pauta.OpcoesDisponiveis)
+                                {
+                                    int contagem = pauta.ContagemVotos.TryGetValue(opcao, out var c) ? c : 0;
+                                    double pct = pauta.TotalVotos > 0 ? (contagem * 100.0 / pauta.TotalVotos) : 0;
+
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between small fw-medium mb-1">
+                                            <span>@opcao</span>
+                                            <span>@contagem voto(s) (@pct.ToString("F1")%)</span>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar @GetProgressBarClass(opcao)" role="progressbar" style="width: @(pct)%" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Voting Action Bar -->
+                            @if (Assembleia.Status == StatusAssembleia.EmAndamento && pauta.Status == StatusPauta.Aberta)
+                            {
+                                <div class="p-3 bg-white border rounded">
+                                    <label class="form-label fw-bold text-secondary mb-2 small text-uppercase">Registrar Voto de sua Unidade Habitacional</label>
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-md-3">
+                                            <input type="text" class="form-control form-control-sm" @bind="UnidadeInput" placeholder="Nº da Unidade (ex: 101)" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="btn-group w-100" role="group">
+                                                @foreach (var op in pauta.OpcoesDisponiveis)
+                                                {
+                                                    var isSelected = SelectedOptions.TryGetValue(pauta.Id, out var s) && s == op;
+                                                    <button type="button" class="btn btn-sm @(isSelected ? "btn-primary fw-bold" : "btn-outline-secondary")" @onclick="() => SelectOption(pauta.Id, op)">
+                                                        @op
+                                                    </button>
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button type="button" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1"
+                                                    disabled="@(!SelectedOptions.ContainsKey(pauta.Id) || string.IsNullOrWhiteSpace(UnidadeInput))"
+                                                    @onclick="() => SubmitVote(pauta.Id)">
+                                                <span class="material-symbols-outlined fs-6">how_to_vote</span>
+                                                <span>Confirmar Voto</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-secondary py-2 mb-0 small text-center">
+                                    Votação encerrada nesta pauta.
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer bg-light border-0 py-3">
+                <button type="button" class="btn btn-secondary" @onclick="OnClose">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public AssembleiaDto Assembleia { get; set; } = default!;
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<(Guid assembleiaId, Guid pautaId, RegistrarVotoRequest request)> OnVoteSubmitted { get; set; }
+
+    private string UnidadeInput { get; set; } = "101";
+    private Dictionary<Guid, string> SelectedOptions = new();
+    private string? ErrorMessage;
+    private string? SuccessMessage;
+
+    private void SelectOption(Guid pautaId, string option)
+    {
+        SelectedOptions[pautaId] = option;
+    }
+
+    private async Task SubmitVote(Guid pautaId)
+    {
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        if (!SelectedOptions.TryGetValue(pautaId, out var option) || string.IsNullOrWhiteSpace(option))
+        {
+            ErrorMessage = "Selecione uma opção de voto.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(UnidadeInput))
+        {
+            ErrorMessage = "Informe o número da sua unidade habitacional.";
+            return;
+        }
+
+        var req = new RegistrarVotoRequest(
+            MoradorUserId: $"user-{UnidadeInput.Trim()}",
+            UnidadeId: UnidadeInput.Trim(),
+            OpcaoEscolhida: option,
+            PesoVoto: 1.0
+        );
+
+        await OnVoteSubmitted.InvokeAsync((Assembleia.Id, pautaId, req));
+    }
+
+    private string GetProgressBarClass(string option) => option.ToLower() switch
+    {
+        "sim" => "bg-success",
+        "não" or "nao" => "bg-danger",
+        _ => "bg-warning text-dark"
+    };
+}

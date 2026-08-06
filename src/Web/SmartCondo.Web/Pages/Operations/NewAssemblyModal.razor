@@ -1,0 +1,202 @@
+@using Modules.Operations.Application.DTOs
+@using Modules.Operations.Domain.Enums
+
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg style-modal">
+            <div class="modal-header bg-primary text-white border-0 py-3">
+                <h5 class="modal-title d-flex align-items-center gap-2 fw-bold">
+                    <span class="material-symbols-outlined">gavel</span>
+                    Cadastrar Nova Assembleia Virtual
+                </h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="OnClose"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined">error</span>
+                        <span>@ErrorMessage</span>
+                    </div>
+                }
+
+                <form @onsubmit="HandleSubmit">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Título da Assembleia <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" @bind="Model.Titulo" placeholder="Ex: Assembleia Geral Ordinária 2026" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tipo <span class="text-danger">*</span></label>
+                            <select class="form-select" @bind="Model.Tipo">
+                                <option value="@TipoAssembleia.Ordinaria">Ordinária</option>
+                                <option value="@TipoAssembleia.Extraordinaria">Extraordinária</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Data e Hora de Início <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" @bind="Model.DataInicio" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Data e Hora de Encerramento <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" @bind="Model.DataFim" required />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Descrição / Edital de Convocação</label>
+                            <textarea class="form-control" rows="3" @bind="Model.Descricao" placeholder="Descreva os objetivos da convocação da assembleia..."></textarea>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0 text-primary d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined">format_list_bulleted</span>
+                            Pautas de Votação
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" @onclick="AddPautaInput">
+                            <span class="material-symbols-outlined fs-6">add</span>
+                            Adicionar Pauta
+                        </button>
+                    </div>
+
+                    @if (Pautas.Count == 0)
+                    {
+                        <div class="text-center py-3 bg-light rounded text-muted">
+                            Nenhuma pauta adicionada ainda. Clique em "Adicionar Pauta" para incluir deliberações.
+                        </div>
+                    }
+                    else
+                    {
+                        @for (int i = 0; i < Pautas.Count; i++)
+                        {
+                            var index = i;
+                            var pauta = Pautas[index];
+                            <div class="card mb-3 border-light shadow-sm bg-light">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-secondary">Pauta #@(index + 1)</span>
+                                        <button type="button" class="btn btn-sm text-danger" @onclick="() => RemovePautaInput(index)">
+                                            <span class="material-symbols-outlined fs-6">delete</span>
+                                        </button>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-7">
+                                            <input type="text" class="form-control form-control-sm" @bind="pauta.Titulo" placeholder="Título da pauta (ex: Aprovação de Contas)" required />
+                                        </div>
+                                        <div class="col-md-5">
+                                            <select class="form-select form-select-sm" @bind="pauta.TipoVotacao">
+                                                <option value="@TipoVotacao.MaioriaSimples">Maioria Simples (50% + 1)</option>
+                                                <option value="@TipoVotacao.MaioriaQualificada">Maioria Qualificada (2/3)</option>
+                                                <option value="@TipoVotacao.Unanimidade">Unanimidade (100%)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <input type="text" class="form-control form-control-sm" @bind="pauta.Descricao" placeholder="Descrição opcional ou detalhes da pauta" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-secondary" @onclick="OnClose">Cancelar</button>
+                        <button type="submit" class="btn btn-primary d-flex align-items-center gap-2" disabled="@IsSubmitting">
+                            @if (IsSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                <span>Salvando...</span>
+                            }
+                            else
+                            {
+                                <span class="material-symbols-outlined fs-5">save</span>
+                                <span>Cadastrar Assembleia</span>
+                            }
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<CreateAssembleiaRequest> OnSave { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
+
+    private FormModel Model = new();
+    private List<PautaFormModel> Pautas = new();
+    private bool IsSubmitting = false;
+
+    protected override void OnInitialized()
+    {
+        Model.DataInicio = DateTime.Today.AddDays(1).AddHours(19);
+        Model.DataFim = Model.DataInicio.AddDays(2);
+
+        // Add 1 default pauta
+        Pautas.Add(new PautaFormModel { Titulo = "Aprovação do OrçamentoAnual", TipoVotacao = TipoVotacao.MaioriaSimples });
+    }
+
+    private void AddPautaInput()
+    {
+        Pautas.Add(new PautaFormModel { TipoVotacao = TipoVotacao.MaioriaSimples });
+    }
+
+    private void RemovePautaInput(int index)
+    {
+        if (index >= 0 && index < Pautas.Count)
+        {
+            Pautas.RemoveAt(index);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        IsSubmitting = true;
+        try
+        {
+            var pautasInput = Pautas
+                .Where(p => !string.IsNullOrWhiteSpace(p.Titulo))
+                .Select(p => new CreatePautaInput(p.Titulo, p.TipoVotacao, p.Descricao))
+                .ToList();
+
+            var request = new CreateAssembleiaRequest(
+                CondoId: 1,
+                Titulo: Model.Titulo,
+                Tipo: Model.Tipo,
+                DataInicio: Model.DataInicio,
+                DataFim: Model.DataFim,
+                CriadoPorUserId: "sindico-atual",
+                Descricao: Model.Descricao,
+                PautasInicial: pautasInput
+            );
+
+            await OnSave.InvokeAsync(request);
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private class FormModel
+    {
+        public string Titulo { get; set; } = string.Empty;
+        public TipoAssembleia Tipo { get; set; } = TipoAssembleia.Ordinaria;
+        public DateTime DataInicio { get; set; }
+        public DateTime DataFim { get; set; }
+        public string? Descricao { get; set; }
+    }
+
+    private class PautaFormModel
+    {
+        public string Titulo { get; set; } = string.Empty;
+        public TipoVotacao TipoVotacao { get; set; } = TipoVotacao.MaioriaSimples;
+        public string? Descricao { get; set; }
+    }
+}

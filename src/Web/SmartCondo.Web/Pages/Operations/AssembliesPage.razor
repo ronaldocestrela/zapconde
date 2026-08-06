@@ -1,0 +1,387 @@
+@page "/operacoes/assembleias"
+@using SmartCondo.Web.Components.Layout
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Microsoft.AspNetCore.Components.Web
+@using Modules.Operations.Application.DTOs
+@using Modules.Operations.Domain.Enums
+@using SmartCondo.Web.Services
+@using SmartCondo.Web.Components.Pages.Operations
+@inject OperationsApiClient OperationsApi
+
+<PageTitle>Assembleias Virtuais - SmartCondo</PageTitle>
+
+<link href="css/assemblies.css" rel="stylesheet" />
+
+<div class="container-fluid px-4 py-4">
+    <!-- Top Operations Sub-Navigation Tabs -->
+    <OperationsNavTabs />
+
+    <!-- Header Section -->
+    <div class="assemblies-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                <span class="material-symbols-outlined fs-2">gavel</span>
+                Assembleias Virtuais
+            </h2>
+            <p class="mb-0 text-white-50">Gestão democrática de pautas, deliberações, votação por unidade habitacional e lavratura de atas oficiais.</p>
+        </div>
+        <button class="btn btn-light btn-lg fw-bold d-flex align-items-center gap-2 shadow-sm" @onclick="OpenNewAssemblyModal">
+            <span class="material-symbols-outlined text-primary">add_circle</span>
+            <span class="text-primary">Nova Assembleia</span>
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+            <span class="material-symbols-outlined">error</span>
+            <span>@ErrorMessage</span>
+            <button class="btn-close ms-auto" @onclick="() => ErrorMessage = null"></button>
+        </div>
+    }
+
+    <!-- KPI Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="assemblies-kpi-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold">EM ANDAMENTO</span>
+                    <span class="material-symbols-outlined text-success">how_to_vote</span>
+                </div>
+                <h3 class="fw-bold mb-0 text-success">@(Summary?.EmAndamento ?? 0)</h3>
+                <span class="small text-muted">Assembleias abertas para votação</span>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="assemblies-kpi-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold">AGENDADAS</span>
+                    <span class="material-symbols-outlined text-warning">event</span>
+                </div>
+                <h3 class="fw-bold mb-0 text-warning">@(Summary?.Agendadas ?? 0)</h3>
+                <span class="small text-muted">Aguardando data de abertura</span>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="assemblies-kpi-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold">ENCERRADAS</span>
+                    <span class="material-symbols-outlined text-secondary">task_alt</span>
+                </div>
+                <h3 class="fw-bold mb-0 text-dark">@(Summary?.Encerradas ?? 0)</h3>
+                <span class="small text-muted">Com Ata Oficial lavrada</span>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="assemblies-kpi-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold">TOTAL DE VOTOS</span>
+                    <span class="material-symbols-outlined text-primary">ballot</span>
+                </div>
+                <h3 class="fw-bold mb-0 text-primary">@(Summary?.TotalVotosRegistrados ?? 0)</h3>
+                <span class="small text-muted">Votos registrados nas pautas</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <span class="material-symbols-outlined">search</span>
+                        </span>
+                        <input type="text" class="form-control border-start-0 ps-0" placeholder="Buscar assembleia por título..." @bind="SearchTerm" @bind:event="oninput" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-sm @(SelectedStatusFilter == null ? "btn-primary" : "btn-outline-secondary")" @onclick="() => FilterByStatus(null)">Todas</button>
+                        <button type="button" class="btn btn-sm @(SelectedStatusFilter == StatusAssembleia.EmAndamento ? "btn-success" : "btn-outline-secondary")" @onclick="() => FilterByStatus(StatusAssembleia.EmAndamento)">Em Andamento</button>
+                        <button type="button" class="btn btn-sm @(SelectedStatusFilter == StatusAssembleia.Agendada ? "btn-warning text-dark" : "btn-outline-secondary")" @onclick="() => FilterByStatus(StatusAssembleia.Agendada)">Agendadas</button>
+                        <button type="button" class="btn btn-sm @(SelectedStatusFilter == StatusAssembleia.Encerrada ? "btn-secondary" : "btn-outline-secondary")" @onclick="() => FilterByStatus(StatusAssembleia.Encerrada)">Encerradas</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assembly Cards Grid -->
+    @if (IsLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Carregando assembleias...</span>
+            </div>
+            <p class="mt-2 text-muted fw-semibold">Carregando assembleias virtuais...</p>
+        </div>
+    }
+    else if (!FilteredAssemblies.Any())
+    {
+        <div class="text-center py-5 card border-0 shadow-sm">
+            <div class="card-body">
+                <span class="material-symbols-outlined text-muted" style="font-size: 4rem;">gavel</span>
+                <h5 class="fw-bold text-secondary mt-2">Nenhuma assembleia encontrada</h5>
+                <p class="text-muted mb-3">Não há assembleias cadastradas com os filtros selecionados.</p>
+                <button class="btn btn-primary" @onclick="OpenNewAssemblyModal">Cadastrar Primeira Assembleia</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var ass in FilteredAssemblies)
+            {
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="assembly-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge rounded-pill px-3 py-2 fw-semibold @GetStatusBadgeClass(ass.Status)">
+                                @ass.Status
+                            </span>
+                            <span class="badge bg-light text-dark border fw-medium">
+                                @ass.Tipo
+                            </span>
+                        </div>
+
+                        <h5 class="fw-bold text-dark mb-2">@ass.Titulo</h5>
+                        <p class="text-muted small mb-3 text-truncate-2" style="min-height: 2.4rem;">
+                            @(string.IsNullOrWhiteSpace(ass.Descricao) ? "Sem edital de convocação cadastrado." : ass.Descricao)
+                        </p>
+
+                        <div class="bg-light p-3 rounded mb-3 border">
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span><span class="material-symbols-outlined fs-6 align-middle">calendar_month</span> Início:</span>
+                                <span class="fw-semibold">@ass.DataInicio.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span><span class="material-symbols-outlined fs-6 align-middle">event_busy</span> Término:</span>
+                                <span class="fw-semibold">@ass.DataFim.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted">
+                                <span><span class="material-symbols-outlined fs-6 align-middle">ballot</span> Pautas:</span>
+                                <span class="fw-semibold">@ass.TotalPautas pauta(s)</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between small fw-semibold text-muted mb-1">
+                                <span>Quórum Participante</span>
+                                <span>@ass.QuorumUnidadesParticipantes unidade(s)</span>
+                            </div>
+                            <div class="quorum-progress-container mb-3">
+                                <div class="quorum-progress-bar" style="width: @Math.Min(100, ass.QuorumUnidadesParticipantes * 10)%"></div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                @if (ass.Status == StatusAssembleia.Agendada)
+                                {
+                                    <button class="btn btn-sm btn-outline-success w-100 d-flex align-items-center justify-content-center gap-1" @onclick="() => StartAssembly(ass.Id)">
+                                        <span class="material-symbols-outlined fs-6">play_arrow</span>
+                                        <span>Iniciar Agora</span>
+                                    </button>
+                                }
+                                else if (ass.Status == StatusAssembleia.EmAndamento)
+                                {
+                                    <button class="btn btn-sm btn-primary w-100 d-flex align-items-center justify-content-center gap-1" @onclick="() => OpenVotingModal(ass)">
+                                        <span class="material-symbols-outlined fs-6">how_to_vote</span>
+                                        <span>Votar / Detalhes</span>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-outline-dark d-flex align-items-center justify-content-center" title="Encerrar & Gerar Ata" @onclick="() => FinalizeAssembly(ass.Id)">
+                                        <span class="material-symbols-outlined fs-6">task_alt</span>
+                                    </button>
+                                }
+                                else if (ass.Status == StatusAssembleia.Encerrada)
+                                {
+                                    <button class="btn btn-sm btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-1" @onclick="() => OpenAtaModal(ass)">
+                                        <span class="material-symbols-outlined fs-6">description</span>
+                                        <span>Ver Ata Oficial</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Modals -->
+@if (ShowNewModal)
+{
+    <NewAssemblyModal OnClose="() => ShowNewModal = false" OnSave="HandleCreateAssembly" ErrorMessage="@ModalErrorMessage" />
+}
+
+@if (SelectedVotingAssembly != null)
+{
+    <VotingModal Assembleia="SelectedVotingAssembly" OnClose="() => SelectedVotingAssembly = null" OnVoteSubmitted="HandleVoteSubmitted" />
+}
+
+@if (SelectedAtaAssembly != null)
+{
+    <AssemblyAtaModal Assembleia="SelectedAtaAssembly" AtaTexto="@(SelectedAtaAssembly.AtaTexto ?? string.Empty)" OnClose="() => SelectedAtaAssembly = null" />
+}
+
+@code {
+    private List<AssembleiaDto> Assemblies = new();
+    private AssembleiaSummaryDto? Summary;
+    private bool IsLoading = true;
+    private string? ErrorMessage;
+    private string SearchTerm = string.Empty;
+    private StatusAssembleia? SelectedStatusFilter;
+
+    private bool ShowNewModal = false;
+    private string? ModalErrorMessage;
+
+    private AssembleiaDto? SelectedVotingAssembly;
+    private AssembleiaDto? SelectedAtaAssembly;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        try
+        {
+            var summaryResult = await OperationsApi.GetAssemblySummaryAsync(condoId: 1);
+            if (summaryResult.IsSuccess && summaryResult.Data != null)
+            {
+                Summary = summaryResult.Data;
+            }
+
+            var assembliesResult = await OperationsApi.GetAssembliesAsync(condoId: 1);
+            if (assembliesResult.IsSuccess && assembliesResult.Data != null)
+            {
+                Assemblies = assembliesResult.Data.ToList();
+            }
+            else if (!assembliesResult.IsSuccess)
+            {
+                ErrorMessage = assembliesResult.Message;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Erro ao carregar dados: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private IEnumerable<AssembleiaDto> FilteredAssemblies
+    {
+        get
+        {
+            var query = Assemblies.AsEnumerable();
+
+            if (SelectedStatusFilter.HasValue)
+            {
+                query = query.Where(a => a.Status == SelectedStatusFilter.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                query = query.Where(a => a.Titulo.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return query;
+        }
+    }
+
+    private void FilterByStatus(StatusAssembleia? status)
+    {
+        SelectedStatusFilter = status;
+    }
+
+    private void OpenNewAssemblyModal()
+    {
+        ModalErrorMessage = null;
+        ShowNewModal = true;
+    }
+
+    private async Task HandleCreateAssembly(CreateAssembleiaRequest request)
+    {
+        ModalErrorMessage = null;
+        var result = await OperationsApi.CreateAssemblyAsync(request);
+        if (result.IsSuccess)
+        {
+            ShowNewModal = false;
+            await LoadDataAsync();
+        }
+        else
+        {
+            ModalErrorMessage = result.Message;
+        }
+    }
+
+    private void OpenVotingModal(AssembleiaDto assembleia)
+    {
+        SelectedVotingAssembly = assembleia;
+    }
+
+    private async Task HandleVoteSubmitted((Guid assembleiaId, Guid pautaId, RegistrarVotoRequest request) args)
+    {
+        var result = await OperationsApi.RegisterVoteAsync(args.assembleiaId, args.pautaId, args.request);
+        if (result.IsSuccess && result.Data != null)
+        {
+            SelectedVotingAssembly = result.Data;
+            await LoadDataAsync();
+        }
+        else
+        {
+            ErrorMessage = result.Message;
+        }
+    }
+
+    private async Task StartAssembly(Guid id)
+    {
+        var result = await OperationsApi.UpdateAssemblyStatusAsync(id, StatusAssembleia.EmAndamento);
+        if (result.IsSuccess)
+        {
+            await LoadDataAsync();
+        }
+        else
+        {
+            ErrorMessage = result.Message;
+        }
+    }
+
+    private async Task FinalizeAssembly(Guid id)
+    {
+        var result = await OperationsApi.FinalizeAssemblyAsync(id);
+        if (result.IsSuccess)
+        {
+            await LoadDataAsync();
+        }
+        else
+        {
+            ErrorMessage = result.Message;
+        }
+    }
+
+    private void OpenAtaModal(AssembleiaDto assembleia)
+    {
+        SelectedAtaAssembly = assembleia;
+    }
+
+    private string GetStatusBadgeClass(StatusAssembleia status) => status switch
+    {
+        StatusAssembleia.EmAndamento => "badge-status-emandamento",
+        StatusAssembleia.Agendada => "badge-status-agendada",
+        StatusAssembleia.Encerrada => "badge-status-encerrada",
+        StatusAssembleia.Cancelada => "badge-status-cancelada",
+        _ => "bg-secondary text-white"
+    };
+}

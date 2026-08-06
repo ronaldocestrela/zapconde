@@ -1,0 +1,122 @@
+/* ==========================================================================
+   Stitch Design System - Virtual Assemblies Stylesheet (Fase 4.2.3)
+   ========================================================================== */
+
+:root {
+    --stitch-primary: #2E5B88;
+    --stitch-primary-dark: #1E3D5C;
+    --stitch-accent: #A3C9A8;
+    --stitch-sand: #F4EAE1;
+    --stitch-sand-light: #FAF6F0;
+    --stitch-card-bg: #FFFFFF;
+    --stitch-card-border: #E8EEF5;
+    --stitch-text-dark: #1D2A3A;
+    --stitch-text-muted: #64748B;
+    --stitch-radius-lg: 16px;
+    --stitch-radius-md: 12px;
+    --stitch-radius-sm: 8px;
+    --stitch-shadow-sm: 0 2px 8px rgba(46, 91, 136, 0.06);
+    --stitch-shadow-md: 0 4px 16px rgba(46, 91, 136, 0.1);
+    --stitch-shadow-hover: 0 8px 24px rgba(46, 91, 136, 0.15);
+}
+
+.assemblies-header {
+    background: linear-gradient(135deg, var(--stitch-primary) 0%, var(--stitch-primary-dark) 100%);
+    border-radius: var(--stitch-radius-lg);
+    padding: 2rem;
+    color: #FFFFFF;
+    box-shadow: var(--stitch-shadow-md);
+}
+
+.assemblies-kpi-card {
+    background: #FFFFFF;
+    border: 1px solid var(--stitch-card-border);
+    border-radius: var(--stitch-radius-md);
+    padding: 1.25rem;
+    box-shadow: var(--stitch-shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.assemblies-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--stitch-shadow-hover);
+}
+
+.assembly-card {
+    background: #FFFFFF;
+    border: 1px solid var(--stitch-card-border);
+    border-radius: var(--stitch-radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--stitch-shadow-sm);
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.assembly-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--stitch-shadow-hover);
+    border-color: var(--stitch-primary);
+}
+
+/* Status Badges */
+.badge-status-emandamento {
+    background-color: #ECFDF5;
+    color: #047857;
+    border: 1px solid #A7F3D0;
+    animation: pulse-border 2s infinite;
+}
+
+.badge-status-agendada {
+    background-color: #FFFBEB;
+    color: #B45309;
+    border: 1px solid #FDE68A;
+}
+
+.badge-status-encerrada {
+    background-color: #F1F5F9;
+    color: #475569;
+    border: 1px solid #CBD5E1;
+}
+
+.badge-status-cancelada {
+    background-color: #FEF2F2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+}
+
+@keyframes pulse-border {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Progress bar for quorum and voting */
+.quorum-progress-container {
+    background-color: #F1F5F9;
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+}
+
+.quorum-progress-bar {
+    background: linear-gradient(90deg, var(--stitch-primary) 0%, var(--stitch-accent) 100%);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.ata-content-box {
+    background-color: var(--stitch-sand-light);
+    border: 1px solid #E2E8F0;
+    border-radius: var(--stitch-radius-md);
+    padding: 1.5rem;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: #1E293B;
+    max-height: 500px;
+    overflow-y: auto;
+}

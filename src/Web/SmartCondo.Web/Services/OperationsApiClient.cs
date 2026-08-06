@@ -474,6 +474,154 @@ public sealed class OperationsApiClient(HttpClient httpClient, AuthSession sessi
         }
     }
 
+    // =========================================================================
+    // ASSEMBLEIAS VIRTUAIIS
+    // =========================================================================
+
+    public async Task<ApiResult<IEnumerable<AssembleiaDto>>> GetAssembliesAsync(
+        int condoId = 1,
+        StatusAssembleia? status = null,
+        TipoAssembleia? tipo = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var queryParams = new List<string> { $"condoId={condoId}" };
+            if (status.HasValue) queryParams.Add($"status={(int)status.Value}");
+            if (tipo.HasValue) queryParams.Add($"tipo={(int)tipo.Value}");
+
+            var queryString = "?" + string.Join("&", queryParams);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/assemblies{queryString}", null, ct);
+            return await ParseAsync<IEnumerable<AssembleiaDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<AssembleiaDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<AssembleiaDto>> GetAssemblyByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/assemblies/{id}", null, ct);
+            return await ParseAsync<AssembleiaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<AssembleiaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<AssembleiaSummaryDto>> GetAssemblySummaryAsync(int condoId = 1, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/assemblies/summary?condoId={condoId}", null, ct);
+            return await ParseAsync<AssembleiaSummaryDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<AssembleiaSummaryDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<AssembleiaDto>> CreateAssemblyAsync(CreateAssembleiaRequest request, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/operations/assemblies", request, ct);
+            return await ParseAsync<AssembleiaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<AssembleiaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<AssembleiaDto>> UpdateAssemblyStatusAsync(Guid id, StatusAssembleia novoStatus, CancellationToken ct = default)
+    {
+        try
+        {
+            var body = new { Id = id, NovoStatus = novoStatus };
+            using var response = await SendAuthorizedAsync(HttpMethod.Patch, $"/api/operations/assemblies/{id}/status", body, ct);
+            return await ParseAsync<AssembleiaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<AssembleiaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<AssembleiaDto>> AddPautaAsync(Guid assembleiaId, CreatePautaInput input, CancellationToken ct = default)
+    {
+        try
+        {
+            var body = new
+            {
+                AssembleiaId = assembleiaId,
+                input.Titulo,
+                input.TipoVotacao,
+                input.Descricao,
+                input.OpcoesDisponiveis
+            };
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/operations/assemblies/{assembleiaId}/pautas", body, ct);
+            return await ParseAsync<AssembleiaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<AssembleiaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<AssembleiaDto>> RegisterVoteAsync(Guid assembleiaId, Guid pautaId, RegistrarVotoRequest request, CancellationToken ct = default)
+    {
+        try
+        {
+            var body = new
+            {
+                AssembleiaId = assembleiaId,
+                PautaId = pautaId,
+                request.MoradorUserId,
+                request.UnidadeId,
+                request.OpcaoEscolhida,
+                request.PesoVoto
+            };
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/operations/assemblies/{assembleiaId}/pautas/{pautaId}/vote", body, ct);
+            return await ParseAsync<AssembleiaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<AssembleiaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<AssembleiaDto>> FinalizeAssemblyAsync(Guid assembleiaId, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/operations/assemblies/{assembleiaId}/finalize", null, ct);
+            return await ParseAsync<AssembleiaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<AssembleiaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<string>> GetAssemblyAtaAsync(Guid assembleiaId, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/assemblies/{assembleiaId}/ata", null, ct);
+            return await ParseAsync<string>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<string>(ex);
+        }
+    }
+
     private async Task<HttpResponseMessage> SendAuthorizedAsync(
         HttpMethod method,
         string path,

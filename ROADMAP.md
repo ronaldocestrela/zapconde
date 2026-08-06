@@ -485,7 +485,18 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Navegação: Atualização de `OperationsNavTabs.razor` ativando o tab de Manutenção e registro da rota em `NavMenuItems.cs`.
 
 
-* [] **Subfase 4.2.3:** [FN-OPE-05] Módulo de Módulos de `AssembleiaVirtual` (Pautas, Votação e Ata).
+* [x] **Subfase 4.2.3:** [FN-OPE-05] Módulo de `AssembleiaVirtual` (Pautas, Votação e Ata).
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & Invariantes: Entidades Aggregate Root `AssembleiaVirtual`, `PautaAssembleia` e `VotoAssembleia`, exceções `AssembleiaDomainException`, `VotoDuplicadoException` e `AssembleiaEncerradaException` e enums `TipoAssembleia`, `StatusAssembleia`, `TipoVotacao` e `StatusPauta` com isolamento multi-tenant (`ITenantScoped`), garantia de voto único por unidade habitacional e lavratura automática da Ata Oficial com apuração de quórum.
+  - EF Core 10 & Persistence: Mapeamento Fluent API em `OperationsDbContext` (`operations."AssembleiasVirtuais"`, `operations."PautasAssembleia"` e `operations."VotosAssembleia"`), índice único composto de banco por `(TenantId, PautaId, UnidadeId)` e migration `20260806200000_AddAssembleiaVirtualVotacaoAta`.
+  - Serviço de Aplicação: `AssembleiaApplicationService` e `IAssembleiaApplicationService` encapsulados com Result Pattern (`Result<T>`) e isolamento multi-tenant (`ITenantScoped`).
+  - FastEndpoints API: Endpoints sob `/api/operations/assemblies` (`POST` criar assembleia com pautas, `GET` listar com filtros, `GET /{id}` obter por ID, `PATCH /{id}/status` atualizar status, `POST /{id}/pautas` adicionar pauta, `POST /{id}/pautas/{pautaId}/vote` registrar voto por unidade, `POST /{id}/finalize` encerrar e gerar ata, `GET /{id}/ata` obter texto da ata e `GET /summary` resumo KPI de métricas).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase4_2_3_AssembleiaVirtualVotacaoAta.feature`, suíte unitária `AssembleiaDomainTests`, testes de navegação `NavMenuItemsTests` e testes de integração com Testcontainers (`AssembleiaIntegrationTests` em PostgreSQL 17 real) — 100% aprovados.
+  - Blazor UI (Stitch): Página `/operacoes/assembleias` (com KPI cards de ocupação e votos, barra de filtros interativa por status/busca, cards com badges de status e barra de progresso de quórum, modal wizard de cadastro `NewAssemblyModal.razor`, modal de votação com apuração em tempo real `VotingModal.razor` e modal de ata oficial `AssemblyAtaModal.razor`) + estilos `assemblies.css` fiéis aos tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
+  - Navegação: Atualização de `OperationsNavTabs.razor` integrando a aba `Assembleias Virtuais` e registro da rota em `NavMenuItems.cs`.
 
 
 
