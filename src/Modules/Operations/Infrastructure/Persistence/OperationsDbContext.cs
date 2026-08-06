@@ -16,6 +16,9 @@ public class OperationsDbContext : MultiTenantDbContext
 
     public DbSet<AreaComum> AreasComuns => Set<AreaComum>();
     public DbSet<Reserva> Reservas => Set<Reserva>();
+    public DbSet<Ocorrencia> Ocorrencias => Set<Ocorrencia>();
+    public DbSet<AnexoOcorrencia> AnexosOcorrencia => Set<AnexoOcorrencia>();
+    public DbSet<HistoricoOcorrencia> HistoricoOcorrencias => Set<HistoricoOcorrencia>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

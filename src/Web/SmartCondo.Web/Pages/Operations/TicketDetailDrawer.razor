@@ -1,0 +1,215 @@
+@using Modules.Operations.Application.DTOs
+@using Modules.Operations.Domain.Enums
+
+@if (IsOpen && Ticket != null)
+{
+    <div class="offcanvas-backdrop fade show" @onclick="Close" style="z-index: 1040;"></div>
+    <div class="offcanvas offcanvas-end show" tabindex="-1" style="width: 500px; z-index: 1050; visibility: visible; border-left: 1px solid #E2E8F0; box-shadow: -10px 0 30px rgba(0,0,0,0.1);">
+        <div class="offcanvas-header" style="background: #2E5B88; color: white; padding: 1.25rem 1.5rem;">
+            <div>
+                <span class="badge-status @GetStatusCss(Ticket.Status) mb-1">@Ticket.Status</span>
+                <h5 class="offcanvas-title font-weight-bold" style="font-size: 1.1rem;">@Ticket.Titulo</h5>
+            </div>
+            <button type="button" class="btn-close btn-close-white" @onclick="Close"></button>
+        </div>
+
+        <div class="offcanvas-body" style="padding: 1.5rem; background: #F8FAFC;">
+            <!-- Informações Gerais -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small"><i class="bi bi-tag me-1"></i>Categoria:</span>
+                        <span class="fw-semibold">@Ticket.Categoria</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small"><i class="bi bi-exclamation-octagon me-1"></i>Prioridade:</span>
+                        <span class="badge-priority @GetPriorityCss(Ticket.Prioridade)">@Ticket.Prioridade</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small"><i class="bi bi-geo-alt me-1"></i>Localização:</span>
+                        <span class="fw-semibold">@Ticket.Localizacao</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small"><i class="bi bi-person me-1"></i>Solicitante:</span>
+                        <span class="fw-semibold">@Ticket.MoradorNome</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>Data Abertura:</span>
+                        <span class="fw-semibold">@Ticket.DataAbertura.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    @if (Ticket.DataConclusao.HasValue)
+                    {
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small"><i class="bi bi-check2-circle me-1"></i>Data Conclusão:</span>
+                            <span class="fw-semibold text-success">@Ticket.DataConclusao.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Descrição -->
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-card-text me-1 text-primary"></i>Descrição do Chamado</h6>
+                <div class="p-3 bg-white border rounded" style="font-size: 0.9rem; line-height: 1.5;">
+                    @Ticket.Descricao
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Ticket.ObservacaoResolucao))
+            {
+                <div class="mb-4">
+                    <h6 class="fw-bold text-success mb-2"><i class="bi bi-check-circle-fill me-1"></i>Observação da Resolução</h6>
+                    <div class="p-3 bg-success-subtle border border-success-subtle rounded text-success-emphasis" style="font-size: 0.9rem;">
+                        @Ticket.ObservacaoResolucao
+                    </div>
+                </div>
+            }
+
+            <!-- Galeria de Fotos / Anexos -->
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-images me-1 text-primary"></i>Fotos e Evidências (@Ticket.Anexos.Count)</h6>
+                @if (Ticket.Anexos.Count > 0)
+                {
+                    <div class="photo-gallery">
+                        @foreach (var anexo in Ticket.Anexos)
+                        {
+                            <a href="@anexo.Url" target="_blank" title="@anexo.NomeArquivo">
+                                <img src="@anexo.Url" class="photo-thumb" alt="@anexo.NomeArquivo" />
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted small italic">Nenhuma foto anexada a esta ocorrência.</p>
+                }
+            </div>
+
+            <!-- Ações de Ciclo de Vida -->
+            @if (Ticket.Status != StatusOcorrencia.Resolvida && Ticket.Status != StatusOcorrencia.Cancelada)
+            {
+                <div class="card border-primary-subtle bg-primary-subtle mb-4" style="border-radius: 12px;">
+                    <div class="card-body">
+                        <h6 class="fw-bold text-primary mb-2"><i class="bi bi-gear-fill me-1"></i>Ações de Atendimento</h6>
+                        <div class="mb-2">
+                            <input type="text" class="form-control form-control-sm mb-2" @bind="ComentarioAcao" placeholder="Comentário sobre a mudança de status..." />
+                            @if (NovoStatusSelecionado == StatusOcorrencia.Resolvida)
+                            {
+                                <textarea class="form-control form-control-sm mb-2" @bind="ObservacaoResolucao" rows="2" placeholder="Observação final de resolução..."></textarea>
+                            }
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            @if (Ticket.Status == StatusOcorrencia.Aberta)
+                            {
+                                <button class="btn btn-sm btn-primary" @onclick="() => ExecutarTransicao(StatusOcorrencia.EmAndamento)">
+                                    <i class="bi bi-play-fill me-1"></i>Iniciar Atendimento
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ExecutarTransicao(StatusOcorrencia.Cancelada)">
+                                    Cancelar
+                                </button>
+                            }
+                            else if (Ticket.Status == StatusOcorrencia.EmAndamento)
+                            {
+                                <button class="btn btn-sm btn-warning text-dark" @onclick="() => ExecutarTransicao(StatusOcorrencia.AguardandoPeca)">
+                                    <i class="bi bi-hourglass-split me-1"></i>Aguardar Peça
+                                </button>
+                                <button class="btn btn-sm btn-success" @onclick="() => ExecutarTransicao(StatusOcorrencia.Resolvida)">
+                                    <i class="bi bi-check-lg me-1"></i>Finalizar Chamado
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ExecutarTransicao(StatusOcorrencia.Cancelada)">
+                                    Cancelar
+                                </button>
+                            }
+                            else if (Ticket.Status == StatusOcorrencia.AguardandoPeca)
+                            {
+                                <button class="btn btn-sm btn-primary" @onclick="() => ExecutarTransicao(StatusOcorrencia.EmAndamento)">
+                                    <i class="bi bi-arrow-repeat me-1"></i>Retomar Atendimento
+                                </button>
+                                <button class="btn btn-sm btn-success" @onclick="() => ExecutarTransicao(StatusOcorrencia.Resolvida)">
+                                    <i class="bi bi-check-lg me-1"></i>Finalizar Chamado
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Timeline de Histórico de Auditoria -->
+            <div>
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-clock-history me-1 text-primary"></i>Linha do Tempo / Histórico</h6>
+                <div class="timeline">
+                    @foreach (var h in Ticket.Historico)
+                    {
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <span class="fw-semibold">@h.AlteradoPorNome</span>
+                                    <span>@h.DataAlteracao.ToLocalTime().ToString("dd/MM/yy HH:mm")</span>
+                                </div>
+                                <div class="timeline-body">
+                                    <span class="badge bg-secondary me-1">@h.StatusNovo</span>
+                                    @h.Comentario
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public OcorrenciaDto? Ticket { get; set; }
+    [Parameter] public EventCallback<AtualizarStatusOcorrenciaRequest> OnStatusChanged { get; set; }
+
+    private string ComentarioAcao { get; set; } = string.Empty;
+    private string ObservacaoResolucao { get; set; } = string.Empty;
+    private StatusOcorrencia NovoStatusSelecionado { get; set; }
+
+    private async Task ExecutarTransicao(StatusOcorrencia novoStatus)
+    {
+        NovoStatusSelecionado = novoStatus;
+        var comentario = string.IsNullOrWhiteSpace(ComentarioAcao) ? $"Mudança de status para {novoStatus}" : ComentarioAcao;
+
+        var request = new AtualizarStatusOcorrenciaRequest(
+            NovoStatus: novoStatus,
+            Comentario: comentario,
+            UsuarioId: "zelador-atual",
+            UsuarioNome: "Atendente Operacional",
+            ObservacaoResolucao: novoStatus == StatusOcorrencia.Resolvida ? ObservacaoResolucao : null
+        );
+
+        await OnStatusChanged.InvokeAsync(request);
+        ComentarioAcao = string.Empty;
+        ObservacaoResolucao = string.Empty;
+    }
+
+    private async Task Close()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(IsOpen);
+    }
+
+    private string GetStatusCss(StatusOcorrencia s) => s switch
+    {
+        StatusOcorrencia.Aberta => "aberta",
+        StatusOcorrencia.EmAndamento => "emandamento",
+        StatusOcorrencia.AguardandoPeca => "aguardandopeca",
+        StatusOcorrencia.Resolvida => "resolvida",
+        StatusOcorrencia.Cancelada => "cancelada",
+        _ => "aberta"
+    };
+
+    private string GetPriorityCss(PrioridadeOcorrencia p) => p switch
+    {
+        PrioridadeOcorrencia.Baixa => "baixa",
+        PrioridadeOcorrencia.Media => "media",
+        PrioridadeOcorrencia.Alta => "alta",
+        PrioridadeOcorrencia.Urgente => "urgente",
+        _ => "media"
+    };
+}

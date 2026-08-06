@@ -1,0 +1,164 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using Modules.Operations.Application.DTOs
+@using Modules.Operations.Domain.Enums
+
+@if (IsOpen)
+{
+    <div class="modal-backdrop fade show" style="display: block; background: rgba(0,0,0,0.5);"></div>
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="background: #2E5B88; color: white; border-top-left-radius: 15px; border-top-right-radius: 15px; padding: 1.25rem 1.5rem;">
+                    <h5 class="modal-title font-weight-bold" id="newTicketModalLabel">
+                        <i class="bi bi-plus-circle-fill me-2"></i>Abrir Novo Chamado / Ocorrência
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 1.75rem;">
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>@ErrorMessage
+                        </div>
+                    }
+
+                    <EditForm Model="Model" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">Categoria</label>
+                                <InputSelect @bind-Value="Model.Categoria" class="form-select">
+                                    @foreach (CategoriaOcorrencia cat in Enum.GetValues(typeof(CategoriaOcorrencia)))
+                                    {
+                                        <option value="@cat">@cat</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">Prioridade</label>
+                                <InputSelect @bind-Value="Model.Prioridade" class="form-select">
+                                    @foreach (PrioridadeOcorrencia prio in Enum.GetValues(typeof(PrioridadeOcorrencia)))
+                                    {
+                                        <option value="@prio">@prio</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Título da Ocorrência *</label>
+                            <InputText @bind-Value="Model.Titulo" class="form-control" placeholder="Ex: Vazamento no teto da garagem" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Localização / Bloco / Unidade</label>
+                            <InputText @bind-Value="Model.Localizacao" class="form-control" placeholder="Ex: Garagem Subsolo - Vaga 42" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Descrição Detalhada *</label>
+                            <InputTextArea @bind-Value="Model.Descricao" class="form-control" rows="4" placeholder="Descreva o problema com o maior detalhamento possível..." />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Foto / Evidência (URL da Imagem)</label>
+                            <div class="input-group">
+                                <InputText @bind-Value="FotoUrl" class="form-control" placeholder="https://exemplo.com/foto.jpg ou URL do upload" />
+                                <button type="button" class="btn btn-outline-secondary" @onclick="AdicionarFoto">
+                                    <i class="bi bi-paperclip me-1"></i>Anexar
+                                </button>
+                            </div>
+                            @if (AnexosTemp.Count > 0)
+                            {
+                                <div class="mt-2 d-flex flex-wrap gap-2">
+                                    @foreach (var a in AnexosTemp)
+                                    {
+                                        <span class="badge bg-light text-dark border p-2 d-flex align-items-center gap-2">
+                                            <i class="bi bi-file-image text-primary"></i>@a.NomeArquivo
+                                            <button type="button" class="btn-close btn-sm" @onclick="() => AnexosTemp.Remove(a)"></button>
+                                        </span>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <div class="modal-footer px-0 pb-0 pt-3 border-top">
+                            <button type="button" class="btn btn-secondary px-4" @onclick="Close">Cancelar</button>
+                            <button type="submit" class="btn px-4" style="background: #2E5B88; color: white; font-weight: 600;">
+                                <i class="bi bi-check-circle me-1"></i>Registrar Chamado
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EventCallback<CriarOcorrenciaRequest> OnSubmitted { get; set; }
+
+    private CriarOcorrenciaModel Model { get; set; } = new();
+    private string FotoUrl { get; set; } = string.Empty;
+    private List<CriarAnexoDto> AnexosTemp { get; set; } = new();
+    private string ErrorMessage { get; set; } = string.Empty;
+
+    private void AdicionarFoto()
+    {
+        if (!string.IsNullOrWhiteSpace(FotoUrl))
+        {
+            var nome = System.IO.Path.GetFileName(FotoUrl);
+            if (string.IsNullOrWhiteSpace(nome)) nome = "foto_evidencia.jpg";
+
+            AnexosTemp.Add(new CriarAnexoDto(FotoUrl.Trim(), nome, "image/jpeg", 256000));
+            FotoUrl = string.Empty;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        ErrorMessage = string.Empty;
+        if (string.IsNullOrWhiteSpace(Model.Titulo) || string.IsNullOrWhiteSpace(Model.Descricao))
+        {
+            ErrorMessage = "Preencha o Título e a Descrição da ocorrência.";
+            return;
+        }
+
+        var request = new CriarOcorrenciaRequest(
+            CondoId: 1,
+            MoradorId: "morador-atual",
+            MoradorNome: "Morador Registrado",
+            Titulo: Model.Titulo,
+            Descricao: Model.Descricao,
+            Categoria: Model.Categoria,
+            Prioridade: Model.Prioridade,
+            Localizacao: Model.Localizacao,
+            AnexosIniciais: AnexosTemp.ToList()
+        );
+
+        await OnSubmitted.InvokeAsync(request);
+        await Close();
+    }
+
+    private async Task Close()
+    {
+        IsOpen = false;
+        Model = new();
+        AnexosTemp.Clear();
+        ErrorMessage = string.Empty;
+        await IsOpenChanged.InvokeAsync(IsOpen);
+    }
+
+    private class CriarOcorrenciaModel
+    {
+        public string Titulo { get; set; } = string.Empty;
+        public string Descricao { get; set; } = string.Empty;
+        public CategoriaOcorrencia Categoria { get; set; } = CategoriaOcorrencia.Manutencao;
+        public PrioridadeOcorrencia Prioridade { get; set; } = PrioridadeOcorrencia.Media;
+        public string Localizacao { get; set; } = string.Empty;
+    }
+}

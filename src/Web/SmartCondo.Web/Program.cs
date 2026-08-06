@@ -58,7 +58,15 @@ builder.Services.AddOperationsModule(builder.Configuration);
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+    {
+        await FinancialDbMigrator.MigrateAsync(app.Services, app.Configuration);
+        await OperationsDbMigrator.MigrateAsync(app.Services, app.Configuration);
+    }
+}
+else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();

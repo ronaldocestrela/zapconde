@@ -457,7 +457,18 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 ### 4.2. Chamados, Ocorrências e Manutenção Preventiva
 
-* [] **Subfase 4.2.1:** [FN-OPE-03] Entidade `Ocorrencia` para abertura, upload de fotos e mudança de ciclo de vida do chamado.
+* [x] **Subfase 4.2.1:** [FN-OPE-03] Entidade `Ocorrencia` para abertura, upload de fotos e mudança de ciclo de vida do chamado.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & Máquina de Estados: Entidade Aggregate Root `Ocorrencia`, entidades `AnexoOcorrencia` e `HistoricoOcorrencia`, exceção `InvalidOcorrenciaStatusTransitionException` e enums `CategoriaOcorrencia`, `PrioridadeOcorrencia` e `StatusOcorrencia` com isolamento multi-tenant (`ITenantScoped`), validações de invariantes de abertura, inclusão de anexos de fotos e máquina de estados para transição do ciclo de vida com rastreabilidade de histórico (linha do tempo).
+  - EF Core 10 & Persistence: Mapeamentos Fluent API em `OperationsDbContext` (`operations."Ocorrencias"`, `operations."AnexosOcorrencia"` e `operations."HistoricoOcorrencias"`), índices compostos por `(TenantId, CondoId, Status)` e migration `20260806164000_AddOcorrenciaCicloVidaAnexos`.
+  - Serviço de Aplicação: `OcorrenciaApplicationService` e `IOcorrenciaApplicationService` encapsulados com Result Pattern (`Result<T>`) e isolamento multi-tenant (`ITenantScoped`).
+  - FastEndpoints API: Endpoints sob `/api/operations/tickets` (`POST` criar chamado com fotos, `GET` listar com filtros por categoria/status/prioridade/morador, `GET /{id}` obter detalhes com fotos e linha do tempo, `PATCH /{id}/status` transicionar ciclo de vida, `POST /{id}/attachments` anexar foto e `GET /summary` resumo KPI de chamados).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase4_2_1_OcorrenciaCicloVidaAnexos.feature`, suíte unitária `OcorrenciaDomainTests`, testes de arquitetura `OperationsArchitectureTests` e testes de integração com Testcontainers (`OcorrenciaIntegrationTests` em PostgreSQL 17 real) — 100% aprovados.
+  - Blazor UI (Stitch): Páginas `/operacoes/ocorrencias` (com KPI cards, tabela interativa com badges de status e prioridade, modal wizard de criação com preview de upload `NewTicketModal.razor` e drawer lateral `TicketDetailDrawer.razor` com galeria de fotos e linha do tempo interativa) + estilos `tickets.css` fiéis aos tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
+  - Navegação: Atualização de `NavMenuItems.cs` integrando a rota `/operacoes/ocorrencias`.
 
 
 * [] **Subfase 4.2.2:** [FN-OPE-04] Calendário de `PlanoManutencao` para alertas automáticos de elevadores, bombas e para-raios.

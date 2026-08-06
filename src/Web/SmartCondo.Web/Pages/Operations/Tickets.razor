@@ -1,0 +1,314 @@
+@page "/operacoes/ocorrencias"
+@using SmartCondo.Web.Components.Layout
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@using Modules.Operations.Application.DTOs
+@using Modules.Operations.Domain.Enums
+@using SmartCondo.Web.Services
+@using SmartCondo.Web.Components.Pages.Operations
+@inject OperationsApiClient OperationsApi
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Ocorrências & Chamados - SmartCondo</PageTitle>
+
+<link href="css/tickets.css" rel="stylesheet" />
+
+<div class="tickets-container">
+    <OperationsNavTabs />
+
+    <!-- Header -->
+    <div class="tickets-header">
+        <div>
+            <h1><i class="bi bi-headset me-2"></i>Gestão de Ocorrências e Chamados</h1>
+            <p class="text-muted mb-0">Acompanhamento operacional, registro de problemas e ciclo de vida de chamados do prédio.</p>
+        </div>
+        <button class="btn-stitch-primary" @onclick="AbrirModalNovoTicket">
+            <i class="bi bi-plus-lg"></i>Novo Chamado
+        </button>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    @if (Summary != null)
+    {
+        <div class="tickets-kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon primary"><i class="bi bi-inbox-fill"></i></div>
+                <div class="kpi-data">
+                    <h3>Total de Chamados</h3>
+                    <p class="kpi-value">@Summary.Total</p>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon warning"><i class="bi bi-envelope-open-fill"></i></div>
+                <div class="kpi-data">
+                    <h3>Abertos</h3>
+                    <p class="kpi-value">@Summary.Abertas</p>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon info"><i class="bi bi-gear-wide-connected"></i></div>
+                <div class="kpi-data">
+                    <h3>Em Andamento</h3>
+                    <p class="kpi-value">@Summary.EmAndamento</p>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon success"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="kpi-data">
+                    <h3>Resolvidos</h3>
+                    <p class="kpi-value">@Summary.Resolvidas</p>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div class="kpi-data">
+                    <h3>Urgentes Pendentes</h3>
+                    <p class="kpi-value">@Summary.Urgentes</p>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Filter Toolbar -->
+    <div class="tickets-filter-bar">
+        <div class="d-flex align-items-center gap-2 flex-grow-1">
+            <i class="bi bi-search text-muted"></i>
+            <input type="text" class="filter-input flex-grow-1" placeholder="Buscar por título, localização ou morador..." @bind="SearchTerm" @bind:event="oninput" />
+        </div>
+        <select class="filter-input" @bind="SelectedCategoria">
+            <option value="">Todas as Categorias</option>
+            @foreach (CategoriaOcorrencia cat in Enum.GetValues(typeof(CategoriaOcorrencia)))
+            {
+                <option value="@cat">@cat</option>
+            }
+        </select>
+        <select class="filter-input" @bind="SelectedStatus">
+            <option value="">Todos os Status</option>
+            @foreach (StatusOcorrencia status in Enum.GetValues(typeof(StatusOcorrencia)))
+            {
+                <option value="@status">@status</option>
+            }
+        </select>
+        <select class="filter-input" @bind="SelectedPrioridade">
+            <option value="">Todas as Prioridades</option>
+            @foreach (PrioridadeOcorrencia prio in Enum.GetValues(typeof(PrioridadeOcorrencia)))
+            {
+                <option value="@prio">@prio</option>
+            }
+        </select>
+    </div>
+
+    <!-- Lista / Tabela de Chamados -->
+    @if (IsLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando chamados...</span>
+            </div>
+        </div>
+    }
+    else if (FilteredTickets == null || !FilteredTickets.Any())
+    {
+        <div class="card border-0 shadow-sm text-center py-5" style="border-radius: 16px;">
+            <div class="card-body">
+                <i class="bi bi-clipboard-check text-muted" style="font-size: 3rem;"></i>
+                <h5 class="mt-3 text-muted">Nenhuma ocorrência encontrada</h5>
+                <p class="text-muted small">Altere os filtros de pesquisa ou abra um novo chamado.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive bg-white rounded-3 shadow-sm border">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" class="ps-3">Status</th>
+                        <th scope="col">Título / Localização</th>
+                        <th scope="col">Categoria</th>
+                        <th scope="col">Prioridade</th>
+                        <th scope="col">Solicitante</th>
+                        <th scope="col">Data Abertura</th>
+                        <th scope="col">Anexos</th>
+                        <th scope="col" class="text-end pe-3">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ticket in FilteredTickets)
+                    {
+                        <tr style="cursor: pointer;" @onclick="() => AbrirDetalhes(ticket)">
+                            <td class="ps-3">
+                                <span class="badge-status @GetStatusCss(ticket.Status)">@ticket.Status</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@ticket.Titulo</div>
+                                <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>@ticket.Localizacao</div>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">@ticket.Categoria</span></td>
+                            <td><span class="badge-priority @GetPriorityCss(ticket.Prioridade)">@ticket.Prioridade</span></td>
+                            <td>@ticket.MoradorNome</td>
+                            <td class="small text-muted">@ticket.DataAbertura.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (ticket.Anexos.Count > 0)
+                                {
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="bi bi-paperclip me-1"></i>@ticket.Anexos.Count</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">-</span>
+                                }
+                            </td>
+                            <td class="text-end pe-3">
+                                <button class="btn btn-sm btn-outline-primary" @onclick:stopPropagation="true" @onclick="() => AbrirDetalhes(ticket)">
+                                    <i class="bi bi-eye me-1"></i>Detalhes
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal Novo Ticket -->
+<NewTicketModal IsOpen="IsModalNovoOpen" IsOpenChanged="OnModalNovoOpenChanged" OnSubmitted="HandleCriarChamado" />
+
+<!-- Drawer Detalhes Ticket -->
+<TicketDetailDrawer IsOpen="IsDrawerOpen" IsOpenChanged="OnDrawerOpenChanged" Ticket="SelectedTicket" OnStatusChanged="HandleAtualizarStatus" />
+
+@code {
+    private bool IsLoading { get; set; } = true;
+    private IEnumerable<OcorrenciaDto> TicketList { get; set; } = new List<OcorrenciaDto>();
+    private OcorrenciaSummaryDto? Summary { get; set; }
+
+    private string SearchTerm { get; set; } = string.Empty;
+    private string SelectedCategoria { get; set; } = string.Empty;
+    private string SelectedStatus { get; set; } = string.Empty;
+    private string SelectedPrioridade { get; set; } = string.Empty;
+
+    private bool IsModalNovoOpen { get; set; }
+    private bool IsDrawerOpen { get; set; }
+    private OcorrenciaDto? SelectedTicket { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDados();
+    }
+
+    private async Task CarregarDados()
+    {
+        IsLoading = true;
+        try
+        {
+            var summaryResult = await OperationsApi.GetTicketSummaryAsync(1);
+            if (summaryResult.IsSuccess) Summary = summaryResult.Data;
+
+            var listResult = await OperationsApi.GetTicketsAsync(1);
+            if (listResult.IsSuccess && listResult.Data != null) TicketList = listResult.Data;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private IEnumerable<OcorrenciaDto> FilteredTickets
+    {
+        get
+        {
+            var query = TicketList;
+
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                var term = SearchTerm.Trim().ToLowerInvariant();
+                query = query.Where(t => t.Titulo.ToLowerInvariant().Contains(term)
+                                      || t.Localizacao.ToLowerInvariant().Contains(term)
+                                      || t.MoradorNome.ToLowerInvariant().Contains(term));
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedCategoria) && Enum.TryParse<CategoriaOcorrencia>(SelectedCategoria, out var cat))
+            {
+                query = query.Where(t => t.Categoria == cat);
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedStatus) && Enum.TryParse<StatusOcorrencia>(SelectedStatus, out var status))
+            {
+                query = query.Where(t => t.Status == status);
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedPrioridade) && Enum.TryParse<PrioridadeOcorrencia>(SelectedPrioridade, out var prio))
+            {
+                query = query.Where(t => t.Prioridade == prio);
+            }
+
+            return query;
+        }
+    }
+
+    private void AbrirModalNovoTicket() => IsModalNovoOpen = true;
+    private void OnModalNovoOpenChanged(bool value) => IsModalNovoOpen = value;
+
+    private void AbrirDetalhes(OcorrenciaDto ticket)
+    {
+        SelectedTicket = ticket;
+        IsDrawerOpen = true;
+    }
+
+    private void OnDrawerOpenChanged(bool value)
+    {
+        IsDrawerOpen = value;
+        if (!value) SelectedTicket = null;
+    }
+
+    private async Task HandleCriarChamado(CriarOcorrenciaRequest request)
+    {
+        var result = await OperationsApi.CreateTicketAsync(request);
+        if (result.IsSuccess)
+        {
+            await CarregarDados();
+        }
+    }
+
+    private async Task HandleAtualizarStatus(AtualizarStatusOcorrenciaRequest request)
+    {
+        if (SelectedTicket != null)
+        {
+            var result = await OperationsApi.UpdateTicketStatusAsync(
+                SelectedTicket.Id,
+                request.NovoStatus,
+                request.Comentario,
+                request.UsuarioId,
+                request.UsuarioNome,
+                request.ObservacaoResolucao
+            );
+
+            if (result.IsSuccess && result.Data != null)
+            {
+                SelectedTicket = result.Data;
+                await CarregarDados();
+            }
+        }
+    }
+
+    private string GetStatusCss(StatusOcorrencia s) => s switch
+    {
+        StatusOcorrencia.Aberta => "aberta",
+        StatusOcorrencia.EmAndamento => "emandamento",
+        StatusOcorrencia.AguardandoPeca => "aguardandopeca",
+        StatusOcorrencia.Resolvida => "resolvida",
+        StatusOcorrencia.Cancelada => "cancelada",
+        _ => "aberta"
+    };
+
+    private string GetPriorityCss(PrioridadeOcorrencia p) => p switch
+    {
+        PrioridadeOcorrencia.Baixa => "baixa",
+        PrioridadeOcorrencia.Media => "media",
+        PrioridadeOcorrencia.Alta => "alta",
+        PrioridadeOcorrencia.Urgente => "urgente",
+        _ => "media"
+    };
+}

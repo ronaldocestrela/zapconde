@@ -235,6 +235,103 @@ public sealed class OperationsApiClient(HttpClient httpClient)
         }
     }
 
+    // --- Módulo de Ocorrências e Chamados ---
+
+    public async Task<ApiResult<IEnumerable<OcorrenciaDto>>> GetTicketsAsync(
+        int condoId = 1,
+        StatusOcorrencia? status = null,
+        CategoriaOcorrencia? categoria = null,
+        PrioridadeOcorrencia? prioridade = null,
+        string? moradorId = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var queryParams = new List<string> { $"condoId={condoId}" };
+            if (status.HasValue) queryParams.Add($"status={(int)status.Value}");
+            if (categoria.HasValue) queryParams.Add($"categoria={(int)categoria.Value}");
+            if (prioridade.HasValue) queryParams.Add($"prioridade={(int)prioridade.Value}");
+            if (!string.IsNullOrWhiteSpace(moradorId)) queryParams.Add($"moradorId={moradorId}");
+
+            var queryString = "?" + string.Join("&", queryParams);
+            var response = await httpClient.GetAsync($"/api/operations/tickets{queryString}", ct);
+            return await ParseAsync<IEnumerable<OcorrenciaDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<OcorrenciaDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<OcorrenciaDto>> GetTicketByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/operations/tickets/{id}", ct);
+            return await ParseAsync<OcorrenciaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<OcorrenciaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<OcorrenciaDto>> CreateTicketAsync(CriarOcorrenciaRequest request, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/operations/tickets", request, JsonOptions, ct);
+            return await ParseAsync<OcorrenciaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<OcorrenciaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<OcorrenciaDto>> UpdateTicketStatusAsync(
+        Guid id,
+        StatusOcorrencia novoStatus,
+        string comentario,
+        string usuarioId,
+        string usuarioNome,
+        string? observacaoResolucao = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var body = new
+            {
+                Id = id,
+                NovoStatus = novoStatus,
+                Comentario = comentario,
+                UsuarioId = usuarioId,
+                UsuarioNome = usuarioNome,
+                ObservacaoResolucao = observacaoResolucao
+            };
+
+            var response = await httpClient.PatchAsJsonAsync($"/api/operations/tickets/{id}/status", body, JsonOptions, ct);
+            return await ParseAsync<OcorrenciaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<OcorrenciaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<OcorrenciaSummaryDto>> GetTicketSummaryAsync(int condoId = 1, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/operations/tickets/summary?condoId={condoId}", ct);
+            return await ParseAsync<OcorrenciaSummaryDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<OcorrenciaSummaryDto>(ex);
+        }
+    }
+
     private static async Task<ApiResult<T>> ParseAsync<T>(HttpResponseMessage response, CancellationToken ct)
     {
         var statusCode = (int)response.StatusCode;

@@ -1,0 +1,252 @@
+/* Stitch Design System - Tickets & Ocorrências Module */
+
+:root {
+    --stitch-primary: #2E5B88;
+    --stitch-primary-hover: #23486E;
+    --stitch-secondary: #A3C9A8;
+    --stitch-bg: #F4EAE1;
+    --stitch-surface: #FFFFFF;
+    --stitch-text-dark: #1E293B;
+    --stitch-text-muted: #64748B;
+    --stitch-border: #E2E8F0;
+    --stitch-shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+    --stitch-shadow-md: 0 4px 12px rgba(46,91,136,0.08);
+    --stitch-shadow-lg: 0 10px 25px rgba(46,91,136,0.12);
+    --stitch-radius: 12px;
+    --stitch-radius-lg: 16px;
+    --stitch-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tickets-container {
+    padding: 1.75rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--stitch-text-dark);
+}
+
+/* Header & KPI Summary */
+.tickets-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.tickets-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--stitch-primary);
+    margin: 0;
+}
+
+.tickets-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.kpi-card {
+    background: var(--stitch-surface);
+    border-radius: var(--stitch-radius);
+    padding: 1.25rem;
+    border: 1px solid var(--stitch-border);
+    box-shadow: var(--stitch-shadow-sm);
+    transition: var(--stitch-transition);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--stitch-shadow-md);
+    border-color: var(--stitch-secondary);
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.kpi-icon.primary { background: rgba(46, 91, 136, 0.1); color: var(--stitch-primary); }
+.kpi-icon.warning { background: rgba(245, 158, 11, 0.1); color: #D97706; }
+.kpi-icon.info { background: rgba(59, 130, 246, 0.1); color: #2563EB; }
+.kpi-icon.success { background: rgba(163, 201, 168, 0.25); color: #2E7D32; }
+.kpi-icon.danger { background: rgba(239, 68, 68, 0.1); color: #DC2626; }
+
+.kpi-data h3 {
+    font-size: 0.875rem;
+    color: var(--stitch-text-muted);
+    margin: 0 0 0.25rem 0;
+    font-weight: 500;
+}
+
+.kpi-data .kpi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--stitch-text-dark);
+}
+
+/* Filter Toolbar */
+.tickets-filter-bar {
+    background: var(--stitch-surface);
+    padding: 1rem 1.25rem;
+    border-radius: var(--stitch-radius);
+    border: 1px solid var(--stitch-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--stitch-shadow-sm);
+}
+
+.filter-input {
+    padding: 0.5rem 0.875rem;
+    border-radius: 8px;
+    border: 1px solid var(--stitch-border);
+    font-size: 0.875rem;
+    outline: none;
+    transition: var(--stitch-transition);
+}
+
+.filter-input:focus {
+    border-color: var(--stitch-primary);
+    box-shadow: 0 0 0 3px rgba(46, 91, 136, 0.15);
+}
+
+/* Badges */
+.badge-status {
+    padding: 0.25rem 0.625rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.badge-status.aberta { background: #FEF3C7; color: #92400E; }
+.badge-status.emandamento { background: #DBEAFE; color: #1E40AF; }
+.badge-status.aguardandopeca { background: #EDE9FE; color: #5B21B6; }
+.badge-status.resolvida { background: #D1FAE5; color: #065F46; }
+.badge-status.cancelada { background: #FEE2E2; color: #991B1B; }
+
+.badge-priority {
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.badge-priority.baixa { background: #F1F5F9; color: #475569; }
+.badge-priority.media { background: #E0F2FE; color: #0369A1; }
+.badge-priority.alta { background: #FFEDD5; color: #C2410C; }
+.badge-priority.urgente { background: #FEE2E2; color: #B91C1C; }
+
+/* Timeline in Drawer */
+.timeline {
+    position: relative;
+    padding-left: 1.75rem;
+    margin-top: 1rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--stitch-border);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -1.75rem;
+    top: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--stitch-primary);
+    border: 3px solid var(--stitch-surface);
+    box-shadow: 0 0 0 1px var(--stitch-border);
+}
+
+.timeline-content {
+    background: #F8FAFC;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #E2E8F0;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--stitch-text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.timeline-body {
+    font-size: 0.875rem;
+    color: var(--stitch-text-dark);
+}
+
+/* Photo Gallery Grid */
+.photo-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.photo-thumb {
+    width: 100%;
+    height: 90px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid var(--stitch-border);
+    cursor: pointer;
+    transition: var(--stitch-transition);
+}
+
+.photo-thumb:hover {
+    transform: scale(1.05);
+    box-shadow: var(--stitch-shadow-md);
+}
+
+/* Buttons */
+.btn-stitch-primary {
+    background: var(--stitch-primary);
+    color: #FFFFFF;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: var(--stitch-transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-stitch-primary:hover {
+    background: var(--stitch-primary-hover);
+    box-shadow: var(--stitch-shadow-md);
+}

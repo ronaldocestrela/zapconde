@@ -20,7 +20,7 @@ public static class OperationsServiceCollectionExtensions
     {
         var connectionString = configuration.GetConnectionString("Postgres")
             ?? configuration.GetConnectionString("DefaultConnection")
-            ?? "Host=localhost;Database=smartcondo;Username=postgres;Password=postgres";
+            ?? "Host=localhost;Port=5432;Database=smartcondo_dev;Username=postgres;Password=postgres";
 
         services.AddDbContext<OperationsDbContext>((sp, options) =>
         {
@@ -33,6 +33,8 @@ public static class OperationsServiceCollectionExtensions
         services.AddScoped<IAreaComumApplicationService, AreaComumApplicationService>();
         services.AddScoped<IReservaRepository, ReservaRepository>();
         services.AddScoped<IReservaApplicationService, ReservaApplicationService>();
+        services.AddScoped<IOcorrenciaRepository, OcorrenciaRepository>();
+        services.AddScoped<IOcorrenciaApplicationService, OcorrenciaApplicationService>();
 
         return services;
     }

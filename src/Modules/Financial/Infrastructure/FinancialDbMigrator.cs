@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -31,6 +33,14 @@ public static class FinancialDbMigrator
 
         try
         {
+            var databaseCreator = dbContext.Database.GetService<IRelationalDatabaseCreator>();
+            if (!await databaseCreator.ExistsAsync(ct))
+            {
+                logger.LogInformation("Database physical instance does not exist ({DatabaseTarget}). Creating database...", databaseTarget);
+                await databaseCreator.CreateAsync(ct);
+                logger.LogInformation("Database created successfully ({DatabaseTarget}).", databaseTarget);
+            }
+
             var pendingMigrations = (await dbContext.Database.GetPendingMigrationsAsync(ct)).ToList();
 
             if (pendingMigrations.Count == 0)
@@ -59,7 +69,7 @@ public static class FinancialDbMigrator
             var innerMessage = ex.InnerException?.Message ?? ex.Message;
             throw new InvalidOperationException(
                 $"Failed to apply Financial migrations on {databaseTarget}. " +
-                $"Ensure PostgreSQL is running (`docker compose up -d`) and the database exists. " +
+                $"Ensure PostgreSQL is running (`docker compose up -d`) and accessible. " +
                 $"Provider error: {innerMessage}",
                 ex);
         }

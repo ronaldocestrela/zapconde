@@ -29,6 +29,14 @@ public static class OperationsDbMigrator
 
         try
         {
+            var databaseCreator = dbContext.Database.GetService<IRelationalDatabaseCreator>();
+            if (!await databaseCreator.ExistsAsync(ct))
+            {
+                logger.LogInformation("Operations database does not exist. Creating database...");
+                await databaseCreator.CreateAsync(ct);
+                logger.LogInformation("Operations database created successfully.");
+            }
+
             var pendingMigrations = (await dbContext.Database.GetPendingMigrationsAsync(ct)).ToList();
 
             if (pendingMigrations.Count > 0)
