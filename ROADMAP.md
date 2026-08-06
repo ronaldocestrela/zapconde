@@ -381,7 +381,20 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 ### 3.2. Controle de Inadimplência e Prestação de Contas
 
-* [] **Subfase 3.2.1:** [FN-FIN-02] Mapeamento de acordos de renegociação e serviço de régua de inadimplência.
+* [x] **Subfase 3.2.1:** [FN-FIN-02] Mapeamento de acordos de renegociação e serviço de régua de inadimplência.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio: Aggregate Root `Acordo`, entidades `ParcelaAcordo`, `AcordoFaturaVinculada`, `EtapaReguaInadimplencia` e `HistoricoCobranca` com contrato `ITenantScoped`.
+  - Enums e Value Objects: `StatusAcordo`, `StatusParcelaAcordo`, `CanalCobranca`, `TipoAcaoCobranca`, adição de `StatusFatura.EmAcordo`, `ParametrosSimulacaoAcordo` e `ResumoAcordoCalculado`.
+  - Domain Services: `CalculadoraAcordoDomainService` (para divisão exata de parcelas e descontos) e `ReguaInadimplenciaEngine` (para avaliação automatizada de faturas elegíveis por DPD).
+  - EF Core 10: Mapeamento em `FinancialDbContext` com Global Query Filter por `TenantId` e `CondoId`.
+  - Serviços de Aplicação: `AcordoApplicationService` e `ReguaInadimplenciaAppService` encapsulados com Result Pattern (`Result<T>`).
+  - FastEndpoints API: `/api/financial/agreements/*` (simular, criar, listar, obter por ID, cancelar e pagar parcela) e `/api/financial/dunning/*` (configurar régua, processar cobrança em lote e obter dashboard aging list).
+  - BDD: `tests/LivingDoc/Features/Fase3_2_1_AcordosReguaInadimplencia.feature`.
+  - Suíte de testes TDD: `AcordoDomainTests`, `ReguaInadimplenciaDomainTests`, `FinancialAgreementArchitectureTests` e `FinancialAgreementIntegrationTests` — 100% aprovados.
+  - Blazor UI (Stitch): Páginas `/financeiro/acordos` (com modal wizard de criação/simulação) e `/financeiro/inadimplencia` (com dashboard Aging List 30/60/90+ dias, régua D+N e histórico) + estilos `agreements.css` e `dunning.css` com tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
 
 
 * [] **Subfase 3.2.2:** [FN-FIN-03 / FN-FIN-04] Geração de Pastas Digitais de Prestação de Contas, Conciliação Bancária e Relatórios Consolidados Multicondomínio.

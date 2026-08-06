@@ -1,0 +1,9 @@
+/* Dunning & Delinquency CSS Stitch */
+.aging-card {
+    border-radius: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.aging-card:hover {
+    transform: translateY(-2px);
+}

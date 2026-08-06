@@ -30,6 +30,8 @@ public static class ApplicationBuilderExtensions
         app.UseTenantContext();
         app.UseAuthorization();
         app.UseFastEndpoints();
+        Modules.Financial.Endpoints.AgreementEndpoints.MapAgreementEndpoints(app);
+        Modules.Financial.Endpoints.DunningEndpoints.MapDunningEndpoints(app);
 
         app.MapHealthChecks("/health/live", new HealthCheckOptions
         {

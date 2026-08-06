@@ -1,0 +1,338 @@
+@page "/financeiro/acordos"
+@using Modules.Financial.Application.Dtos
+@using Modules.Financial.Application.Services
+@using Modules.Financial.Domain.Enums
+@using SmartCondo.Web.Services
+@inject FinancialApiClient FinancialApi
+@inject IServiceProvider ServiceProvider
+@rendermode InteractiveServer
+
+<PageTitle>Acordos de Renegociação - SmartCondo</PageTitle>
+
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 font-weight-bold" style="color: #2E5B88;">
+                <span class="material-symbols-outlined align-middle me-2">handshake</span>
+                Acordos de Renegociação
+            </h1>
+            <p class="text-muted small mb-0">Gestão de propostas, parcelamentos e recuperação de débitos condominiais.</p>
+        </div>
+        <button class="btn text-white px-3 py-2 rounded-3 shadow-sm d-flex align-items-center gap-2" 
+                style="background-color: #2E5B88;" 
+                @onclick="AbrirModalNovoAcordo">
+            <span class="material-symbols-outlined">add</span>
+            Novo Acordo
+        </button>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3" style="background-color: #FFFFFF;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small d-block mb-1">Acordos Ativos</span>
+                        <h4 class="mb-0 font-weight-bold" style="color: #2E5B88;">@AcordosAtivosCount</h4>
+                    </div>
+                    <div class="p-3 rounded-circle" style="background-color: #F4EAE1; color: #2E5B88;">
+                        <span class="material-symbols-outlined fs-4">handshake</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3" style="background-color: #FFFFFF;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small d-block mb-1">Total Renegociado</span>
+                        <h4 class="mb-0 font-weight-bold text-success">@TotalRenegociado.ToString("C")</h4>
+                    </div>
+                    <div class="p-3 rounded-circle" style="background-color: #A3C9A8; color: #2E5B88;">
+                        <span class="material-symbols-outlined fs-4">payments</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3" style="background-color: #FFFFFF;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small d-block mb-1">Descontos Concedidos</span>
+                        <h4 class="mb-0 font-weight-bold text-warning">@TotalDescontos.ToString("C")</h4>
+                    </div>
+                    <div class="p-3 rounded-circle" style="background-color: #FFF3CD; color: #856404;">
+                        <span class="material-symbols-outlined fs-4">percent</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3" style="background-color: #FFFFFF;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small d-block mb-1">Acordos Quitados</span>
+                        <h4 class="mb-0 font-weight-bold text-primary">@AcordosQuitadosCount</h4>
+                    </div>
+                    <div class="p-3 rounded-circle" style="background-color: #E2E3E5; color: #383D41;">
+                        <span class="material-symbols-outlined fs-4">task_alt</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table Card -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-transparent border-0 p-3 d-flex align-items-center justify-content-between">
+            <h5 class="mb-0 font-weight-bold text-secondary">Lista de Acordos Registrados</h5>
+            <div class="d-flex gap-2">
+                <input type="text" class="form-control form-control-sm rounded-3" placeholder="Filtrar por número ou unidade..." @bind="FiltroTexto" @bind:event="oninput" />
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Número</th>
+                        <th>Unidade</th>
+                        <th>Criado em</th>
+                        <th>Origem</th>
+                        <th>Desconto</th>
+                        <th>Valor Acordo</th>
+                        <th>Parcelas</th>
+                        <th>Status</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Carregando)
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                <span class="spinner-border spinner-border-sm me-2"></span>Carregando acordos...
+                            </td>
+                        </tr>
+                    }
+                    else if (!AcordosFiltrados.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">Nenhum acordo de renegociação encontrado.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var acordo in AcordosFiltrados)
+                        {
+                            <tr>
+                                <td class="font-weight-bold">@acordo.NumeroAcordo</td>
+                                <td>Unidade @acordo.UnidadeId</td>
+                                <td>@acordo.DataCriacao.ToString("dd/MM/yyyy")</td>
+                                <td>@acordo.ValorTotalOriginal.ToString("C")</td>
+                                <td class="text-warning">@acordo.ValorDesconto.ToString("C")</td>
+                                <td class="font-weight-bold text-success">@acordo.ValorTotalAcordo.ToString("C")</td>
+                                <td>@acordo.QuantidadeParcelas x</td>
+                                <td>
+                                    <span class="badge rounded-pill @ObterBadgeStatus(acordo.Status)">
+                                        @acordo.Status.ToString()
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirDetalhes(acordo)">
+                                        <span class="material-symbols-outlined fs-6 align-middle">visibility</span>
+                                    </button>
+                                    @if (acordo.Status == StatusAcordo.Ativo)
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => CancelarAcordo(acordo.Id)">
+                                            <span class="material-symbols-outlined fs-6 align-middle">block</span>
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Novo Acordo / Simulação -->
+@if (ExibirModalNovoAcordo)
+{
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0 text-white" style="background-color: #2E5B88;">
+                    <h5 class="modal-title d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined">calculate</span>
+                        Novo Acordo de Renegociação
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FecharModalNovoAcordo"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Unidade ID</label>
+                            <input type="number" class="form-control" @bind="NovaUnidadeId" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Morador ID</label>
+                            <input type="number" class="form-control" @bind="NovoMoradorId" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Qtd. Parcelas</label>
+                            <input type="number" class="form-control" min="1" max="12" @bind="NovasParcelas" />
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Desconto Concedido (R$)</label>
+                            <input type="number" class="form-control" step="10" min="0" @bind="NovoDesconto" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">1º Vencimento</label>
+                            <input type="date" class="form-control" @bind="PrimeiroVencimento" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Observações</label>
+                        <textarea class="form-control" rows="2" @bind="NovasObservacoes"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-outline-secondary" @onclick="FecharModalNovoAcordo">Cancelar</button>
+                    <button class="btn text-white px-4" style="background-color: #2E5B88;" @onclick="EfetivarNovoAcordo">
+                        Efetivar Acordo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<AcordoDto> Acordos = new();
+    private bool Carregando = true;
+    private string FiltroTexto = string.Empty;
+
+    private bool ExibirModalNovoAcordo = false;
+    private int NovaUnidadeId = 101;
+    private int NovoMoradorId = 5;
+    private int NovasParcelas = 3;
+    private decimal NovoDesconto = 50m;
+    private DateTime PrimeiroVencimento = DateTime.Today.AddDays(5);
+    private string NovasObservacoes = "Renegociação formalizada via portal.";
+
+    private int AcordosAtivosCount => Acordos.Count(a => a.Status == StatusAcordo.Ativo);
+    private int AcordosQuitadosCount => Acordos.Count(a => a.Status == StatusAcordo.Quitado);
+    private decimal TotalRenegociado => Acordos.Sum(a => a.ValorTotalAcordo);
+    private decimal TotalDescontos => Acordos.Sum(a => a.ValorDesconto);
+
+    private IEnumerable<AcordoDto> AcordosFiltrados => Acordos.Where(a =>
+        string.IsNullOrWhiteSpace(FiltroTexto) ||
+        a.NumeroAcordo.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase) ||
+        a.UnidadeId.ToString().Contains(FiltroTexto));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarAcordos();
+    }
+
+    private async Task CarregarAcordos()
+    {
+        Carregando = true;
+        var apiRes = await FinancialApi.GetAgreementsAsync(1);
+        if (apiRes.IsSuccess && apiRes.Data != null)
+        {
+            Acordos = apiRes.Data.ToList();
+        }
+        else
+        {
+            var service = ServiceProvider.GetService<IAcordoApplicationService>();
+            if (service != null)
+            {
+                var res = await service.ObterAcordosPorCondominioAsync(1);
+                if (res.IsSuccess && res.Data != null)
+                {
+                    Acordos = res.Data.ToList();
+                }
+            }
+        }
+        Carregando = false;
+    }
+
+    private void AbrirModalNovoAcordo() => ExibirModalNovoAcordo = true;
+    private void FecharModalNovoAcordo() => ExibirModalNovoAcordo = false;
+
+    private async Task EfetivarNovoAcordo()
+    {
+        var req = new CriarAcordoRequest(
+            CondoId: 1,
+            UnidadeId: NovaUnidadeId,
+            MoradorId: NovoMoradorId,
+            FaturasIds: new List<int> { 1, 2 },
+            ValorDescontoConcedido: NovoDesconto,
+            QuantidadeParcelas: NovasParcelas,
+            DataPrimeiroVencimento: PrimeiroVencimento,
+            Observacoes: NovasObservacoes
+        );
+
+        var apiRes = await FinancialApi.CreateAgreementAsync(req);
+        if (apiRes.IsSuccess)
+        {
+            FecharModalNovoAcordo();
+            await CarregarAcordos();
+            return;
+        }
+
+        var service = ServiceProvider.GetService<IAcordoApplicationService>();
+        if (service != null)
+        {
+            var res = await service.CriarAcordoAsync(req);
+            if (res.IsSuccess)
+            {
+                FecharModalNovoAcordo();
+                await CarregarAcordos();
+            }
+        }
+    }
+
+    private async Task CancelarAcordo(int id)
+    {
+        var apiRes = await FinancialApi.CancelAgreementAsync(id, "Cancelado manualmente pelo usuário.");
+        if (apiRes.IsSuccess)
+        {
+            await CarregarAcordos();
+            return;
+        }
+
+        var service = ServiceProvider.GetService<IAcordoApplicationService>();
+        if (service != null)
+        {
+            var res = await service.CancelarAcordoAsync(id, "Cancelado manualmente pelo usuário.");
+            if (res.IsSuccess)
+            {
+                await CarregarAcordos();
+            }
+        }
+    }
+
+    private void AbrirDetalhes(AcordoDto acordo)
+    {
+        // Visualizar detalhes
+    }
+
+    private string ObterBadgeStatus(StatusAcordo status) => status switch
+    {
+        StatusAcordo.Ativo => "bg-primary text-white",
+        StatusAcordo.Quitado => "bg-success text-white",
+        StatusAcordo.Descumprido => "bg-danger text-white",
+        StatusAcordo.Cancelado => "bg-secondary text-white",
+        _ => "bg-warning text-dark"
+    };
+}

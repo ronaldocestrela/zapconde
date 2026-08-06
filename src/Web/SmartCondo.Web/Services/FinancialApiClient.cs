@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Modules.Financial.Application.DTOs;
+using Modules.Financial.Application.Dtos;
 using Modules.Financial.Domain.Enums;
 
 namespace SmartCondo.Web.Services;
@@ -113,6 +114,90 @@ public sealed class FinancialApiClient(HttpClient httpClient)
         catch (Exception ex)
         {
             return ConnectionFailure<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<IEnumerable<AcordoDto>>> GetAgreementsAsync(int condoId = 1, int? unidadeId = null, StatusAcordo? status = null, CancellationToken ct = default)
+    {
+        try
+        {
+            var queryParams = new List<string> { $"condoId={condoId}" };
+            if (unidadeId.HasValue) queryParams.Add($"unidadeId={unidadeId}");
+            if (status.HasValue) queryParams.Add($"status={(int)status.Value}");
+
+            var queryString = "?" + string.Join("&", queryParams);
+            var response = await httpClient.GetAsync($"/api/financial/agreements{queryString}", ct);
+            return await ParseAsync<IEnumerable<AcordoDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<AcordoDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<AcordoDto>> CreateAgreementAsync(CriarAcordoRequest request, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/financial/agreements", request, JsonOptions, ct);
+            return await ParseAsync<AcordoDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<AcordoDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<bool>> CancelAgreementAsync(int id, string motivo, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsync($"/api/financial/agreements/{id}/cancel?motivo={Uri.EscapeDataString(motivo)}", null, ct);
+            var apiRes = await ParseAsync<object>(response, ct);
+            return new ApiResult<bool>(apiRes.IsSuccess, apiRes.IsSuccess, apiRes.Message, apiRes.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<bool>(ex);
+        }
+    }
+
+    public async Task<ApiResult<DashboardInadimplenciaDto>> GetDunningDashboardAsync(int condoId = 1, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/financial/dunning/dashboard?condoId={condoId}", ct);
+            return await ParseAsync<DashboardInadimplenciaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<DashboardInadimplenciaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<IEnumerable<EtapaReguaDto>>> GetDunningConfigAsync(int condoId = 1, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/financial/dunning/config?condoId={condoId}", ct);
+            return await ParseAsync<IEnumerable<EtapaReguaDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<EtapaReguaDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<ProcessamentoReguaResultadoDto>> ProcessDunningAsync(int condoId = 1, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsync($"/api/financial/dunning/process?condoId={condoId}", null, ct);
+            return await ParseAsync<ProcessamentoReguaResultadoDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<ProcessamentoReguaResultadoDto>(ex);
         }
     }
 

@@ -9,5 +9,6 @@ public enum StatusFatura
     Pago = 2,
     Vencido = 3,
     Cancelado = 4,
-    ParcialmentePago = 5
+    ParcialmentePago = 5,
+    EmAcordo = 6
 }

@@ -15,21 +15,24 @@ public static class FinancialServiceCollectionExtensions
         services.AddDbContext<FinancialDbContext>((sp, options) =>
         {
             var useInMemory = configuration.GetValue<bool>("Financial:UseInMemoryDatabase");
-            if (useInMemory)
+            var connectionString = configuration.GetConnectionString("Postgres");
+
+            if (useInMemory || string.IsNullOrWhiteSpace(connectionString))
             {
                 options.UseInMemoryDatabase(configuration["Financial:InMemoryDatabaseName"] ?? "SmartCondoFinancial");
                 return;
             }
 
-            var connectionString = configuration.GetConnectionString("Postgres")
-                ?? throw new InvalidOperationException("Connection string 'Postgres' não configurada.");
-
             options.UseNpgsql(connectionString);
         });
 
         services.AddSingleton<Domain.Services.CalculadoraFinanceira>();
+        services.AddSingleton<Domain.Services.CalculadoraAcordoDomainService>();
+        services.AddSingleton<Domain.Services.ReguaInadimplenciaEngine>();
         services.AddScoped<IInvoiceService, InvoiceService>();
         services.AddScoped<IFinancialCalculationService, FinancialCalculationService>();
+        services.AddScoped<IAcordoApplicationService, AcordoApplicationService>();
+        services.AddScoped<IReguaInadimplenciaAppService, ReguaInadimplenciaAppService>();
 
         // Gateway de Pagamento, Stubs e Webhooks
         services.AddSingleton<MockPaymentGatewayService>();

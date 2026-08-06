@@ -1,0 +1,19 @@
+/* Brand Tokens Stitch Design */
+:root {
+    --stitch-primary: #2E5B88;
+    --stitch-secondary: #A3C9A8;
+    --stitch-bg: #F4EAE1;
+    --stitch-card-bg: #FFFFFF;
+    --stitch-text-dark: #1E293B;
+}
+
+.agreements-card {
+    background-color: var(--stitch-card-bg);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.agreements-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+}
