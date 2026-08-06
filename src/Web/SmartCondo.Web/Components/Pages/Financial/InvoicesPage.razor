@@ -239,11 +239,17 @@ else
 
     private IEnumerable<FaturaSummaryDto> FilteredInvoices => Invoices.Where(i =>
     {
+        if (i == null) return false;
+
         if (!string.IsNullOrWhiteSpace(SearchTerm))
         {
-            var match = i.NumeroFatura.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                        i.NomeMorador.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                        i.BlocoNumeroUnidade.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase);
+            var numFatura = i.NumeroFatura ?? string.Empty;
+            var morador = i.NomeMorador ?? string.Empty;
+            var unidade = i.BlocoNumeroUnidade ?? string.Empty;
+
+            var match = numFatura.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        morador.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        unidade.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase);
             if (!match) return false;
         }
 
@@ -265,39 +271,58 @@ else
             return;
         }
 
-        await Session.EnsureLoadedAsync();
-
-        if (string.IsNullOrWhiteSpace(Session.AccessToken))
+        try
         {
-            Navigation.NavigateTo("/login", replace: true);
-            return;
-        }
+            await Session.EnsureLoadedAsync();
 
-        if (Session.Context is null)
+            if (string.IsNullOrWhiteSpace(Session.AccessToken))
+            {
+                Navigation.NavigateTo("/login", replace: true);
+                return;
+            }
+
+            if (Session.Context is null)
+            {
+                Navigation.NavigateTo("/selecionar-perfil", replace: true);
+                return;
+            }
+
+            _sessionReady = true;
+            await LoadInvoicesAsync();
+            StateHasChanged();
+        }
+        catch
         {
-            Navigation.NavigateTo("/selecionar-perfil", replace: true);
-            return;
+            _sessionReady = true;
+            Invoices = GetDemoInvoices();
+            IsLoading = false;
+            StateHasChanged();
         }
-
-        _sessionReady = true;
-        await LoadInvoicesAsync();
-        StateHasChanged();
     }
 
     private async Task LoadInvoicesAsync()
     {
         IsLoading = true;
-        var res = await FinancialApi.GetInvoicesAsync();
-        if (res.IsSuccess && res.Data != null)
+        try
         {
-            Invoices = res.Data.ToList();
+            var res = await FinancialApi.GetInvoicesAsync();
+            if (res.IsSuccess && res.Data != null)
+            {
+                Invoices = res.Data.ToList();
+            }
+            else
+            {
+                Invoices = GetDemoInvoices();
+            }
         }
-        else
+        catch
         {
-            // Seed inicial demo caso API ainda esteja vazia
             Invoices = GetDemoInvoices();
         }
-        IsLoading = false;
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private async Task OpenDetailAsync(int id)

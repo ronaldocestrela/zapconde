@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Modules.Operations.Application.DTOs;
@@ -5,7 +6,7 @@ using Modules.Operations.Domain.Enums;
 
 namespace SmartCondo.Web.Services;
 
-public sealed class OperationsApiClient(HttpClient httpClient)
+public sealed class OperationsApiClient(HttpClient httpClient, AuthSession session)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -26,7 +27,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
             if (tipo.HasValue) queryParams.Add($"tipo={(int)tipo.Value}");
 
             var queryString = "?" + string.Join("&", queryParams);
-            var response = await httpClient.GetAsync($"/api/operations/common-areas{queryString}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/common-areas{queryString}", null, ct);
             return await ParseAsync<IEnumerable<AreaComumDto>>(response, ct);
         }
         catch (Exception ex)
@@ -39,7 +40,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/operations/common-areas/{id}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/common-areas/{id}", null, ct);
             return await ParseAsync<AreaComumDto>(response, ct);
         }
         catch (Exception ex)
@@ -52,7 +53,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/operations/common-areas", request, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/operations/common-areas", request, ct);
             return await ParseAsync<AreaComumDto>(response, ct);
         }
         catch (Exception ex)
@@ -82,7 +83,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
                 request.RegrasUso
             };
 
-            var response = await httpClient.PutAsJsonAsync($"/api/operations/common-areas/{id}", body, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Put, $"/api/operations/common-areas/{id}", body, ct);
             return await ParseAsync<AreaComumDto>(response, ct);
         }
         catch (Exception ex)
@@ -96,7 +97,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
         try
         {
             var body = new { Id = id, NovoStatus = novoStatus };
-            var response = await httpClient.PatchAsJsonAsync($"/api/operations/common-areas/{id}/status", body, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Patch, $"/api/operations/common-areas/{id}/status", body, ct);
             return await ParseAsync<AreaComumDto>(response, ct);
         }
         catch (Exception ex)
@@ -109,7 +110,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/operations/common-areas/summary?condoId={condoId}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/common-areas/summary?condoId={condoId}", null, ct);
             return await ParseAsync<AreaComumSummaryDto>(response, ct);
         }
         catch (Exception ex)
@@ -137,7 +138,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
             if (dataFim.HasValue) queryParams.Add($"dataFim={dataFim.Value:o}");
 
             var queryString = "?" + string.Join("&", queryParams);
-            var response = await httpClient.GetAsync($"/api/operations/reservations{queryString}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/reservations{queryString}", null, ct);
             return await ParseAsync<IEnumerable<ReservaDto>>(response, ct);
         }
         catch (Exception ex)
@@ -150,7 +151,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/operations/reservations/{id}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/reservations/{id}", null, ct);
             return await ParseAsync<ReservaDto>(response, ct);
         }
         catch (Exception ex)
@@ -163,7 +164,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/operations/reservations", request, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/operations/reservations", request, ct);
             return await ParseAsync<ReservaDto>(response, ct);
         }
         catch (Exception ex)
@@ -177,7 +178,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
         try
         {
             var body = new CancelarReservaRequest(motivo);
-            var response = await httpClient.PatchAsJsonAsync($"/api/operations/reservations/{id}/cancel", body, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Patch, $"/api/operations/reservations/{id}/cancel", body, ct);
             return await ParseAsync<ReservaDto>(response, ct);
         }
         catch (Exception ex)
@@ -190,7 +191,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PatchAsync($"/api/operations/reservations/{id}/approve", null, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Patch, $"/api/operations/reservations/{id}/approve", null, ct);
             return await ParseAsync<ReservaDto>(response, ct);
         }
         catch (Exception ex)
@@ -203,7 +204,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/operations/reservations/summary?condoId={condoId}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/reservations/summary?condoId={condoId}", null, ct);
             return await ParseAsync<ReservaSummaryDto>(response, ct);
         }
         catch (Exception ex)
@@ -227,7 +228,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
             if (fim.HasValue) queryParams.Add($"fim={fim.Value:o}");
 
             var queryString = "?" + string.Join("&", queryParams);
-            var response = await httpClient.GetAsync($"/api/operations/reservations/calendar{queryString}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/reservations/calendar{queryString}", null, ct);
             return await ParseAsync<IEnumerable<ReservaCalendarSlotDto>>(response, ct);
         }
         catch (Exception ex)
@@ -255,7 +256,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
             if (!string.IsNullOrWhiteSpace(moradorId)) queryParams.Add($"moradorId={moradorId}");
 
             var queryString = "?" + string.Join("&", queryParams);
-            var response = await httpClient.GetAsync($"/api/operations/tickets{queryString}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/tickets{queryString}", null, ct);
             return await ParseAsync<IEnumerable<OcorrenciaDto>>(response, ct);
         }
         catch (Exception ex)
@@ -268,7 +269,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/operations/tickets/{id}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/tickets/{id}", null, ct);
             return await ParseAsync<OcorrenciaDto>(response, ct);
         }
         catch (Exception ex)
@@ -281,7 +282,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/operations/tickets", request, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/operations/tickets", request, ct);
             return await ParseAsync<OcorrenciaDto>(response, ct);
         }
         catch (Exception ex)
@@ -311,7 +312,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
                 ObservacaoResolucao = observacaoResolucao
             };
 
-            var response = await httpClient.PatchAsJsonAsync($"/api/operations/tickets/{id}/status", body, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Patch, $"/api/operations/tickets/{id}/status", body, ct);
             return await ParseAsync<OcorrenciaDto>(response, ct);
         }
         catch (Exception ex)
@@ -324,7 +325,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/operations/tickets/summary?condoId={condoId}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/tickets/summary?condoId={condoId}", null, ct);
             return await ParseAsync<OcorrenciaSummaryDto>(response, ct);
         }
         catch (Exception ex)
@@ -354,7 +355,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
             if (fim.HasValue) queryParams.Add($"fim={fim.Value:o}");
 
             var queryString = "?" + string.Join("&", queryParams);
-            var response = await httpClient.GetAsync($"/api/operations/maintenance{queryString}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/maintenance{queryString}", null, ct);
             return await ParseAsync<IEnumerable<PlanoManutencaoDto>>(response, ct);
         }
         catch (Exception ex)
@@ -367,7 +368,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/operations/maintenance/{id}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/maintenance/{id}", null, ct);
             return await ParseAsync<PlanoManutencaoDto>(response, ct);
         }
         catch (Exception ex)
@@ -380,7 +381,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/operations/maintenance", request, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/operations/maintenance", request, ct);
             return await ParseAsync<PlanoManutencaoDto>(response, ct);
         }
         catch (Exception ex)
@@ -407,7 +408,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
                 request.Observacoes
             };
 
-            var response = await httpClient.PutAsJsonAsync($"/api/operations/maintenance/{id}", body, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Put, $"/api/operations/maintenance/{id}", body, ct);
             return await ParseAsync<PlanoManutencaoDto>(response, ct);
         }
         catch (Exception ex)
@@ -429,7 +430,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
                 request.AgendarProxima
             };
 
-            var response = await httpClient.PostAsJsonAsync($"/api/operations/maintenance/{id}/complete", body, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/operations/maintenance/{id}/complete", body, ct);
             return await ParseAsync<PlanoManutencaoDto>(response, ct);
         }
         catch (Exception ex)
@@ -442,7 +443,7 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/operations/maintenance/summary?condoId={condoId}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/maintenance/summary?condoId={condoId}", null, ct);
             return await ParseAsync<PlanoManutencaoSummaryDto>(response, ct);
         }
         catch (Exception ex)
@@ -464,13 +465,44 @@ public sealed class OperationsApiClient(HttpClient httpClient)
             if (fim.HasValue) queryParams.Add($"fim={fim.Value:o}");
 
             var queryString = "?" + string.Join("&", queryParams);
-            var response = await httpClient.GetAsync($"/api/operations/maintenance/calendar{queryString}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/operations/maintenance/calendar{queryString}", null, ct);
             return await ParseAsync<IEnumerable<ManutencaoCalendarEventDto>>(response, ct);
         }
         catch (Exception ex)
         {
             return ConnectionFailure<IEnumerable<ManutencaoCalendarEventDto>>(ex);
         }
+    }
+
+    private async Task<HttpResponseMessage> SendAuthorizedAsync(
+        HttpMethod method,
+        string path,
+        object? body,
+        CancellationToken ct)
+    {
+        await session.EnsureLoadedAsync();
+        using var request = new HttpRequestMessage(method, path);
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body, options: JsonOptions);
+        }
+
+        if (!string.IsNullOrWhiteSpace(session.AccessToken))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", session.AccessToken);
+        }
+
+        if (session.Context?.TenantId > 0)
+        {
+            request.Headers.TryAddWithoutValidation("X-Tenant-Id", session.Context.TenantId.ToString());
+        }
+
+        if (session.Context?.CondoId > 0)
+        {
+            request.Headers.TryAddWithoutValidation("X-Condo-Id", session.Context.CondoId.ToString());
+        }
+
+        return await httpClient.SendAsync(request, ct);
     }
 
     private static async Task<ApiResult<T>> ParseAsync<T>(HttpResponseMessage response, CancellationToken ct)

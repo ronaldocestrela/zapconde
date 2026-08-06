@@ -23,13 +23,16 @@ public sealed class AuthSession(ProtectedSessionStorage storage)
             return;
         }
 
-        var result = await storage.GetAsync<AuthSnapshot>(StorageKey);
-        if (result.Success && result.Value is not null)
+        if (storage is not null)
         {
-            AccessToken = result.Value.AccessToken;
-            RefreshToken = result.Value.RefreshToken;
-            Profiles = result.Value.Profiles ?? [];
-            Context = result.Value.Context;
+            var result = await storage.GetAsync<AuthSnapshot>(StorageKey);
+            if (result.Success && result.Value is not null)
+            {
+                AccessToken = result.Value.AccessToken;
+                RefreshToken = result.Value.RefreshToken;
+                Profiles = result.Value.Profiles ?? [];
+                Context = result.Value.Context;
+            }
         }
 
         _loaded = true;

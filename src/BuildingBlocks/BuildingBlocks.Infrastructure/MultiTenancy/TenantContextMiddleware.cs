@@ -20,8 +20,7 @@ public sealed class TenantContextMiddleware(RequestDelegate next)
             return;
         }
 
-        if (IsWebhookPath(context.Request.Path) &&
-            TryResolveFromHeaders(context.Request.Headers, tenantService))
+        if (TryResolveFromHeaders(context.Request.Headers, tenantService))
         {
             await next(context);
             return;

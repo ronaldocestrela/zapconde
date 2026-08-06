@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Modules.Financial.Application.DTOs;
@@ -6,7 +7,7 @@ using Modules.Financial.Domain.Enums;
 
 namespace SmartCondo.Web.Services;
 
-public sealed class FinancialApiClient(HttpClient httpClient)
+public sealed class FinancialApiClient(HttpClient httpClient, AuthSession session)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -29,7 +30,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
             if (status.HasValue) queryParams.Add($"status={(int)status.Value}");
 
             var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
-            var response = await httpClient.GetAsync($"/api/financial/invoices{queryString}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/financial/invoices{queryString}", null, ct);
             return await ParseAsync<IEnumerable<FaturaSummaryDto>>(response, ct);
         }
         catch (Exception ex)
@@ -42,7 +43,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/financial/invoices/{id}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/financial/invoices/{id}", null, ct);
             return await ParseAsync<FaturaDetailDto>(response, ct);
         }
         catch (Exception ex)
@@ -55,7 +56,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/financial/invoices", request, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/financial/invoices", request, ct);
             return await ParseAsync<FaturaDetailDto>(response, ct);
         }
         catch (Exception ex)
@@ -68,7 +69,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsync($"/api/financial/invoices/{id}/cancel", null, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/financial/invoices/{id}/cancel", null, ct);
             var apiRes = await ParseAsync<object>(response, ct);
             return new ApiResult<bool>(apiRes.IsSuccess, apiRes.IsSuccess, apiRes.Message, apiRes.StatusCode);
         }
@@ -82,7 +83,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsync($"/api/financial/invoices/{faturaId}/generate-payment", null, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/financial/invoices/{faturaId}/generate-payment", null, ct);
             return await ParseAsync<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>(response, ct);
         }
         catch (Exception ex)
@@ -95,7 +96,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/financial/invoices/{faturaId}/payment-info", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/financial/invoices/{faturaId}/payment-info", null, ct);
             return await ParseAsync<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>(response, ct);
         }
         catch (Exception ex)
@@ -108,7 +109,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsync($"/api/financial/invoices/{faturaId}/sync-payment", null, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/financial/invoices/{faturaId}/sync-payment", null, ct);
             return await ParseAsync<Modules.Financial.Application.Dtos.PaymentInfoResponseDto>(response, ct);
         }
         catch (Exception ex)
@@ -126,7 +127,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
             if (status.HasValue) queryParams.Add($"status={(int)status.Value}");
 
             var queryString = "?" + string.Join("&", queryParams);
-            var response = await httpClient.GetAsync($"/api/financial/agreements{queryString}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/financial/agreements{queryString}", null, ct);
             return await ParseAsync<IEnumerable<AcordoDto>>(response, ct);
         }
         catch (Exception ex)
@@ -139,7 +140,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/financial/agreements", request, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/financial/agreements", request, ct);
             return await ParseAsync<AcordoDto>(response, ct);
         }
         catch (Exception ex)
@@ -152,7 +153,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsync($"/api/financial/agreements/{id}/cancel?motivo={Uri.EscapeDataString(motivo)}", null, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/financial/agreements/{id}/cancel?motivo={Uri.EscapeDataString(motivo)}", null, ct);
             var apiRes = await ParseAsync<object>(response, ct);
             return new ApiResult<bool>(apiRes.IsSuccess, apiRes.IsSuccess, apiRes.Message, apiRes.StatusCode);
         }
@@ -166,7 +167,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/financial/dunning/dashboard?condoId={condoId}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/financial/dunning/dashboard?condoId={condoId}", null, ct);
             return await ParseAsync<DashboardInadimplenciaDto>(response, ct);
         }
         catch (Exception ex)
@@ -179,7 +180,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/financial/dunning/config?condoId={condoId}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/financial/dunning/config?condoId={condoId}", null, ct);
             return await ParseAsync<IEnumerable<EtapaReguaDto>>(response, ct);
         }
         catch (Exception ex)
@@ -192,7 +193,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsync($"/api/financial/dunning/process?condoId={condoId}", null, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/financial/dunning/process?condoId={condoId}", null, ct);
             return await ParseAsync<ProcessamentoReguaResultadoDto>(response, ct);
         }
         catch (Exception ex)
@@ -206,7 +207,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
         try
         {
             var url = $"/api/financial/digital-binders?condoId={condoId}" + (ano.HasValue ? $"&ano={ano}" : "");
-            var response = await httpClient.GetAsync(url, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, url, null, ct);
             return await ParseAsync<IEnumerable<PastaDigitalDto>>(response, ct);
         }
         catch (Exception ex)
@@ -219,7 +220,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/financial/digital-binders/{id}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/financial/digital-binders/{id}", null, ct);
             return await ParseAsync<PastaDigitalDto>(response, ct);
         }
         catch (Exception ex)
@@ -232,7 +233,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/financial/digital-binders/generate", request, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/financial/digital-binders/generate", request, ct);
             return await ParseAsync<PastaDigitalDto>(response, ct);
         }
         catch (Exception ex)
@@ -245,7 +246,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsync($"/api/financial/digital-binders/{id}/submit", null, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/financial/digital-binders/{id}/submit", null, ct);
             return await ParseAsync<PastaDigitalDto>(response, ct);
         }
         catch (Exception ex)
@@ -258,7 +259,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync($"/api/financial/digital-binders/{id}/approve", request, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/financial/digital-binders/{id}/approve", request, ct);
             return await ParseAsync<PastaDigitalDto>(response, ct);
         }
         catch (Exception ex)
@@ -271,7 +272,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/financial/bank-reconciliation/accounts?condoId={condoId}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/financial/bank-reconciliation/accounts?condoId={condoId}", null, ct);
             return await ParseAsync<IEnumerable<ContaBancariaDto>>(response, ct);
         }
         catch (Exception ex)
@@ -284,7 +285,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/financial/bank-reconciliation/import-statement", request, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/financial/bank-reconciliation/import-statement", request, ct);
             return await ParseAsync<IEnumerable<ExtratoBancarioItemDto>>(response, ct);
         }
         catch (Exception ex)
@@ -297,7 +298,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsync($"/api/financial/bank-reconciliation/auto-reconcile/{contaBancariaId}", null, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/financial/bank-reconciliation/auto-reconcile/{contaBancariaId}", null, ct);
             return await ParseAsync<ResultadoConciliacaoEmLoteDto>(response, ct);
         }
         catch (Exception ex)
@@ -310,7 +311,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync($"/api/financial/bank-reconciliation/pending-items/{contaBancariaId}", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/financial/bank-reconciliation/pending-items/{contaBancariaId}", null, ct);
             return await ParseAsync<IEnumerable<ExtratoBancarioItemDto>>(response, ct);
         }
         catch (Exception ex)
@@ -323,7 +324,7 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/financial/bank-reconciliation/reconcile-item", request, JsonOptions, ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/financial/bank-reconciliation/reconcile-item", request, ct);
             return await ParseAsync<ExtratoBancarioItemDto>(response, ct);
         }
         catch (Exception ex)
@@ -336,13 +337,44 @@ public sealed class FinancialApiClient(HttpClient httpClient)
     {
         try
         {
-            var response = await httpClient.GetAsync("/api/financial/reports/multi-condo-summary", ct);
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, "/api/financial/reports/multi-condo-summary", null, ct);
             return await ParseAsync<RelatorioConsolidadoMulticondominioDto>(response, ct);
         }
         catch (Exception ex)
         {
             return ConnectionFailure<RelatorioConsolidadoMulticondominioDto>(ex);
         }
+    }
+
+    private async Task<HttpResponseMessage> SendAuthorizedAsync(
+        HttpMethod method,
+        string path,
+        object? body,
+        CancellationToken ct)
+    {
+        await session.EnsureLoadedAsync();
+        using var request = new HttpRequestMessage(method, path);
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body, options: JsonOptions);
+        }
+
+        if (!string.IsNullOrWhiteSpace(session.AccessToken))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", session.AccessToken);
+        }
+
+        if (session.Context?.TenantId > 0)
+        {
+            request.Headers.TryAddWithoutValidation("X-Tenant-Id", session.Context.TenantId.ToString());
+        }
+
+        if (session.Context?.CondoId > 0)
+        {
+            request.Headers.TryAddWithoutValidation("X-Condo-Id", session.Context.CondoId.ToString());
+        }
+
+        return await httpClient.SendAsync(request, ct);
     }
 
     private static async Task<ApiResult<T>> ParseAsync<T>(HttpResponseMessage response, CancellationToken ct)
