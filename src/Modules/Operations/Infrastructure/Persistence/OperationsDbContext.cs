@@ -19,6 +19,7 @@ public class OperationsDbContext : MultiTenantDbContext
     public DbSet<Ocorrencia> Ocorrencias => Set<Ocorrencia>();
     public DbSet<AnexoOcorrencia> AnexosOcorrencia => Set<AnexoOcorrencia>();
     public DbSet<HistoricoOcorrencia> HistoricoOcorrencias => Set<HistoricoOcorrencia>();
+    public DbSet<PlanoManutencao> PlanosManutencao => Set<PlanoManutencao>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

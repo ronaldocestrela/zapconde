@@ -46,6 +46,8 @@ public static class NavMenuItems
             [SmartCondoRoles.Sindico, SmartCondoRoles.Administradora, SmartCondoRoles.Condomino]),
         new("Ocorrências e Chamados", "/operacoes/ocorrencias", "confirmation_number", NavSection.Gestao,
             [SmartCondoRoles.Sindico, SmartCondoRoles.Administradora, SmartCondoRoles.Condomino, SmartCondoRoles.Zelador]),
+        new("Manutenção Preventiva", "/operacoes/manutencao", "engineering", NavSection.Gestao,
+            [SmartCondoRoles.Sindico, SmartCondoRoles.Administradora, SmartCondoRoles.Zelador]),
         new("Portaria", "/portaria", "badge", NavSection.Acesso,
             [SmartCondoRoles.Sindico, SmartCondoRoles.Administradora, SmartCondoRoles.Condomino, SmartCondoRoles.Portaria]),
         new("WhatsApp / IA", "/whatsapp", "smart_toy", NavSection.Inteligencia,

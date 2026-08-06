@@ -7,8 +7,8 @@ namespace Tests.Unit.Web;
 public class NavMenuItemsTests
 {
     [Theory]
-    [InlineData(SmartCondoRoles.Sindico, new[] { "Início", "Unidades e Moradores", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Inadimplência e Régua", "Prestação de Contas", "Conciliação Bancária", "Relatórios Consolidados", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Portaria", "WhatsApp / IA", "Configurações" })]
-    [InlineData(SmartCondoRoles.Administradora, new[] { "Início", "Unidades e Moradores", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Inadimplência e Régua", "Prestação de Contas", "Conciliação Bancária", "Relatórios Consolidados", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Portaria", "WhatsApp / IA", "Configurações" })]
+    [InlineData(SmartCondoRoles.Sindico, new[] { "Início", "Unidades e Moradores", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Inadimplência e Régua", "Prestação de Contas", "Conciliação Bancária", "Relatórios Consolidados", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Manutenção Preventiva", "Portaria", "WhatsApp / IA", "Configurações" })]
+    [InlineData(SmartCondoRoles.Administradora, new[] { "Início", "Unidades e Moradores", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Inadimplência e Régua", "Prestação de Contas", "Conciliação Bancária", "Relatórios Consolidados", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Manutenção Preventiva", "Portaria", "WhatsApp / IA", "Configurações" })]
     [InlineData(SmartCondoRoles.Condomino, new[] { "Início", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Prestação de Contas", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Portaria", "Configurações" })]
     [InlineData(SmartCondoRoles.Portaria, new[] { "Início", "Portaria", "Configurações" })]
     public void GetItemsForRole_Should_ReturnExpectedItems(string role, string[] expectedLabels)

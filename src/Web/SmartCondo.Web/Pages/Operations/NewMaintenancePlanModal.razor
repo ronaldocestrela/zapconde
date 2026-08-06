@@ -1,0 +1,236 @@
+@using Modules.Operations.Application.DTOs
+@using Modules.Operations.Domain.Enums
+@using SmartCondo.Web.Services
+@using Microsoft.AspNetCore.Components.Forms
+@inject OperationsApiClient OperationsApi
+
+@if (Show)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg rounded-3">
+                <div class="modal-header text-white" style="background-color: #2E5B88;">
+                    <h5 class="modal-title font-weight-bold d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined">engineering</span>
+                        @(IsEdit ? "Editar Plano de Manutenção" : "Novo Plano de Manutenção Preventiva")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="Fechar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    @if (!string.IsNullOrEmpty(ErroMessage))
+                    {
+                        <div class="alert alert-danger mb-3">@ErroMessage</div>
+                    }
+
+                    <EditForm Model="Model" OnValidSubmit="SalvarAsync">
+                        <DataAnnotationsValidator />
+
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Título do Equipamento / Serviço *</label>
+                                <InputText @bind-Value="Model.Titulo" class="form-control" placeholder="Ex: Manutenção Preventiva Elevador Social Bloco A" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Categoria *</label>
+                                <InputSelect @bind-Value="Model.Categoria" class="form-select">
+                                    <option value="@CategoriaManutencao.Elevadores">Elevadores</option>
+                                    <option value="@CategoriaManutencao.BombasDagua">Bombas d'Água</option>
+                                    <option value="@CategoriaManutencao.ParaRaios">Para-raios</option>
+                                    <option value="@CategoriaManutencao.Geradores">Geradores</option>
+                                    <option value="@CategoriaManutencao.Portoes">Portões Automáticos</option>
+                                    <option value="@CategoriaManutencao.Incendio">Sistema de Incêndio</option>
+                                    <option value="@CategoriaManutencao.Outros">Outros</option>
+                                </InputSelect>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Periodicidade *</label>
+                                <InputSelect @bind-Value="Model.Periodicidade" class="form-select">
+                                    <option value="@PeriodicidadeManutencao.Semanal">Semanal</option>
+                                    <option value="@PeriodicidadeManutencao.Mensal">Mensal</option>
+                                    <option value="@PeriodicidadeManutencao.Bimestral">Bimestral</option>
+                                    <option value="@PeriodicidadeManutencao.Trimestral">Trimestral</option>
+                                    <option value="@PeriodicidadeManutencao.Semestral">Semestral</option>
+                                    <option value="@PeriodicidadeManutencao.Anual">Anual</option>
+                                </InputSelect>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Data da Próxima Manutenção *</label>
+                                <InputDate @bind-Value="Model.DataProximaManutencao" class="form-control" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Empresa Contratada / Prestador</label>
+                                <InputText @bind-Value="Model.EmpresaContratada" class="form-control" placeholder="Ex: Otis, Atlas Schindler..." />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Responsável Técnico (Nome/ART)</label>
+                                <InputText @bind-Value="Model.ResponsavelTecnico" class="form-control" placeholder="Ex: Eng. Carlos Silva" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Custo Estimado (R$)</label>
+                                <InputNumber @bind-Value="Model.CustoEstimado" class="form-control" placeholder="0.00" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Data da Última Manutenção (opcional)</label>
+                                <InputDate @bind-Value="Model.DataUltimaManutencao" class="form-control" />
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Descrição do Escopo Técnico</label>
+                                <InputTextArea @bind-Value="Model.Descricao" class="form-control" rows="3" placeholder="Insira o check-list de inspeção, itens cobrados na vistoria ou observações." />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-outline-secondary" @onclick="Fechar">Cancelar</button>
+                            <button type="submit" class="btn btn-primary-stitch" disabled="@Processando">
+                                @if (Processando)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                    <span>Salvando...</span>
+                                }
+                                else
+                                {
+                                    <span>Salvar Plano</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+    [Parameter] public EventCallback OnClosed { get; set; }
+    [Parameter] public PlanoManutencaoDto? PlanoParaEditar { get; set; }
+
+    private FormModel Model { get; set; } = new();
+    private bool IsEdit => PlanoParaEditar != null;
+    private bool Processando { get; set; }
+    private string ErroMessage { get; set; } = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (PlanoParaEditar != null)
+        {
+            Model = new FormModel
+            {
+                Titulo = PlanoParaEditar.Titulo,
+                Descricao = PlanoParaEditar.Descricao,
+                Categoria = PlanoParaEditar.Categoria,
+                Periodicidade = PlanoParaEditar.Periodicidade,
+                DataProximaManutencao = PlanoParaEditar.DataProximaManutencao,
+                ResponsavelTecnico = PlanoParaEditar.ResponsavelTecnico,
+                EmpresaContratada = PlanoParaEditar.EmpresaContratada,
+                CustoEstimado = PlanoParaEditar.CustoEstimado,
+                DataUltimaManutencao = PlanoParaEditar.DataUltimaManutencao
+            };
+        }
+        else
+        {
+            Model = new FormModel
+            {
+                DataProximaManutencao = DateTime.Today.AddDays(15)
+            };
+        }
+    }
+
+    private async Task SalvarAsync()
+    {
+        Processando = true;
+        ErroMessage = string.Empty;
+
+        try
+        {
+            if (IsEdit && PlanoParaEditar != null)
+            {
+                var updateRequest = new UpdatePlanoManutencaoRequest(
+                    Model.Titulo,
+                    Model.Descricao,
+                    Model.Categoria,
+                    Model.Periodicidade,
+                    Model.DataProximaManutencao,
+                    Model.ResponsavelTecnico,
+                    Model.EmpresaContratada,
+                    Model.CustoEstimado,
+                    null
+                );
+
+                var result = await OperationsApi.UpdateMaintenancePlanAsync(PlanoParaEditar.Id, updateRequest);
+                if (result.IsSuccess)
+                {
+                    await OnSaved.InvokeAsync();
+                    Fechar();
+                }
+                else
+                {
+                    ErroMessage = result.Message;
+                }
+            }
+            else
+            {
+                var createRequest = new CreatePlanoManutencaoRequest(
+                    CondoId: 1,
+                    Titulo: Model.Titulo,
+                    Categoria: Model.Categoria,
+                    Periodicidade: Model.Periodicidade,
+                    DataProximaManutencao: Model.DataProximaManutencao,
+                    Descricao: Model.Descricao,
+                    ResponsavelTecnico: Model.ResponsavelTecnico,
+                    EmpresaContratada: Model.EmpresaContratada,
+                    CustoEstimado: Model.CustoEstimado,
+                    DataUltimaManutencao: Model.DataUltimaManutencao
+                );
+
+                var result = await OperationsApi.CreateMaintenancePlanAsync(createRequest);
+                if (result.IsSuccess)
+                {
+                    await OnSaved.InvokeAsync();
+                    Fechar();
+                }
+                else
+                {
+                    ErroMessage = result.Message;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ErroMessage = ex.Message;
+        }
+        finally
+        {
+            Processando = false;
+        }
+    }
+
+    private void Fechar()
+    {
+        Show = false;
+        ErroMessage = string.Empty;
+        OnClosed.InvokeAsync();
+    }
+
+    public class FormModel
+    {
+        public string Titulo { get; set; } = string.Empty;
+        public string? Descricao { get; set; }
+        public CategoriaManutencao Categoria { get; set; } = CategoriaManutencao.Elevadores;
+        public PeriodicidadeManutencao Periodicidade { get; set; } = PeriodicidadeManutencao.Mensal;
+        public DateTime DataProximaManutencao { get; set; } = DateTime.Today.AddDays(15);
+        public string? ResponsavelTecnico { get; set; }
+        public string? EmpresaContratada { get; set; }
+        public decimal? CustoEstimado { get; set; }
+        public DateTime? DataUltimaManutencao { get; set; }
+    }
+}

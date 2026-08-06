@@ -1,0 +1,164 @@
+/* Maintenance Preventiva System CSS (Stitch Theme) */
+
+:root {
+    --stitch-primary: #2E5B88;
+    --stitch-primary-hover: #1e3f61;
+    --stitch-secondary: #A3C9A8;
+    --stitch-accent: #F4EAE1;
+    --stitch-card-bg: #ffffff;
+    --stitch-border-radius: 12px;
+}
+
+.maintenance-container {
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.maintenance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.maintenance-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--stitch-primary);
+    margin: 0;
+}
+
+.maintenance-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.kpi-card {
+    background: var(--stitch-card-bg);
+    border-radius: var(--stitch-border-radius);
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(46, 91, 136, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.kpi-icon.primary { background: rgba(46, 91, 136, 0.1); color: var(--stitch-primary); }
+.kpi-icon.success { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+.kpi-icon.warning { background: rgba(255, 193, 7, 0.15); color: #d39e00; }
+.kpi-icon.danger { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+.kpi-icon.info { background: rgba(23, 162, 184, 0.1); color: #17a2b8; }
+
+.kpi-data h3 {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0 0 0.25rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #212529;
+}
+
+.btn-stitch-primary {
+    background-color: var(--stitch-primary);
+    color: #ffffff;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-stitch-primary:hover {
+    background-color: var(--stitch-primary-hover);
+    color: #ffffff;
+}
+
+/* Badge Status Styles */
+.badge-status {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.badge-status.em-dia { background-color: #d4edda; color: #155724; }
+.badge-status.proxima { background-color: #fff3cd; color: #856404; }
+.badge-status.atrasada { background-color: #f8d7da; color: #721c24; }
+.badge-status.em-execucao { background-color: #d1ecf1; color: #0c5460; }
+.badge-status.concluida { background-color: #e2e3e5; color: #383d41; }
+
+/* Calendar Grid */
+.calendar-view-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-weight: 700;
+    color: var(--stitch-primary);
+    padding: 0.5rem;
+    background: var(--stitch-accent);
+    border-radius: 6px;
+}
+
+.calendar-day-cell {
+    min-height: 90px;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    position: relative;
+}
+
+.calendar-day-number {
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 0.35rem;
+}
+
+.calendar-event-pill {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

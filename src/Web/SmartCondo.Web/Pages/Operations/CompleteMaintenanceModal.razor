@@ -1,0 +1,154 @@
+@using Modules.Operations.Application.DTOs
+@using SmartCondo.Web.Services
+@using Microsoft.AspNetCore.Components.Forms
+@inject OperationsApiClient OperationsApi
+
+@if (Show && Plano != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg rounded-3">
+                <div class="modal-header text-white bg-success">
+                    <h5 class="modal-title font-weight-bold d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined">task_alt</span>
+                        Registrar Conclusão de Manutenção
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="Fechar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-light border mb-3">
+                        <h6 class="fw-bold mb-1" style="color: #2E5B88;">@Plano.Titulo</h6>
+                        <small class="text-muted d-block">Categoria: @Plano.Categoria | Empresa: @(Plano.EmpresaContratada ?? "Não informada")</small>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(ErroMessage))
+                    {
+                        <div class="alert alert-danger mb-3">@ErroMessage</div>
+                    }
+
+                    <EditForm Model="Model" OnValidSubmit="SalvarAsync">
+                        <DataAnnotationsValidator />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Data da Realização *</label>
+                                <InputDate @bind-Value="Model.DataRealizacao" class="form-control" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Custo Real (R$)</label>
+                                <InputNumber @bind-Value="Model.CustoReal" class="form-control" placeholder="0.00" />
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Observações / Parecer do Técnico</label>
+                                <InputTextArea @bind-Value="Model.Observacoes" class="form-control" rows="3" placeholder="Informe o laudo técnico, trocas de peças ou reparos executados." />
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check form-switch bg-light p-3 rounded">
+                                    <InputCheckbox @bind-Value="Model.AgendarProxima" class="form-check-input" id="agendarProximaCheck" />
+                                    <label class="form-check-label fw-semibold" for="agendarProximaCheck">
+                                        Agendar próxima manutenção automaticamente conforme a periodicidade (@Plano.Periodicidade)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-outline-secondary" @onclick="Fechar">Cancelar</button>
+                            <button type="submit" class="btn btn-success d-flex align-items-center gap-1" disabled="@Processando">
+                                @if (Processando)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                    <span>Registrando...</span>
+                                }
+                                else
+                                {
+                                    <span class="material-symbols-outlined fs-5">check_circle</span>
+                                    <span>Confirmar Baixa</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public PlanoManutencaoDto? Plano { get; set; }
+    [Parameter] public EventCallback OnCompleted { get; set; }
+    [Parameter] public EventCallback OnClosed { get; set; }
+
+    private CompleteFormModel Model { get; set; } = new();
+    private bool Processando { get; set; }
+    private string ErroMessage { get; set; } = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (Plano != null)
+        {
+            Model = new CompleteFormModel
+            {
+                DataRealizacao = DateTime.Today,
+                CustoReal = Plano.CustoEstimado,
+                AgendarProxima = true
+            };
+        }
+    }
+
+    private async Task SalvarAsync()
+    {
+        if (Plano == null) return;
+
+        Processando = true;
+        ErroMessage = string.Empty;
+
+        try
+        {
+            var request = new ConcluirManutencaoRequest(
+                Model.DataRealizacao,
+                Model.CustoReal,
+                Model.Observacoes,
+                Model.AgendarProxima
+            );
+
+            var result = await OperationsApi.CompleteMaintenancePlanAsync(Plano.Id, request);
+            if (result.IsSuccess)
+            {
+                await OnCompleted.InvokeAsync();
+                Fechar();
+            }
+            else
+            {
+                ErroMessage = result.Message;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErroMessage = ex.Message;
+        }
+        finally
+        {
+            Processando = false;
+        }
+    }
+
+    private void Fechar()
+    {
+        Show = false;
+        ErroMessage = string.Empty;
+        OnClosed.InvokeAsync();
+    }
+
+    public class CompleteFormModel
+    {
+        public DateTime DataRealizacao { get; set; } = DateTime.Today;
+        public decimal? CustoReal { get; set; }
+        public string? Observacoes { get; set; }
+        public bool AgendarProxima { get; set; } = true;
+    }
+}

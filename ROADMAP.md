@@ -471,7 +471,18 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Navegação: Atualização de `NavMenuItems.cs` integrando a rota `/operacoes/ocorrencias`.
 
 
-* [] **Subfase 4.2.2:** [FN-OPE-04] Calendário de `PlanoManutencao` para alertas automáticos de elevadores, bombas e para-raios.
+* [x] **Subfase 4.2.2:** [FN-OPE-04] Calendário de `PlanoManutencao` para alertas automáticos de elevadores, bombas e para-raios.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & Invariantes: Entidade Aggregate Root `PlanoManutencao`, exceção `PlanoManutencaoDomainException` e enums `CategoriaManutencao`, `PeriodicidadeManutencao` e `StatusManutencao` com isolamento multi-tenant (`ITenantScoped`), máquina de estados para cálculo de alertas em janela de 15 dias (`Proxima`), detecção de atraso (`Atrasada`) e baixa com recálculo automático da próxima manutenção baseada na periodicidade.
+  - EF Core 10 & Persistence: Mapeamento Fluent API em `OperationsDbContext` (`operations."PlanosManutencao"`), índices compostos de performance por `(TenantId, CondoId, Status)` e `(TenantId, DataProximaManutencao)` e migration `20260806190000_AddPlanoManutencao`.
+  - Serviço de Aplicação: `PlanoManutencaoApplicationService` e `IPlanoManutencaoApplicationService` encapsulados com Result Pattern (`Result<T>`) e isolamento multi-tenant (`ITenantScoped`).
+  - FastEndpoints API: Endpoints sob `/api/operations/maintenance` (`POST` criar plano de manutenção, `GET` listar com filtros por categoria/status/periodicidade, `GET /{id}` obter por ID, `PUT /{id}` atualizar, `POST /{id}/complete` registrar baixa/conclusão, `GET /summary` resumo KPI de métricas e `GET /calendar` eventos para agenda).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase4_2_2_PlanoManutencaoAlertas.feature`, suíte unitária `PlanoManutencaoDomainTests`, testes de navegação `NavMenuItemsTests` e testes de integração com Testcontainers (`PlanoManutencaoIntegrationTests` em PostgreSQL 17 real) — 100% aprovados.
+  - Blazor UI (Stitch): Páginas `/operacoes/manutencao` (com KPI cards de status e custos, filtros por texto/categoria/status, alternância entre visão Tabela e Calendário Mensal, modal wizard de cadastro `NewMaintenancePlanModal.razor` e modal de baixa/conclusão `CompleteMaintenanceModal.razor`) + estilos `maintenance.css` fiéis aos tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
+  - Navegação: Atualização de `OperationsNavTabs.razor` ativando o tab de Manutenção e registro da rota em `NavMenuItems.cs`.
 
 
 * [] **Subfase 4.2.3:** [FN-OPE-05] Módulo de Módulos de `AssembleiaVirtual` (Pautas, Votação e Ata).

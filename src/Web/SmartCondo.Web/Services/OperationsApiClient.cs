@@ -9,7 +9,8 @@ public sealed class OperationsApiClient(HttpClient httpClient)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
     };
 
     public async Task<ApiResult<IEnumerable<AreaComumDto>>> GetAreasComunsAsync(
@@ -332,6 +333,146 @@ public sealed class OperationsApiClient(HttpClient httpClient)
         }
     }
 
+    // --- Módulo de Manutenção Preventiva ---
+
+    public async Task<ApiResult<IEnumerable<PlanoManutencaoDto>>> GetMaintenancePlansAsync(
+        int condoId = 1,
+        CategoriaManutencao? categoria = null,
+        StatusManutencao? status = null,
+        PeriodicidadeManutencao? periodicidade = null,
+        DateTime? inicio = null,
+        DateTime? fim = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var queryParams = new List<string> { $"condoId={condoId}" };
+            if (categoria.HasValue) queryParams.Add($"categoria={(int)categoria.Value}");
+            if (status.HasValue) queryParams.Add($"status={(int)status.Value}");
+            if (periodicidade.HasValue) queryParams.Add($"periodicidade={(int)periodicidade.Value}");
+            if (inicio.HasValue) queryParams.Add($"inicio={inicio.Value:o}");
+            if (fim.HasValue) queryParams.Add($"fim={fim.Value:o}");
+
+            var queryString = "?" + string.Join("&", queryParams);
+            var response = await httpClient.GetAsync($"/api/operations/maintenance{queryString}", ct);
+            return await ParseAsync<IEnumerable<PlanoManutencaoDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<PlanoManutencaoDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<PlanoManutencaoDto>> GetMaintenancePlanByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/operations/maintenance/{id}", ct);
+            return await ParseAsync<PlanoManutencaoDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<PlanoManutencaoDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<PlanoManutencaoDto>> CreateMaintenancePlanAsync(CreatePlanoManutencaoRequest request, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/operations/maintenance", request, JsonOptions, ct);
+            return await ParseAsync<PlanoManutencaoDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<PlanoManutencaoDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<PlanoManutencaoDto>> UpdateMaintenancePlanAsync(Guid id, UpdatePlanoManutencaoRequest request, CancellationToken ct = default)
+    {
+        try
+        {
+            var body = new
+            {
+                Id = id,
+                request.Titulo,
+                request.Descricao,
+                request.Categoria,
+                request.Periodicidade,
+                request.DataProximaManutencao,
+                request.ResponsavelTecnico,
+                request.EmpresaContratada,
+                request.CustoEstimado,
+                request.Observacoes
+            };
+
+            var response = await httpClient.PutAsJsonAsync($"/api/operations/maintenance/{id}", body, JsonOptions, ct);
+            return await ParseAsync<PlanoManutencaoDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<PlanoManutencaoDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<PlanoManutencaoDto>> CompleteMaintenancePlanAsync(Guid id, ConcluirManutencaoRequest request, CancellationToken ct = default)
+    {
+        try
+        {
+            var body = new
+            {
+                Id = id,
+                request.DataRealizacao,
+                request.CustoReal,
+                request.Observacoes,
+                request.AgendarProxima
+            };
+
+            var response = await httpClient.PostAsJsonAsync($"/api/operations/maintenance/{id}/complete", body, JsonOptions, ct);
+            return await ParseAsync<PlanoManutencaoDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<PlanoManutencaoDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<PlanoManutencaoSummaryDto>> GetMaintenanceSummaryAsync(int condoId = 1, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/operations/maintenance/summary?condoId={condoId}", ct);
+            return await ParseAsync<PlanoManutencaoSummaryDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<PlanoManutencaoSummaryDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<IEnumerable<ManutencaoCalendarEventDto>>> GetMaintenanceCalendarAsync(
+        int condoId = 1,
+        DateTime? inicio = null,
+        DateTime? fim = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var queryParams = new List<string> { $"condoId={condoId}" };
+            if (inicio.HasValue) queryParams.Add($"inicio={inicio.Value:o}");
+            if (fim.HasValue) queryParams.Add($"fim={fim.Value:o}");
+
+            var queryString = "?" + string.Join("&", queryParams);
+            var response = await httpClient.GetAsync($"/api/operations/maintenance/calendar{queryString}", ct);
+            return await ParseAsync<IEnumerable<ManutencaoCalendarEventDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<ManutencaoCalendarEventDto>>(ex);
+        }
+    }
+
     private static async Task<ApiResult<T>> ParseAsync<T>(HttpResponseMessage response, CancellationToken ct)
     {
         var statusCode = (int)response.StatusCode;
@@ -364,5 +505,5 @@ public sealed class OperationsApiClient(HttpClient httpClient)
     }
 
     private static ApiResult<T> ConnectionFailure<T>(Exception ex) =>
-        new(false, default, $"Falha de conexão com a API: {ex.Message}", 503);
+        new(false, default, $"Servidor backend (SmartCondo.Api) não está acessível em http://localhost:5127. Certifique-se de que a API está rodando. ({ex.Message})", 503);
 }

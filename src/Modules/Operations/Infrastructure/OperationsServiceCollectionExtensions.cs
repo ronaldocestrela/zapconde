@@ -35,6 +35,7 @@ public static class OperationsServiceCollectionExtensions
         services.AddScoped<IReservaApplicationService, ReservaApplicationService>();
         services.AddScoped<IOcorrenciaRepository, OcorrenciaRepository>();
         services.AddScoped<IOcorrenciaApplicationService, OcorrenciaApplicationService>();
+        services.AddScoped<IPlanoManutencaoApplicationService, PlanoManutencaoApplicationService>();
 
         return services;
     }

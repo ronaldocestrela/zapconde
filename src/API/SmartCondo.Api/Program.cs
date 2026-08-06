@@ -13,16 +13,26 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+    try
     {
-        await IdentityDbMigrator.MigrateAsync(app.Services, app.Configuration);
-        await FinancialDbMigrator.MigrateAsync(app.Services, app.Configuration);
-        await OperationsDbMigrator.MigrateAsync(app.Services, app.Configuration);
-    }
+        if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+        {
+            app.Logger.LogInformation("Executando migrações do banco de dados no startup...");
+            await IdentityDbMigrator.MigrateAsync(app.Services, app.Configuration);
+            await FinancialDbMigrator.MigrateAsync(app.Services, app.Configuration);
+            await OperationsDbMigrator.MigrateAsync(app.Services, app.Configuration);
+        }
 
-    if (app.Configuration.GetValue<bool>("Identity:SeedOnStartup"))
+        if (app.Configuration.GetValue<bool>("Identity:SeedOnStartup"))
+        {
+            app.Logger.LogInformation("Executando seeder inicial de dados...");
+            await IdentityDataSeeder.SeedAsync(app.Services);
+        }
+    }
+    catch (Exception ex)
     {
-        await IdentityDataSeeder.SeedAsync(app.Services);
+        app.Logger.LogError(ex, "FALHA CRÍTICA NO STARTUP DA API: Ocorreu um erro ao aplicar migrações ou seeder de dados.");
+        throw;
     }
 }
 
