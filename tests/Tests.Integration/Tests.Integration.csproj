@@ -35,6 +35,7 @@
     <ProjectReference Include="..\..\src\BuildingBlocks\BuildingBlocks.Shared\BuildingBlocks.Shared.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\Modules.Identity.csproj" />
     <ProjectReference Include="..\..\src\Modules\Financial\Modules.Financial.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Operations\Modules.Operations.csproj" />
   </ItemGroup>
 
 </Project>

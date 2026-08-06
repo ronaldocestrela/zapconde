@@ -1,0 +1,145 @@
+/* Common Areas Design System - Stitch Visual Palette (#2E5B88, #A3C9A8, #F4EAE1, #1E1E1E) */
+
+.common-areas-container {
+    padding: 1.5rem;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #1E1E1E;
+}
+
+.ca-kpi-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(46, 91, 136, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ca-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.ca-kpi-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ca-kpi-val {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2E5B88;
+    margin-top: 0.25rem;
+}
+
+.ca-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ca-card:hover {
+    box-shadow: 0 12px 30px rgba(46, 91, 136, 0.12);
+    transform: translateY(-4px);
+}
+
+.ca-card-header {
+    background: linear-gradient(135deg, #2E5B88 0%, #1E3D5C 100%);
+    color: #ffffff;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ca-badge-status {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.ca-badge-ativa {
+    background-color: #A3C9A8;
+    color: #1b3a1e;
+}
+
+.ca-badge-manutencao {
+    background-color: #ffe0b2;
+    color: #e65100;
+}
+
+.ca-badge-inativa {
+    background-color: #e0e0e0;
+    color: #424242;
+}
+
+.ca-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    background-color: #fafafa;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.ca-detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.ca-detail-label {
+    font-size: 0.75rem;
+    color: #757575;
+}
+
+.ca-detail-val {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2E5B88;
+}
+
+.ca-card-footer {
+    padding: 1rem 1.5rem;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-primary-stitch {
+    background-color: #2E5B88;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primary-stitch:hover {
+    background-color: #1E3D5C;
+    color: #ffffff;
+}
+
+.btn-outline-stitch {
+    border: 1px solid #2E5B88;
+    color: #2E5B88;
+    background: transparent;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-stitch:hover {
+    background-color: #2E5B88;
+    color: #ffffff;
+}

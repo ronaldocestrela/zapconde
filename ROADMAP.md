@@ -426,7 +426,18 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 ### 4.1. Reservas de Áreas Comuns
 
-* [] **Subfase 4.1.1:** Entidade `AreaComum` (Salão de Festas, Churrasqueira) com regras de capacidade e custos.
+* [x] **Subfase 4.1.1:** Entidade `AreaComum` (Salão de Festas, Churrasqueira) com regras de capacidade e custos.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio: Entidade Aggregate Root `AreaComum` e enums `TipoAreaComum` e `StatusAreaComum` com isolamento multi-tenant (`ITenantScoped`), validações de invariantes (capacidade $> 0$, taxas $\ge 0$, horários válidos e antecedência minima/máxima em dias) e propriedade calculada `CustoTotalReserva`.
+  - EF Core 10: Mapeamento em `OperationsDbContext` (herdando de `MultiTenantDbContext`) com Global Query Filter automático por `TenantId` e tabela `operations."AreasComuns"`.
+  - Serviço de Aplicação: `AreaComumApplicationService` e `IAreaComumApplicationService` encapsulados com Result Pattern (`Result<T>`) e isolamento multi-tenant (`ITenantScoped`).
+  - FastEndpoints API: `/api/operations/common-areas` (`POST` criar, `GET` listar com filtros por tipo/status, `GET /summary` resumo KPI, `GET /{id}` por ID, `PUT /{id}` atualizar e `PATCH /{id}/status` alterar status operacional).
+  - BDD: `tests/LivingDoc/Features/Fase4_1_1_AreaComumCapacidadeCustos.feature`.
+  - Suíte de testes TDD: `AreaComumDomainTests`, `OperationsArchitectureTests` e `AreaComumIntegrationTests` (com PostgreSQL real via Testcontainers) — 100% aprovados.
+  - Blazor UI (Stitch): Páginas `/operacoes/areas-comuns` (com KPI cards, grid interativo com badges de status, modal wizard de cadastro/edição e alteração rápida de status) + estilos `common-areas.css` fiéis aos tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
 
 
 * [] **Subfase 4.1.2:** [TDD] Criar regras de domínio para impedir colisão de reservas simultâneas no mesmo horário (usando Redis Distributed Locks para simultaneidade).

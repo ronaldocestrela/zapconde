@@ -1,0 +1,494 @@
+@page "/operacoes/areas-comuns"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Modules.Operations.Application.DTOs
+@using Modules.Operations.Domain.Enums
+@using SmartCondo.Web.Services
+@inject OperationsApiClient OperationsApi
+
+<PageTitle>Gestão de Áreas Comuns - SmartCondo</PageTitle>
+
+<div class="common-areas-container">
+    <OperationsNavTabs />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 font-weight-bold" style="color: #2E5B88;">
+                <span class="material-symbols-outlined align-middle me-2">meeting_room</span>
+                Áreas Comuns & Regras de Uso
+            </h1>
+            <p class="text-muted small mb-0">Cadastre e gerencie espaços comuns, capacidade de convidados, taxas de limpeza e horários de funcionamento.</p>
+        </div>
+        <button class="btn btn-primary-stitch d-flex align-items-center gap-2" @onclick="AbrirModalNovo">
+            <span class="material-symbols-outlined">add_circle</span>
+            Nova Área Comum
+        </button>
+    </div>
+
+    @if (Carregando)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Carregando áreas comuns...</p>
+        </div>
+    }
+    else
+    {
+        <!-- KPI Cards Summary -->
+        @if (Resumo != null)
+        {
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="ca-kpi-card">
+                        <div class="ca-kpi-label">Total de Áreas</div>
+                        <div class="ca-kpi-val">@Resumo.TotalAreas</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="ca-kpi-card" style="border-left: 4px solid #A3C9A8;">
+                        <div class="ca-kpi-label">Áreas Ativas</div>
+                        <div class="ca-kpi-val text-success">@Resumo.AreasAtivas</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="ca-kpi-card" style="border-left: 4px solid #ffb74d;">
+                        <div class="ca-kpi-label">Em Manutenção</div>
+                        <div class="ca-kpi-val text-warning">@Resumo.AreasEmManutencao</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="ca-kpi-card" style="border-left: 4px solid #2E5B88;">
+                        <div class="ca-kpi-label">Taxa Média Reserva</div>
+                        <div class="ca-kpi-val">R$ @Resumo.TaxaMediaReserva.ToString("N2")</div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Filtros -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4 p-3 bg-white">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label small font-weight-bold text-muted">Filtrar por Status</label>
+                    <select class="form-select" @onchange="OnStatusFilterChanged">
+                        <option value="">Todos os Status</option>
+                        <option value="1">Ativa</option>
+                        <option value="2">Manutenção</option>
+                        <option value="3">Inativa</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small font-weight-bold text-muted">Filtrar por Tipo</label>
+                    <select class="form-select" @onchange="OnTipoFilterChanged">
+                        <option value="">Todos os Tipos</option>
+                        <option value="1">Lazer</option>
+                        <option value="2">Eventos</option>
+                        <option value="3">Esportes</option>
+                        <option value="4">Churrasqueira</option>
+                        <option value="5">Gourmet</option>
+                    </select>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-outline-secondary px-3 py-2 rounded-3 mt-4" @onclick="CarregarDados">
+                        <span class="material-symbols-outlined align-middle">refresh</span> Atualizar Listagem
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de Áreas Comuns -->
+        @if (!AreasComuns.Any())
+        {
+            <div class="text-center py-5 bg-white rounded-3 shadow-sm border p-4">
+                <span class="material-symbols-outlined display-4 text-muted mb-2">event_seat</span>
+                <h5 class="text-muted">Nenhuma área comum encontrada.</h5>
+                <p class="text-muted small">Clique em "Nova Área Comum" para cadastrar o primeiro espaço do condomínio.</p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var area in AreasComuns)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="ca-card h-100">
+                            <div class="ca-card-header">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="material-symbols-outlined fs-4">
+                                        @(area.Tipo == TipoAreaComum.Churrasqueira ? "outdoor_grill" : area.Tipo == TipoAreaComum.Esportes ? "sports_soccer" : "celebration")
+                                    </span>
+                                    <h5 class="mb-0 font-weight-bold">@area.Nome</h5>
+                                </div>
+                                <span class="ca-badge-status @GetStatusBadgeClass(area.Status)">
+                                    @area.StatusDescricao
+                                </span>
+                            </div>
+                            <div class="ca-details-grid">
+                                <div class="ca-detail-item">
+                                    <span class="ca-detail-label">Capacidade Máxima</span>
+                                    <span class="ca-detail-val">@area.CapacidadeMaxima pessoas</span>
+                                </div>
+                                <div class="ca-detail-item">
+                                    <span class="ca-detail-label">Horário Funcionamento</span>
+                                    <span class="ca-detail-val">@area.HorarioInicioFuncionamento - @area.HorarioFimFuncionamento</span>
+                                </div>
+                                <div class="ca-detail-item">
+                                    <span class="ca-detail-label">Taxa de Reserva</span>
+                                    <span class="ca-detail-val">R$ @area.TaxaReserva.ToString("N2")</span>
+                                </div>
+                                <div class="ca-detail-item">
+                                    <span class="ca-detail-label">Taxa de Limpeza</span>
+                                    <span class="ca-detail-val">R$ @area.TaxaLimpeza.ToString("N2")</span>
+                                </div>
+                                <div class="ca-detail-item col-span-2 mt-2 pt-2 border-top">
+                                    <span class="ca-detail-label">Custo Total de Uso</span>
+                                    <span class="ca-detail-val text-success font-weight-bold fs-5">R$ @area.CustoTotalReserva.ToString("N2")</span>
+                                </div>
+                            </div>
+                            <div class="ca-card-footer">
+                                <div class="small text-muted">
+                                    @if (area.RequerAprovacaoSindico)
+                                    {
+                                        <span class="badge bg-warning text-dark"><span class="material-symbols-outlined align-middle fs-6">gavel</span> Requer Aprovação</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-secondary">Reserva Direta</span>
+                                    }
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-stitch" @onclick="() => AbrirModalEdicao(area)">
+                                        <span class="material-symbols-outlined fs-6 align-middle">edit</span> Editar
+                                    </button>
+                                    @if (area.Status == StatusAreaComum.Ativa)
+                                    {
+                                        <button class="btn btn-sm btn-outline-warning" @onclick="() => AlterarStatus(area.Id, StatusAreaComum.Manutencao)">
+                                            Manutenção
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-outline-success" @onclick="() => AlterarStatus(area.Id, StatusAreaComum.Ativa)">
+                                            Ativar
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+<!-- Modal de Cadastro / Edição -->
+@if (ExibirModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold">
+                        @(AreaEmEdicaoId.HasValue ? "Editar Área Comum" : "Nova Área Comum")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FecharModal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    @if (!string.IsNullOrWhiteSpace(MensagemErroModal))
+                    {
+                        <div class="alert alert-danger mb-3">@MensagemErroModal</div>
+                    }
+
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label font-weight-bold">Nome da Área Comum *</label>
+                            <input type="text" class="form-control" @bind="FormNome" placeholder="Ex: Salão de Festas Principal" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label font-weight-bold">Tipo *</label>
+                            <select class="form-select" @bind="FormTipo">
+                                <option value="@TipoAreaComum.Eventos">Eventos</option>
+                                <option value="@TipoAreaComum.Churrasqueira">Churrasqueira</option>
+                                <option value="@TipoAreaComum.Lazer">Lazer</option>
+                                <option value="@TipoAreaComum.Esportes">Esportes</option>
+                                <option value="@TipoAreaComum.Gourmet">Gourmet</option>
+                                <option value="@TipoAreaComum.Outro">Outro</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label font-weight-bold">Descrição</label>
+                            <textarea class="form-control" rows="2" @bind="FormDescricao" placeholder="Descreva a estrutura, equipamentos e comodidades..."></textarea>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label font-weight-bold">Capacidade Máxima (Pessoas) *</label>
+                            <input type="number" class="form-control" @bind="FormCapacidadeMaxima" min="1" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label font-weight-bold">Taxa de Reserva (R$) *</label>
+                            <input type="number" step="0.01" class="form-control" @bind="FormTaxaReserva" min="0" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label font-weight-bold">Taxa de Limpeza (R$) *</label>
+                            <input type="number" step="0.01" class="form-control" @bind="FormTaxaLimpeza" min="0" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label font-weight-bold">Horário de Início *</label>
+                            <input type="time" class="form-control" @bind="FormHorarioInicio" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label font-weight-bold">Horário de Término *</label>
+                            <input type="time" class="form-control" @bind="FormHorarioFim" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label font-weight-bold">Antecedência Mínima (Dias)</label>
+                            <input type="number" class="form-control" @bind="FormAntecedenciaMinima" min="0" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label font-weight-bold">Antecedência Máxima (Dias)</label>
+                            <input type="number" class="form-control" @bind="FormAntecedenciaMaxima" min="1" />
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="checkAprovacao" @bind="FormRequerAprovacao" />
+                                <label class="form-check-label font-weight-bold" for="checkAprovacao">
+                                    Requer aprovação prévia do Síndico / Zelador
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label font-weight-bold">Regras e Termos de Uso</label>
+                            <textarea class="form-control" rows="3" @bind="FormRegrasUso" placeholder="Ex: Proibido aparelhos de som de alta potência após 22:00. O lixo acumulado deve ser recolhido..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" @onclick="FecharModal">Cancelar</button>
+                    <button type="button" class="btn btn-primary-stitch" @onclick="SalvarAreaComum" disabled="@Salvando">
+                        @if (Salvando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Salvar Área Comum
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool Carregando { get; set; } = true;
+    private bool Salvando { get; set; } = false;
+    private bool ExibirModal { get; set; } = false;
+    private string MensagemErroModal { get; set; } = string.Empty;
+
+    private int? StatusFiltro { get; set; }
+    private int? TipoFiltro { get; set; }
+
+    private List<AreaComumDto> AreasComuns { get; set; } = new();
+    private AreaComumSummaryDto? Resumo { get; set; }
+
+    private int? AreaEmEdicaoId { get; set; }
+    private string FormNome { get; set; } = string.Empty;
+    private string FormDescricao { get; set; } = string.Empty;
+    private TipoAreaComum FormTipo { get; set; } = TipoAreaComum.Eventos;
+    private int FormCapacidadeMaxima { get; set; } = 50;
+    private decimal FormTaxaReserva { get; set; } = 100m;
+    private decimal FormTaxaLimpeza { get; set; } = 40m;
+    private TimeOnly FormHorarioInicio { get; set; } = new TimeOnly(8, 0);
+    private TimeOnly FormHorarioFim { get; set; } = new TimeOnly(22, 0);
+    private int FormAntecedenciaMinima { get; set; } = 1;
+    private int FormAntecedenciaMaxima { get; set; } = 60;
+    private bool FormRequerAprovacao { get; set; } = false;
+    private string FormRegrasUso { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDados();
+    }
+
+    private async Task CarregarDados()
+    {
+        Carregando = true;
+
+        StatusAreaComum? status = StatusFiltro.HasValue ? (StatusAreaComum)StatusFiltro.Value : null;
+        TipoAreaComum? tipo = TipoFiltro.HasValue ? (TipoAreaComum)TipoFiltro.Value : null;
+
+        var result = await OperationsApi.GetAreasComunsAsync(condoId: 1, status: status, tipo: tipo);
+        if (result.IsSuccess && result.Data != null)
+        {
+            AreasComuns = result.Data.ToList();
+        }
+
+        var summaryResult = await OperationsApi.GetSummaryAsync(condoId: 1);
+        if (summaryResult.IsSuccess)
+        {
+            Resumo = summaryResult.Data;
+        }
+
+        Carregando = false;
+    }
+
+    private async Task OnStatusFilterChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var val))
+            StatusFiltro = val;
+        else
+            StatusFiltro = null;
+
+        await CarregarDados();
+    }
+
+    private async Task OnTipoFilterChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var val))
+            TipoFiltro = val;
+        else
+            TipoFiltro = null;
+
+        await CarregarDados();
+    }
+
+    private void AbrirModalNovo()
+    {
+        AreaEmEdicaoId = null;
+        FormNome = string.Empty;
+        FormDescricao = string.Empty;
+        FormTipo = TipoAreaComum.Eventos;
+        FormCapacidadeMaxima = 50;
+        FormTaxaReserva = 100m;
+        FormTaxaLimpeza = 40m;
+        FormHorarioInicio = new TimeOnly(8, 0);
+        FormHorarioFim = new TimeOnly(22, 0);
+        FormAntecedenciaMinima = 1;
+        FormAntecedenciaMaxima = 60;
+        FormRequerAprovacao = false;
+        FormRegrasUso = string.Empty;
+        MensagemErroModal = string.Empty;
+        ExibirModal = true;
+    }
+
+    private void AbrirModalEdicao(AreaComumDto area)
+    {
+        AreaEmEdicaoId = area.Id;
+        FormNome = area.Nome;
+        FormDescricao = area.Descricao;
+        FormTipo = area.Tipo;
+        FormCapacidadeMaxima = area.CapacidadeMaxima;
+        FormTaxaReserva = area.TaxaReserva;
+        FormTaxaLimpeza = area.TaxaLimpeza;
+        if (TimeOnly.TryParse(area.HorarioInicioFuncionamento, out var inicio)) FormHorarioInicio = inicio;
+        if (TimeOnly.TryParse(area.HorarioFimFuncionamento, out var fim)) FormHorarioFim = fim;
+        FormAntecedenciaMinima = area.TempoAntecedenciaMinimaDias;
+        FormAntecedenciaMaxima = area.TempoAntecedenciaMaximaDias;
+        FormRequerAprovacao = area.RequerAprovacaoSindico;
+        FormRegrasUso = area.RegrasUso;
+        MensagemErroModal = string.Empty;
+        ExibirModal = true;
+    }
+
+    private void FecharModal()
+    {
+        ExibirModal = false;
+    }
+
+    private async Task SalvarAreaComum()
+    {
+        Salvando = true;
+        MensagemErroModal = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(FormNome))
+        {
+            MensagemErroModal = "O nome da área comum é obrigatório.";
+            Salvando = false;
+            return;
+        }
+
+        if (FormCapacidadeMaxima <= 0)
+        {
+            MensagemErroModal = "A capacidade máxima deve ser maior que zero.";
+            Salvando = false;
+            return;
+        }
+
+        var inicioStr = FormHorarioInicio.ToString("HH:mm");
+        var fimStr = FormHorarioFim.ToString("HH:mm");
+
+        if (AreaEmEdicaoId.HasValue)
+        {
+            var updateReq = new UpdateAreaComumRequest(
+                FormNome,
+                FormDescricao,
+                FormTipo,
+                FormCapacidadeMaxima,
+                FormTaxaReserva,
+                FormTaxaLimpeza,
+                inicioStr,
+                fimStr,
+                FormAntecedenciaMinima,
+                FormAntecedenciaMaxima,
+                FormRequerAprovacao,
+                FormRegrasUso);
+
+            var res = await OperationsApi.UpdateAreaComumAsync(AreaEmEdicaoId.Value, updateReq);
+            if (!res.IsSuccess)
+            {
+                MensagemErroModal = res.Message;
+                Salvando = false;
+                return;
+            }
+        }
+        else
+        {
+            var createReq = new CreateAreaComumRequest(
+                CondoId: 1,
+                Nome: FormNome,
+                Descricao: FormDescricao,
+                Tipo: FormTipo,
+                CapacidadeMaxima: FormCapacidadeMaxima,
+                TaxaReserva: FormTaxaReserva,
+                TaxaLimpeza: FormTaxaLimpeza,
+                HorarioInicioFuncionamento: inicioStr,
+                HorarioFimFuncionamento: fimStr,
+                TempoAntecedenciaMinimaDias: FormAntecedenciaMinima,
+                TempoAntecedenciaMaximaDias: FormAntecedenciaMaxima,
+                RequerAprovacaoSindico: FormRequerAprovacao,
+                RegrasUso: FormRegrasUso);
+
+            var res = await OperationsApi.CreateAreaComumAsync(createReq);
+            if (!res.IsSuccess)
+            {
+                MensagemErroModal = res.Message;
+                Salvando = false;
+                return;
+            }
+        }
+
+        Salvando = false;
+        ExibirModal = false;
+        await CarregarDados();
+    }
+
+    private async Task AlterarStatus(int id, StatusAreaComum novoStatus)
+    {
+        var res = await OperationsApi.ChangeStatusAsync(id, novoStatus);
+        if (res.IsSuccess)
+        {
+            await CarregarDados();
+        }
+    }
+
+    private static string GetStatusBadgeClass(StatusAreaComum status) => status switch
+    {
+        StatusAreaComum.Ativa => "ca-badge-ativa",
+        StatusAreaComum.Manutencao => "ca-badge-manutencao",
+        StatusAreaComum.Inativa => "ca-badge-inativa",
+        _ => "ca-badge-inativa"
+    };
+}

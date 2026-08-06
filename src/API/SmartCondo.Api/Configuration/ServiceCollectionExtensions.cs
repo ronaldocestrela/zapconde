@@ -2,6 +2,7 @@ using FastEndpoints;
 using BuildingBlocks.Infrastructure.DependencyInjection;
 using Modules.Identity.Infrastructure;
 using Modules.Financial.Infrastructure;
+using Modules.Operations.Infrastructure;
 
 namespace SmartCondo.Api.Configuration;
 
@@ -19,6 +20,7 @@ public static class ServiceCollectionExtensions
         services.AddInfrastructure(configuration);
         services.AddIdentityModule(configuration);
         services.AddFinancialModule(configuration);
+        services.AddOperationsModule(configuration);
 
         services.AddFastEndpoints(config =>
         {
@@ -26,7 +28,8 @@ public static class ServiceCollectionExtensions
             [
                 typeof(Program).Assembly,
                 typeof(Modules.Identity.Endpoints.LoginEndpoint).Assembly,
-                typeof(Modules.Financial.Endpoints.GetInvoicesEndpoint).Assembly
+                typeof(Modules.Financial.Endpoints.GetInvoicesEndpoint).Assembly,
+                typeof(Modules.Operations.Endpoints.CreateAreaComumEndpoint).Assembly
             ];
         });
 

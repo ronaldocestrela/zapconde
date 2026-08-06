@@ -4,6 +4,7 @@ using BuildingBlocks.Shared.Caching;
 using BuildingBlocks.Shared.MultiTenancy;
 using Microsoft.AspNetCore.Components.Authorization;
 using Modules.Financial.Infrastructure;
+using Modules.Operations.Infrastructure;
 using SmartCondo.Web.Components;
 using SmartCondo.Web.Services;
 
@@ -44,10 +45,16 @@ builder.Services.AddHttpClient<FinancialApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+builder.Services.AddHttpClient<OperationsApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 builder.Services.AddSingleton<Modules.Financial.Domain.Services.CalculadoraFinanceira>();
 builder.Services.AddScoped<ICurrentTenantService, CurrentTenantService>();
 builder.Services.AddSingleton<ICacheService, InMemoryCacheService>();
 builder.Services.AddFinancialModule(builder.Configuration);
+builder.Services.AddOperationsModule(builder.Configuration);
 
 var app = builder.Build();
 
