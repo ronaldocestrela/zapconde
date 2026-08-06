@@ -32,6 +32,9 @@ public static class ApplicationBuilderExtensions
         app.UseFastEndpoints();
         Modules.Financial.Endpoints.AgreementEndpoints.MapAgreementEndpoints(app);
         Modules.Financial.Endpoints.DunningEndpoints.MapDunningEndpoints(app);
+        Modules.Financial.Endpoints.DigitalBinderEndpoints.MapDigitalBinderEndpoints(app);
+        Modules.Financial.Endpoints.BankReconciliationEndpoints.MapBankReconciliationEndpoints(app);
+        Modules.Financial.Endpoints.ConsolidatedReportEndpoints.MapConsolidatedReportEndpoints(app);
 
         app.MapHealthChecks("/health/live", new HealthCheckOptions
         {

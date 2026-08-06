@@ -22,6 +22,12 @@ public class FinancialDbContext : MultiTenantDbContext
     public DbSet<AcordoFaturaVinculada> AcordoFaturasVinculadas => Set<AcordoFaturaVinculada>();
     public DbSet<EtapaReguaInadimplencia> EtapasReguaInadimplencia => Set<EtapaReguaInadimplencia>();
     public DbSet<HistoricoCobranca> HistoricosCobranca => Set<HistoricoCobranca>();
+    public DbSet<PastaDigital> PastasDigitais => Set<PastaDigital>();
+    public DbSet<DocumentoPrestacaoContas> DocumentosPrestacaoContas => Set<DocumentoPrestacaoContas>();
+    public DbSet<ItemBalancete> ItensBalancete => Set<ItemBalancete>();
+    public DbSet<ContaBancaria> ContasBancarias => Set<ContaBancaria>();
+    public DbSet<ExtratoBancarioItem> ExtratoBancarioItens => Set<ExtratoBancarioItem>();
+    public DbSet<ConciliacaoBancariaRecord> ConciliacoesBancarias => Set<ConciliacaoBancariaRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

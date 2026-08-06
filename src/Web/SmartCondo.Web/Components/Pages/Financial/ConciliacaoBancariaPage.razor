@@ -1,0 +1,185 @@
+@page "/financeiro/conciliacao"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Modules.Financial.Application.DTOs
+@using Modules.Financial.Domain.Enums
+@using SmartCondo.Web.Services
+@inject FinancialApiClient FinancialApi
+
+<PageTitle>Conciliação Bancária - SmartCondo</PageTitle>
+
+<div class="container-fluid p-4">
+    <FinancialNavTabs />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 font-weight-bold" style="color: #2E5B88;">
+                <span class="material-symbols-outlined align-middle me-2">account_balance</span>
+                Conciliação Bancária
+            </h1>
+            <p class="text-muted small mb-0">Reconciliação automática e manual de extratos bancários com lançamentos do sistema.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary px-3 py-2 rounded-3 d-flex align-items-center gap-2" @onclick="ImportarExtratoDemonstracao">
+                <span class="material-symbols-outlined">upload_file</span>
+                Importar Extrato OFX/CSV
+            </button>
+            <button class="btn text-white px-3 py-2 rounded-3 shadow-sm d-flex align-items-center gap-2" style="background-color: #2E5B88;" @onclick="ExecutarConciliacaoAutomatica">
+                <span class="material-symbols-outlined">sync</span>
+                Conciliar Automático
+            </button>
+        </div>
+    </div>
+
+    @if (Carregando)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Carregando dados da conciliação bancária...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small">Conta Bancária</span>
+                            <h6 class="font-weight-bold mb-0">Banco do Brasil - Ag 1234 / Cc 56789-0</h6>
+                        </div>
+                        <span class="material-symbols-outlined text-primary fs-2">account_balance_wallet</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small">Itens Pendentes</span>
+                            <h4 class="font-weight-bold text-warning mb-0">@ItensPendentes.Count</h4>
+                        </div>
+                        <span class="material-symbols-outlined text-warning fs-2">pending_actions</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small">Score Médio de Match</span>
+                            <h4 class="font-weight-bold text-success mb-0">100%</h4>
+                        </div>
+                        <span class="material-symbols-outlined text-success fs-2">verified</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3 p-4">
+            <h5 class="font-weight-bold mb-3" style="color: #2E5B88;">Extrato Bancário Pendente de Conciliação</h5>
+            @if (ItensPendentes.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Data</th>
+                                <th>Histórico / Descrição</th>
+                                <th>Documento</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in ItensPendentes)
+                            {
+                                <tr>
+                                    <td>@item.DataTransacao.ToString("dd/MM/yyyy")</td>
+                                    <td>@item.DescricaoHistorico</td>
+                                    <td><code>@item.DocumentoRef</code></td>
+                                    <td>
+                                        <span class="badge @(item.TipoTransacao == TipoTransacaoBancaria.Credito ? "bg-success" : "bg-danger")">
+                                            @item.TipoTransacao
+                                        </span>
+                                    </td>
+                                    <td class="font-weight-bold @(item.TipoTransacao == TipoTransacaoBancaria.Credito ? "text-success" : "text-danger")">
+                                        R$ @item.Valor.ToString("N2")
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">@item.StatusConciliacao</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-success" @onclick="() => ConciliarManual(item.Id)">
+                                            Vincular Manualmente
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <span class="material-symbols-outlined text-success display-4 mb-2">check_circle</span>
+                    <h5 class="text-muted">Todos os lançamentos do extrato estão 100% conciliados!</h5>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private bool Carregando = true;
+    private int ContaId = 1;
+    private List<ExtratoBancarioItemDto> ItensPendentes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDados();
+    }
+
+    private async Task CarregarDados()
+    {
+        Carregando = true;
+        var contasResult = await FinancialApi.GetBankAccountsAsync(condoId: 1);
+        if (contasResult.IsSuccess && contasResult.Data != null && contasResult.Data.Any())
+        {
+            ContaId = contasResult.Data.First().Id;
+        }
+
+        var itensResult = await FinancialApi.GetPendingReconciliationItemsAsync(ContaId);
+        if (itensResult.IsSuccess && itensResult.Data != null)
+        {
+            ItensPendentes = itensResult.Data.ToList();
+        }
+        Carregando = false;
+    }
+
+    private async Task ImportarExtratoDemonstracao()
+    {
+        var req = new ImportarExtratoRequestDto(ContaId, new List<ImportarExtratoItemDto>
+        {
+            new ImportarExtratoItemDto(DateTime.Today, "PAGTO TAXA CONDO 101", "DOC101", 500m, TipoTransacaoBancaria.Credito),
+            new ImportarExtratoItemDto(DateTime.Today, "MANUTENCAO ELEVADOR OTIS", "NF998", 850m, TipoTransacaoBancaria.Debito)
+        });
+        await FinancialApi.ImportBankStatementAsync(req);
+        await CarregarDados();
+    }
+
+    private async Task ExecutarConciliacaoAutomatica()
+    {
+        await FinancialApi.AutoReconcileAsync(ContaId);
+        await CarregarDados();
+    }
+
+    private async Task ConciliarManual(int itemId)
+    {
+        await FinancialApi.ManualReconcileAsync(new ConciliarManualRequestDto(itemId, OrigemConciliacao.Outro, 1, 1, "Conciliado manualmente via interface."));
+        await CarregarDados();
+    }
+}

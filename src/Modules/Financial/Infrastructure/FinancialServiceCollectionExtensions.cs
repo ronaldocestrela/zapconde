@@ -29,10 +29,15 @@ public static class FinancialServiceCollectionExtensions
         services.AddSingleton<Domain.Services.CalculadoraFinanceira>();
         services.AddSingleton<Domain.Services.CalculadoraAcordoDomainService>();
         services.AddSingleton<Domain.Services.ReguaInadimplenciaEngine>();
+        services.AddSingleton<Domain.Services.PastaDigitalDomainService>();
+        services.AddSingleton<Domain.Services.ConciliacaoBancariaDomainService>();
         services.AddScoped<IInvoiceService, InvoiceService>();
         services.AddScoped<IFinancialCalculationService, FinancialCalculationService>();
         services.AddScoped<IAcordoApplicationService, AcordoApplicationService>();
         services.AddScoped<IReguaInadimplenciaAppService, ReguaInadimplenciaAppService>();
+        services.AddScoped<IPastaDigitalApplicationService, PastaDigitalApplicationService>();
+        services.AddScoped<IConciliacaoBancariaApplicationService, ConciliacaoBancariaApplicationService>();
+        services.AddScoped<IRelatorioConsolidadoApplicationService, RelatorioConsolidadoApplicationService>();
 
         // Gateway de Pagamento, Stubs e Webhooks
         services.AddSingleton<MockPaymentGatewayService>();

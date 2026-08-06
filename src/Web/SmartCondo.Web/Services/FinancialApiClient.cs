@@ -201,6 +201,150 @@ public sealed class FinancialApiClient(HttpClient httpClient)
         }
     }
 
+    public async Task<ApiResult<IEnumerable<PastaDigitalDto>>> GetDigitalBindersAsync(int condoId = 1, int? ano = null, CancellationToken ct = default)
+    {
+        try
+        {
+            var url = $"/api/financial/digital-binders?condoId={condoId}" + (ano.HasValue ? $"&ano={ano}" : "");
+            var response = await httpClient.GetAsync(url, ct);
+            return await ParseAsync<IEnumerable<PastaDigitalDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<PastaDigitalDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<PastaDigitalDto>> GetDigitalBinderByIdAsync(int id, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/financial/digital-binders/{id}", ct);
+            return await ParseAsync<PastaDigitalDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<PastaDigitalDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<PastaDigitalDto>> CreateDigitalBinderAsync(CriarPastaDigitalRequestDto request, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/financial/digital-binders/generate", request, JsonOptions, ct);
+            return await ParseAsync<PastaDigitalDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<PastaDigitalDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<PastaDigitalDto>> SubmitDigitalBinderAsync(int id, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsync($"/api/financial/digital-binders/{id}/submit", null, ct);
+            return await ParseAsync<PastaDigitalDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<PastaDigitalDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<PastaDigitalDto>> ApproveDigitalBinderAsync(int id, AprovarPastaDigitalRequestDto request, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync($"/api/financial/digital-binders/{id}/approve", request, JsonOptions, ct);
+            return await ParseAsync<PastaDigitalDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<PastaDigitalDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<IEnumerable<ContaBancariaDto>>> GetBankAccountsAsync(int condoId = 1, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/financial/bank-reconciliation/accounts?condoId={condoId}", ct);
+            return await ParseAsync<IEnumerable<ContaBancariaDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<ContaBancariaDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<IEnumerable<ExtratoBancarioItemDto>>> ImportBankStatementAsync(ImportarExtratoRequestDto request, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/financial/bank-reconciliation/import-statement", request, JsonOptions, ct);
+            return await ParseAsync<IEnumerable<ExtratoBancarioItemDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<ExtratoBancarioItemDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<ResultadoConciliacaoEmLoteDto>> AutoReconcileAsync(int contaBancariaId, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsync($"/api/financial/bank-reconciliation/auto-reconcile/{contaBancariaId}", null, ct);
+            return await ParseAsync<ResultadoConciliacaoEmLoteDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<ResultadoConciliacaoEmLoteDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<IEnumerable<ExtratoBancarioItemDto>>> GetPendingReconciliationItemsAsync(int contaBancariaId, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/financial/bank-reconciliation/pending-items/{contaBancariaId}", ct);
+            return await ParseAsync<IEnumerable<ExtratoBancarioItemDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<ExtratoBancarioItemDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<ExtratoBancarioItemDto>> ManualReconcileAsync(ConciliarManualRequestDto request, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/financial/bank-reconciliation/reconcile-item", request, JsonOptions, ct);
+            return await ParseAsync<ExtratoBancarioItemDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<ExtratoBancarioItemDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<RelatorioConsolidadoMulticondominioDto>> GetMultiCondoSummaryReportAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync("/api/financial/reports/multi-condo-summary", ct);
+            return await ParseAsync<RelatorioConsolidadoMulticondominioDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<RelatorioConsolidadoMulticondominioDto>(ex);
+        }
+    }
+
     private static async Task<ApiResult<T>> ParseAsync<T>(HttpResponseMessage response, CancellationToken ct)
     {
         var statusCode = (int)response.StatusCode;

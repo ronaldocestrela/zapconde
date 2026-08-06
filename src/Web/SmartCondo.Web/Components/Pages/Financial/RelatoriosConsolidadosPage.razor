@@ -1,0 +1,123 @@
+@page "/financeiro/relatorios"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Modules.Financial.Application.DTOs
+@using SmartCondo.Web.Services
+@inject FinancialApiClient FinancialApi
+
+<PageTitle>Relatórios Consolidados Multicondomínio - SmartCondo</PageTitle>
+
+<div class="container-fluid p-4">
+    <FinancialNavTabs />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 font-weight-bold" style="color: #2E5B88;">
+                <span class="material-symbols-outlined align-middle me-2">analytics</span>
+                Relatórios Consolidados Multicondomínio
+            </h1>
+            <p class="text-muted small mb-0">Visão executiva agregada de receitas, despesas, inadimplência e status de prestação de contas de múltiplos condomínios.</p>
+        </div>
+        <button class="btn btn-outline-secondary px-3 py-2 rounded-3 d-flex align-items-center gap-2" @onclick="AtualizarRelatorio">
+            <span class="material-symbols-outlined">refresh</span>
+            Atualizar Dados
+        </button>
+    </div>
+
+    @if (Carregando)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Carregando relatório consolidado...</p>
+        </div>
+    }
+    else if (Relatorio != null)
+    {
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-primary">
+                    <span class="text-muted small">Receita Total Consolidada</span>
+                    <h3 class="font-weight-bold text-success mb-0">R$ @Relatorio.ReceitaTotalConsolidada.ToString("N2")</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-danger">
+                    <span class="text-muted small">Despesa Total Consolidada</span>
+                    <h3 class="font-weight-bold text-danger mb-0">R$ @Relatorio.DespesaTotalConsolidada.ToString("N2")</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-info">
+                    <span class="text-muted small">Saldo Consolidado</span>
+                    <h3 class="font-weight-bold text-primary mb-0">R$ @Relatorio.SaldoTotalConsolidado.ToString("N2")</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-4 border-warning">
+                    <span class="text-muted small">Taxa Média de Inadimplência</span>
+                    <h3 class="font-weight-bold text-warning mb-0">@Relatorio.TaxaInadimplenciaMedia.ToString("N1")%</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3 p-4">
+            <h5 class="font-weight-bold mb-3" style="color: #2E5B88;">Desempenho Financeiro por Condomínio</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Condomínio</th>
+                            <th>Total Receitas</th>
+                            <th>Total Despesas</th>
+                            <th>Saldo Atual</th>
+                            <th>Inadimplência</th>
+                            <th>Inadimplentes</th>
+                            <th>Pastas Pendentes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var condo in Relatorio.Condominios)
+                        {
+                            <tr>
+                                <td class="font-weight-bold">@condo.NomeCondominio</td>
+                                <td class="text-success font-weight-bold">R$ @condo.TotalReceitas.ToString("N2")</td>
+                                <td class="text-danger">R$ @condo.TotalDespesas.ToString("N2")</td>
+                                <td class="font-weight-bold text-primary">R$ @condo.SaldoAtual.ToString("N2")</td>
+                                <td>
+                                    <span class="badge @(condo.TaxaInadimplenciaPercentual > 10 ? "bg-danger" : "bg-success")">
+                                        @condo.TaxaInadimplenciaPercentual.ToString("N1")%
+                                    </span>
+                                </td>
+                                <td>@condo.TotalInadimplentes unidades</td>
+                                <td>
+                                    <span class="badge bg-secondary">@condo.PastasPendentesAprovacao</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool Carregando = true;
+    private RelatorioConsolidadoMulticondominioDto? Relatorio;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AtualizarRelatorio();
+    }
+
+    private async Task AtualizarRelatorio()
+    {
+        Carregando = true;
+        var result = await FinancialApi.GetMultiCondoSummaryReportAsync();
+        if (result.IsSuccess && result.Data != null)
+        {
+            Relatorio = result.Data;
+        }
+        Carregando = false;
+    }
+}

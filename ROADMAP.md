@@ -397,7 +397,21 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Blazor UI (Stitch): Páginas `/financeiro/acordos` (com modal wizard de criação/simulação) e `/financeiro/inadimplencia` (com dashboard Aging List 30/60/90+ dias, régua D+N e histórico) + estilos `agreements.css` e `dunning.css` com tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
 
 
-* [] **Subfase 3.2.2:** [FN-FIN-03 / FN-FIN-04] Geração de Pastas Digitais de Prestação de Contas, Conciliação Bancária e Relatórios Consolidados Multicondomínio.
+* [x] **Subfase 3.2.2:** [FN-FIN-03 / FN-FIN-04] Geração de Pastas Digitais de Prestação de Contas, Conciliação Bancária e Relatórios Consolidados Multicondomínio.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio: Entidades `PastaDigital` (Aggregate Root), `DocumentoPrestacaoContas`, `ItemBalancete`, `ContaBancaria`, `ExtratoBancarioItem` e `ConciliacaoBancariaRecord` com suporte `ITenantScoped`.
+  - Enums e Value Objects: `StatusPastaDigital`, `CategoriaDocumentoPrestacao`, `CategoriaPlanoContas`, `TipoLancamentoBalancete`, `StatusConciliacaoBancaria`, `TipoTransacaoBancaria`, `TipoContaBancaria` e `OrigemConciliacao`.
+  - Domain Services: `PastaDigitalDomainService` (consolidação de balancete mensal e saldos) e `ConciliacaoBancariaDomainService` (motor de score e pareamento automático extrato vs lançamentos).
+  - EF Core 10: Mapeamento em `FinancialDbContext` com Global Query Filter por `TenantId`.
+  - Serviços de Aplicação: `PastaDigitalApplicationService`, `ConciliacaoBancariaApplicationService` e `RelatorioConsolidadoApplicationService` encapsulados com Result Pattern (`Result<T>`).
+  - FastEndpoints API: `/api/financial/digital-binders/*` (criar, listar, obter por ID, itens, documentos, submeter e aprovar/rejeitar), `/api/financial/bank-reconciliation/*` (contas, importar extrato, auto-conciliar, itens pendentes e conciliar manual) e `/api/financial/reports/multi-condo-summary`.
+  - BDD: `tests/LivingDoc/Features/Fase3_2_2_PrestacaoContasConciliacaoBancaria.feature`.
+  - Suíte de testes TDD: `PastaDigitalDomainTests`, `ConciliacaoBancariaDomainTests`, `FinancialDigitalBinderArchitectureTests` e `FinancialDigitalBinderIntegrationTests` (com PostgreSQL real via Testcontainers) — 100% aprovados.
+  - Blazor UI (Stitch): Páginas `/financeiro/prestacao-contas` (gerenciamento e aprovação de pastas digitais), `/financeiro/conciliacao` (interface dual-pane para extrato vs lançamentos) e `/financeiro/relatorios` (dashboard multicondomínio para administradoras) + estilos `digital-binder.css` fiéis aos tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
+
 
 
 
