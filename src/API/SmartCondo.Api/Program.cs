@@ -1,3 +1,4 @@
+using Modules.Financial.Infrastructure;
 using Modules.Identity.Infrastructure;
 using SmartCondo.Api.Configuration;
 
@@ -14,6 +15,7 @@ if (app.Environment.IsDevelopment())
     if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
     {
         await IdentityDbMigrator.MigrateAsync(app.Services, app.Configuration);
+        await FinancialDbMigrator.MigrateAsync(app.Services, app.Configuration);
     }
 
     if (app.Configuration.GetValue<bool>("Identity:SeedOnStartup"))

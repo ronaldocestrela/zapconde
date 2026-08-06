@@ -5,7 +5,7 @@ namespace SmartCondo.Api.Endpoints.System;
 
 /// <summary>
 /// Endpoint de health check do sistema.
-/// Retorna informações básicas de status da API usando o padrão Result<T>.
+/// Retorna informações básicas de status da API usando o padrão Result&lt;T&gt;.
 /// Implementado conforme Subfase 1.1.2 do ROADMAP.md e diretrizes do AGENTS.md.
 /// </summary>
 public class HealthEndpoint : EndpointWithoutRequest<Result<HealthDto>>
