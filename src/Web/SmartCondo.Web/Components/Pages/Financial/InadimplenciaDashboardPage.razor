@@ -1,14 +1,18 @@
 @page "/financeiro/inadimplencia"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @using Modules.Financial.Application.Dtos
 @using Modules.Financial.Application.Services
 @using SmartCondo.Web.Services
 @inject FinancialApiClient FinancialApi
 @inject IServiceProvider ServiceProvider
-@rendermode InteractiveServer
 
 <PageTitle>Gestão de Inadimplência e Régua de Cobrança - SmartCondo</PageTitle>
 
 <div class="container-fluid p-4">
+    <!-- Sub-Navigation Bar -->
+    <FinancialNavTabs />
+
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>

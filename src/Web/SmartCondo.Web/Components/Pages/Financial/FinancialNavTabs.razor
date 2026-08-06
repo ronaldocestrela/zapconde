@@ -1,0 +1,22 @@
+@using Microsoft.AspNetCore.Components.Routing
+
+<div class="financial-subnav-bar">
+    <nav class="financial-subnav-container" aria-label="Navegação do Módulo Financeiro">
+        <NavLink href="/financeiro/faturas" class="financial-subnav-item" Match="NavLinkMatch.Prefix">
+            <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+            <span>Faturas & Cobranças</span>
+        </NavLink>
+        <NavLink href="/financeiro/simulador" class="financial-subnav-item" Match="NavLinkMatch.Prefix">
+            <span class="material-symbols-outlined" aria-hidden="true">calculate</span>
+            <span>Simulador de Encargos</span>
+        </NavLink>
+        <NavLink href="/financeiro/acordos" class="financial-subnav-item" Match="NavLinkMatch.Prefix">
+            <span class="material-symbols-outlined" aria-hidden="true">handshake</span>
+            <span>Acordos de Renegociação</span>
+        </NavLink>
+        <NavLink href="/financeiro/inadimplencia" class="financial-subnav-item" Match="NavLinkMatch.Prefix">
+            <span class="material-symbols-outlined" aria-hidden="true">warning_amber</span>
+            <span>Inadimplência & Régua</span>
+        </NavLink>
+    </nav>
+</div>

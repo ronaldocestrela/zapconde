@@ -1,12 +1,16 @@
 @page "/financeiro/simulador"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @using Modules.Financial.Application.DTOs
 @using Modules.Financial.Domain.Services
 @using Modules.Financial.Domain.ValueObjects
-@rendermode InteractiveServer
 
 <PageTitle>Simulador Financeiro de Encargos - SmartCondo</PageTitle>
 
 <div class="simulator-container">
+    <!-- Sub-Navigation Bar -->
+    <FinancialNavTabs />
+
     <!-- Header -->
     <div class="simulator-header">
         <div>
