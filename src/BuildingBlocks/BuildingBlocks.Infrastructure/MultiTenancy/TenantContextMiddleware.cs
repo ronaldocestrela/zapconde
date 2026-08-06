@@ -1,13 +1,12 @@
 using System.Security.Claims;
 using BuildingBlocks.Shared.MultiTenancy;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Hosting;
 
 namespace BuildingBlocks.Infrastructure.MultiTenancy;
 
 /// <summary>
 /// Middleware que injeta TenantId/CondoId no <see cref="ICurrentTenantService"/>.
-/// Prioridade: claims JWT autenticadas; headers X-Tenant-ID / webhooks; fallback dev mode (TenantId = 1).
+/// Prioridade: claims JWT autenticadas; headers X-Tenant-ID em rotas de webhooks.
 /// </summary>
 public sealed class TenantContextMiddleware(RequestDelegate next)
 {

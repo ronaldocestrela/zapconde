@@ -16,7 +16,12 @@ public class AreaComumRepository : IAreaComumRepository
 
     public async Task<AreaComum?> GetByIdAsync(int id, CancellationToken ct = default)
     {
-        return await _context.AreasComuns.FirstOrDefaultAsync(x => x.Id == id, ct);
+        var query = _context.AreasComuns.Where(x => x.Id == id);
+        if (!_context.CurrentTenantId.HasValue)
+        {
+            query = query.IgnoreQueryFilters();
+        }
+        return await query.FirstOrDefaultAsync(ct);
     }
 
     public async Task<IEnumerable<AreaComum>> GetAllAsync(
@@ -26,6 +31,11 @@ public class AreaComumRepository : IAreaComumRepository
         CancellationToken ct = default)
     {
         var query = _context.AreasComuns.AsQueryable();
+
+        if (!_context.CurrentTenantId.HasValue)
+        {
+            query = query.IgnoreQueryFilters();
+        }
 
         if (condoId > 0)
             query = query.Where(x => x.CondoId == condoId);

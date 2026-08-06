@@ -74,6 +74,7 @@ public static class InfrastructureServiceCollectionExtensions
         if (useInMemoryCache)
         {
             services.AddSingleton<ICacheService, InMemoryCacheService>();
+            services.AddSingleton<IDistributedLockService, InMemoryDistributedLockService>();
         }
         else
         {

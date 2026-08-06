@@ -15,6 +15,7 @@ public class OperationsDbContext : MultiTenantDbContext
     }
 
     public DbSet<AreaComum> AreasComuns => Set<AreaComum>();
+    public DbSet<Reserva> Reservas => Set<Reserva>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

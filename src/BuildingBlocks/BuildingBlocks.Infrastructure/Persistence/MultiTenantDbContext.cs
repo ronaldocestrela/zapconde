@@ -29,6 +29,11 @@ public abstract class MultiTenantDbContext : DbContext
     }
 
     /// <summary>
+    /// Tenant ID resolvido no contexto atual (null quando não identificado).
+    /// </summary>
+    public int? CurrentTenantId => _currentTenantService?.TenantId;
+
+    /// <summary>
     /// Aplica configuração de modelo incluindo Global Query Filter para entidades multi-tenant
     /// e mapeamento das tabelas do Transactional Outbox do MassTransit.
     /// </summary>

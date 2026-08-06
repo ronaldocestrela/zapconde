@@ -440,7 +440,18 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Blazor UI (Stitch): Páginas `/operacoes/areas-comuns` (com KPI cards, grid interativo com badges de status, modal wizard de cadastro/edição e alteração rápida de status) + estilos `common-areas.css` fiéis aos tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
 
 
-* [] **Subfase 4.1.2:** [TDD] Criar regras de domínio para impedir colisão de reservas simultâneas no mesmo horário (usando Redis Distributed Locks para simultaneidade).
+* [x] **Subfase 4.1.2:** [TDD] Criar regras de domínio para impedir colisão de reservas simultâneas no mesmo horário (usando Redis Distributed Locks para simultaneidade).
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio: Entidade `Reserva`, enum `StatusReserva`, exceção `BookingCollisionException` com isolamento multi-tenant (`ITenantScoped`), validações de antecedência mínima/máxima, limites de capacidade da área comum, cálculo do custo total e verificação de sobreposição temporal (`Overlaps`).
+  - Redis Distributed Lock & Isolation: Inclusão do `IDistributedLockService` (`RedisDistributedLockService` e fallback `InMemoryDistributedLockService`) no serviço de aplicação `ReservaApplicationService` com lock atômico por chave granular (`lock:operations:tenant:{tenantId}:areacomum:{areaId}:date:{yyyyMMdd}`).
+  - EF Core 10 & Persistence: Mapeamento em `OperationsDbContext` (tabela `operations."Reservas"`), índices compostos de performance para rápida detecção de sobreposição e migration `20260806151900_AddReservaAreaComum`.
+  - FastEndpoints API & Result Pattern: Endpoints `/api/operations/reservations` (`POST` criar com status 201/409 Conflict, `GET` listar com filtros, `GET /{id}` obter por ID, `PATCH /{id}/cancel` cancelar, `PATCH /{id}/approve` aprovar, `GET /summary` resumo KPI e `GET /calendar` calendário de ocupação).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase4_1_2_ReservaAreaComumColisaoRedisLock.feature`, suíte unitária `ReservaDomainTests` e testes de integração com Testcontainers (`ReservaIntegrationTests` em PostgreSQL 17 + Redis 7.4 real) — 100% aprovados.
+  - Blazor UI (Stitch): Página `/operacoes/reservas` (com KPI cards de ocupação, barra de filtros interativa, tabela com badges de status, modal wizard de solicitação com cálculo em tempo real e alerta visual de colisão) + estilos `reservations.css` fiéis aos tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
+
 
 
 

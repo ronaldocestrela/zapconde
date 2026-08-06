@@ -1,0 +1,118 @@
+/* Stitch Visual Design Token Palette for Reservations Page */
+:root {
+  --res-primary: #2E5B88;
+  --res-primary-hover: #23476b;
+  --res-accent: #A3C9A8;
+  --res-bg-light: #F4EAE1;
+  --res-text-dark: #2D3142;
+  --res-danger: #E63946;
+}
+
+.res-kpi-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(46, 91, 136, 0.06);
+  border: 1px solid rgba(46, 91, 136, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.res-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 91, 136, 0.12);
+}
+
+.res-kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: var(--res-bg-light);
+  color: var(--res-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.res-kpi-val {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--res-text-dark);
+  line-height: 1.2;
+}
+
+.res-kpi-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.res-card-table {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.res-badge-confirmada {
+  background-color: #d1e7dd;
+  color: #0f5132;
+  font-weight: 600;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+}
+
+.res-badge-pendente {
+  background-color: #fff3cd;
+  color: #664d03;
+  font-weight: 600;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+}
+
+.res-badge-cancelada {
+  background-color: #f8d7da;
+  color: #842029;
+  font-weight: 600;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+}
+
+.res-badge-rejeitada {
+  background-color: #e2e3e5;
+  color: #41464b;
+  font-weight: 600;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+}
+
+.res-btn-primary {
+  background-color: var(--res-primary);
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.res-btn-primary:hover {
+  background-color: var(--res-primary-hover);
+  color: #ffffff;
+}
+
+.res-collision-alert {
+  background-color: #f8d7da;
+  border: 1px solid #f5c2c7;
+  color: #842029;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}

@@ -117,6 +117,124 @@ public sealed class OperationsApiClient(HttpClient httpClient)
         }
     }
 
+    public async Task<ApiResult<IEnumerable<ReservaDto>>> GetReservasAsync(
+        int condoId = 1,
+        int? areaComumId = null,
+        int? moradorId = null,
+        StatusReserva? status = null,
+        DateTime? dataInicio = null,
+        DateTime? dataFim = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var queryParams = new List<string> { $"condoId={condoId}" };
+            if (areaComumId.HasValue) queryParams.Add($"areaComumId={areaComumId.Value}");
+            if (moradorId.HasValue) queryParams.Add($"moradorId={moradorId.Value}");
+            if (status.HasValue) queryParams.Add($"status={(int)status.Value}");
+            if (dataInicio.HasValue) queryParams.Add($"dataInicio={dataInicio.Value:o}");
+            if (dataFim.HasValue) queryParams.Add($"dataFim={dataFim.Value:o}");
+
+            var queryString = "?" + string.Join("&", queryParams);
+            var response = await httpClient.GetAsync($"/api/operations/reservations{queryString}", ct);
+            return await ParseAsync<IEnumerable<ReservaDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<ReservaDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<ReservaDto>> GetReservaByIdAsync(int id, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/operations/reservations/{id}", ct);
+            return await ParseAsync<ReservaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<ReservaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<ReservaDto>> CreateReservaAsync(CreateReservaRequest request, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/operations/reservations", request, JsonOptions, ct);
+            return await ParseAsync<ReservaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<ReservaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<ReservaDto>> CancelarReservaAsync(int id, string motivo, CancellationToken ct = default)
+    {
+        try
+        {
+            var body = new CancelarReservaRequest(motivo);
+            var response = await httpClient.PatchAsJsonAsync($"/api/operations/reservations/{id}/cancel", body, JsonOptions, ct);
+            return await ParseAsync<ReservaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<ReservaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<ReservaDto>> AprovarReservaAsync(int id, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.PatchAsync($"/api/operations/reservations/{id}/approve", null, ct);
+            return await ParseAsync<ReservaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<ReservaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<ReservaSummaryDto>> GetReservaSummaryAsync(int condoId = 1, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync($"/api/operations/reservations/summary?condoId={condoId}", ct);
+            return await ParseAsync<ReservaSummaryDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<ReservaSummaryDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<IEnumerable<ReservaCalendarSlotDto>>> GetReservaCalendarAsync(
+        int condoId = 1,
+        int? areaComumId = null,
+        DateTime? inicio = null,
+        DateTime? fim = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var queryParams = new List<string> { $"condoId={condoId}" };
+            if (areaComumId.HasValue) queryParams.Add($"areaComumId={areaComumId.Value}");
+            if (inicio.HasValue) queryParams.Add($"inicio={inicio.Value:o}");
+            if (fim.HasValue) queryParams.Add($"fim={fim.Value:o}");
+
+            var queryString = "?" + string.Join("&", queryParams);
+            var response = await httpClient.GetAsync($"/api/operations/reservations/calendar{queryString}", ct);
+            return await ParseAsync<IEnumerable<ReservaCalendarSlotDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<ReservaCalendarSlotDto>>(ex);
+        }
+    }
+
     private static async Task<ApiResult<T>> ParseAsync<T>(HttpResponseMessage response, CancellationToken ct)
     {
         var statusCode = (int)response.StatusCode;
