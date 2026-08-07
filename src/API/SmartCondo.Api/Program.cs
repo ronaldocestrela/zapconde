@@ -3,6 +3,7 @@ using Modules.Financial.Infrastructure;
 using Modules.Identity.Infrastructure;
 using Modules.Operations.Infrastructure;
 using Modules.WhatsApp.Infrastructure;
+using Modules.AIEngine.Infrastructure;
 using SmartCondo.Api.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +26,7 @@ if (app.Environment.IsDevelopment())
             await OperationsDbMigrator.MigrateAsync(app.Services, app.Configuration);
             await AccessControlDbMigrator.MigrateAsync(app.Services, app.Configuration);
             await WhatsAppDbMigrator.MigrateAsync(app.Services, app.Configuration);
+            await AiDbMigrator.MigrateAsync(app.Services, app.Configuration);
         }
 
         if (app.Configuration.GetValue<bool>("Identity:SeedOnStartup"))

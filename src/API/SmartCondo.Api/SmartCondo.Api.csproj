@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\Modules\Operations\Modules.Operations.csproj" />
     <ProjectReference Include="..\..\Modules\AccessControl\Modules.AccessControl.csproj" />
     <ProjectReference Include="..\..\Modules\WhatsApp\Modules.WhatsApp.csproj" />
+    <ProjectReference Include="..\..\Modules\AIEngine\Modules.AIEngine.csproj" />
   </ItemGroup>
 
 </Project>

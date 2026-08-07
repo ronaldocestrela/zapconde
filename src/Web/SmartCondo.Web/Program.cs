@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Modules.Identity.Infrastructure;
 using Modules.AccessControl.Infrastructure;
 using Modules.WhatsApp.Infrastructure;
+using Modules.AIEngine.Infrastructure;
 using Modules.Financial.Infrastructure;
 using Modules.Operations.Infrastructure;
 using SmartCondo.Web.Components;
@@ -65,6 +66,11 @@ builder.Services.AddHttpClient<WhatsAppApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+builder.Services.AddHttpClient<AiApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
 builder.Services.AddSingleton<Modules.Financial.Domain.Services.CalculadoraFinanceira>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddIdentityModule(builder.Configuration);
@@ -72,6 +78,7 @@ builder.Services.AddFinancialModule(builder.Configuration);
 builder.Services.AddOperationsModule(builder.Configuration);
 builder.Services.AddAccessControlModule(builder.Configuration);
 builder.Services.AddWhatsAppModule(builder.Configuration);
+builder.Services.AddAIEngineModule(builder.Configuration);
 
 var app = builder.Build();
 

@@ -601,7 +601,18 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 ### 7.1. Configuração do Semantic Kernel & RAG
 
-* [] **Subfase 7.1.1:** Setup do Microsoft.SemanticKernel integrado ao OpenAI / Azure OpenAI.
+* [x] **Subfase 7.1.1:** Setup do Microsoft.SemanticKernel integrado ao OpenAI / Azure OpenAI.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & Multi-tenancy: Entidades Aggregate Root `AiKernelConfig` e `AiExecutionLog` no schema `ai` (`ai."KernelConfigs"` e `ai."ExecutionLogs"`), com suporte ao tipo `ITenantScoped`, filtro de consulta global por `TenantId`, enums `AiProvider` (`OpenAI`, `AzureOpenAI`, `MockLocal`) e exceção de domínio `AiEngineDomainException`.
+  - Microsoft.SemanticKernel Engine: Abstrações `IAiKernelFactory` e `IAiOrchestratorService` para construção dinâmica de instâncias `Kernel` (.NET 10 / SK 1.38) configuradas por tenant, com gerenciamento de modelos (`gpt-4o-mini`, `text-embedding-3-small`), temperatura, max tokens e modo fallback/mock local para testes sem custos externos.
+  - EF Core 10 & Persistence: Mapeamento Fluent API em `AiDbContext` (`AiKernelConfigConfiguration`, `AiExecutionLogConfiguration`), migração inicial `20260807163235_InitialAIEngineModule` e migrador automático de banco no startup (`AiDbMigrator`).
+  - FastEndpoints API (Result Pattern): Endpoints sob `/api/ai` (`GET /api/ai/config` para obter parâmetros ativas, `POST /api/ai/config` para salvar credenciais, `POST /api/ai/prompt/execute` para execução interativa de prompts, `GET /api/ai/logs` para auditoria paginada e `GET /api/ai/summary` para resumo de indicadores de tokens e latência) retornando padronizadamente `Result<T>`.
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase7_1_1_SetupSemanticKernelOpenAI.feature`, suíte unitária (`AiKernelFactoryTests`, `AiOrchestratorServiceTests`, `NavMenuItemsTests`) e teste de integração end-to-end com Testcontainers (`AiIntegrationTests` rodando PostgreSQL 17 real) — 100% aprovados.
+  - Blazor UI & Stitch Visual Design: Cliente HTTP `AiApiClient`, folhas de estilo `ai-engine.css` (seguindo os tokens da marca `#2E5B88`, `#A3C9A8`, `#F4EAE1`), abas de navegação `AINavTabs.razor`, páginas `/ai/config` (Configurações do Kernel), `/ai/playground` (Testador de Prompts & Métricas de Tokens) e `/ai/logs` (Auditoria Paginada com Modal de Detalhes), além de adição do item `Semantic Kernel / IA` no menu lateral principal.
+
 
 
 * [] **Subfase 7.1.2:** [FN-OPE-IA03] Criação do pipeline de RAG: Leitura da Convenção/Regimento Interno, geração de embeddings e busca por similaridade vetorial via **pgvector**.

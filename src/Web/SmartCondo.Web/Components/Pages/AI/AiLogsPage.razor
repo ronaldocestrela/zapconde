@@ -1,0 +1,192 @@
+@page "/ai/logs"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Modules.AIEngine.Application.DTOs
+@using SmartCondo.Web.Services
+@inject AiApiClient AiApi
+
+<PageTitle>Logs de Execução de IA - SmartCondo</PageTitle>
+
+<link href="css/ai-engine.css" rel="stylesheet" />
+
+<div class="ai-container">
+    <AINavTabs />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 font-weight-bold" style="color: #2E5B88;">
+                <span class="material-symbols-outlined align-middle me-2">history</span>
+                Auditoria & Logs de Execução de IA
+            </h1>
+            <p class="text-muted small mb-0">Histórico completo de prompts processados pelo Semantic Kernel no condomínio.</p>
+        </div>
+        <button class="btn btn-outline-secondary d-flex align-items-center gap-2" @onclick="CarregarLogs">
+            <span class="material-symbols-outlined">refresh</span>
+            Atualizar Logs
+        </button>
+    </div>
+
+    <div class="ai-card">
+        @if (IsCarregando)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Carregando histórico de auditoria...</p>
+            </div>
+        }
+        else if (Logs != null && Logs.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data / Hora</th>
+                            <th>Status</th>
+                            <th>Modelo</th>
+                            <th>Prompt</th>
+                            <th>Tokens (In/Out)</th>
+                            <th>Latência</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Logs)
+                        {
+                            <tr>
+                                <td class="small fw-semibold text-secondary">
+                                    @log.ExecutedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                                </td>
+                                <td>
+                                    @if (log.Success)
+                                    {
+                                        <span class="badge ai-badge-success">
+                                            <span class="material-symbols-outlined fs-6 align-middle me-1">check</span> Sucesso
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge ai-badge-failed">
+                                            <span class="material-symbols-outlined fs-6 align-middle me-1">error</span> Falha
+                                        </span>
+                                    }
+                                </td>
+                                <td><code class="text-dark">@log.ModelUsed</code></td>
+                                <td style="max-width: 320px;" class="text-truncate" title="@log.Prompt">
+                                    @log.Prompt
+                                </td>
+                                <td class="small">
+                                    <span class="fw-bold" style="color: #2E5B88;">@log.TotalTokens</span>
+                                    <span class="text-muted fs-7">(@log.PromptTokens / @log.CompletionTokens)</span>
+                                </td>
+                                <td class="small font-monospace">
+                                    @log.DurationMs ms
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => AbrirDetalhes(log)">
+                                        <span class="material-symbols-outlined fs-6">info</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center text-muted py-5">
+                <span class="material-symbols-outlined fs-1 text-secondary opacity-50 mb-2">inbox</span>
+                <p class="mb-0">Nenhum log de execução encontrado para este condomínio.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@if (LogSelecionado != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #2E5B88; color: white;">
+                    <h5 class="modal-header-title m-0 fw-bold d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined">receipt_long</span>
+                        Detalhes da Execução #@LogSelecionado.Id
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FecharModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted mb-1">Modelo Utilizado</label>
+                            <div class="fw-bold">@LogSelecionado.ModelUsed</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted mb-1">Duração</label>
+                            <div class="fw-bold">@LogSelecionado.DurationMs ms</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted mb-1">Consumo de Tokens</label>
+                            <div class="fw-bold">@LogSelecionado.TotalTokens (@LogSelecionado.PromptTokens prompt + @LogSelecionado.CompletionTokens resposta)</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Prompt Enviado</label>
+                        <div class="p-3 bg-light border rounded font-monospace small">@LogSelecionado.Prompt</div>
+                    </div>
+
+                    @if (LogSelecionado.Success)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Resposta Gerada</label>
+                            <div class="ai-playground-response-box">@LogSelecionado.Response</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-danger">Mensagem de Erro</label>
+                            <div class="p-3 bg-danger bg-opacity-10 border border-danger rounded text-danger font-monospace small">@LogSelecionado.ErrorMessage</div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FecharModal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private IEnumerable<AiExecutionLogDto>? Logs;
+    private bool IsCarregando = true;
+    private AiExecutionLogDto? LogSelecionado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarLogs();
+    }
+
+    private async Task CarregarLogs()
+    {
+        IsCarregando = true;
+        var result = await AiApi.GetLogsAsync(page: 1, pageSize: 50);
+        IsCarregando = false;
+
+        if (result?.IsSuccess == true && result.Data != null)
+        {
+            Logs = result.Data;
+        }
+    }
+
+    private void AbrirDetalhes(AiExecutionLogDto log)
+    {
+        LogSelecionado = log;
+    }
+
+    private void FecharModal()
+    {
+        LogSelecionado = null;
+    }
+}
