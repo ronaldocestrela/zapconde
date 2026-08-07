@@ -24,6 +24,7 @@ public static class WhatsAppServiceCollectionExtensions
 
         services.AddSingleton<IEvolutionPayloadParser, EvolutionPayloadParser>();
         services.AddScoped<IWhatsAppApplicationService, WhatsAppApplicationService>();
+        services.AddScoped<IWhatsAppInboundProcessorService, WhatsAppInboundProcessorService>();
 
         return services;
     }

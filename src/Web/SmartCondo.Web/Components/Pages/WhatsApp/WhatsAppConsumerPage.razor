@@ -1,0 +1,241 @@
+@page "/whatsapp/consumer"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Modules.WhatsApp.Application.DTOs
+@using SmartCondo.Web.Services
+@inject WhatsAppApiClient WhatsAppApi
+@inject NavigationManager Navigation
+@inject AuthSession Session
+
+<PageTitle>Consumidor & Resolução - WhatsApp</PageTitle>
+
+<link href="css/whatsapp.css" rel="stylesheet" />
+
+<div class="whatsapp-container">
+    <WhatsAppNavTabs />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 font-weight-bold" style="color: #2E5B88;">
+                <span class="material-symbols-outlined align-middle me-2">psychology</span>
+                Consumidor em Background (`WhatsAppInboundConsumer`)
+            </h1>
+            <p class="text-muted small mb-0">Monitoramento do enfileiramento MassTransit/RabbitMQ, resolução de moradores via Redis/PostgreSQL e idempotência.</p>
+        </div>
+        <button class="btn btn-outline-primary d-flex align-items-center gap-2" @onclick="CarregarDadosAsync">
+            <span class="material-symbols-outlined">refresh</span>
+            Atualizar Métricas
+        </button>
+    </div>
+
+    <!-- Cards KPI de Performance -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 card-kpi" style="border-left: 5px solid #2E5B88; border-radius: 12px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold">TOTAL PROCESSADO</div>
+                        <div class="h3 mb-0 fw-extrabold text-dark">@(_metrics?.TotalProcessed ?? 0)</div>
+                    </div>
+                    <span class="material-symbols-outlined fs-1" style="color: #2E5B88;">dataset</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 card-kpi" style="border-left: 5px solid #28a745; border-radius: 12px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold">TAXA IDENTIFICAÇÃO</div>
+                        <div class="h3 mb-0 fw-extrabold text-success">@(_metrics?.ResidentIdentificationRate ?? 0)%</div>
+                    </div>
+                    <span class="material-symbols-outlined fs-1 text-success">person_check</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 card-kpi" style="border-left: 5px solid #17a2b8; border-radius: 12px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold">HIT RATE CACHE REDIS</div>
+                        <div class="h3 mb-0 fw-extrabold text-info">@(_metrics?.RedisCacheHitRate ?? 0)%</div>
+                    </div>
+                    <span class="material-symbols-outlined fs-1 text-info">bolt</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 card-kpi" style="border-left: 5px solid #6c757d; border-radius: 12px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold">LATÊNCIA MÉDIA</div>
+                        <div class="h3 mb-0 fw-extrabold text-secondary">@(_metrics?.AverageLatencyMs ?? 0) ms</div>
+                    </div>
+                    <span class="material-symbols-outlined fs-1 text-secondary">timer</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Logs e Resolução -->
+    <div class="card border-0 shadow-sm" style="border-radius: 14px; overflow: hidden;">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0 text-dark">Mensagens Inbound Processadas Downstream</h5>
+            <span class="badge bg-light text-dark border px-3 py-2">Fila MassTransit Active</span>
+        </div>
+
+        @if (_loading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p class="text-muted mt-2">Carregando métricas e mensagens do consumidor...</p>
+            </div>
+        }
+        else if (_logs == null || !_logs.Any())
+        {
+            <div class="p-5 text-center">
+                <span class="material-symbols-outlined display-4 text-muted mb-2">inbox</span>
+                <h5 class="fw-bold text-dark">Nenhuma mensagem enfileirada ainda</h5>
+                <p class="text-muted mb-0">Envie um webhook de mensagem via Evolution API para visualizar o processamento em background.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data / Hora</th>
+                            <th>MessageId</th>
+                            <th>Remetente</th>
+                            <th>Conteúdo Extraído</th>
+                            <th>Status Processamento</th>
+                            <th>Morador Identificado</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in _logs)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold text-dark">@log.ReceivedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</div>
+                                    <small class="text-muted">@(log.ProcessedAt.HasValue ? $"Processado em {log.ProcessedAt.Value.ToLocalTime():HH:mm:ss}" : "Aguardando")</small>
+                                </td>
+                                <td>
+                                    <code class="text-primary fw-bold">@log.MessageId</code>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">@(string.IsNullOrWhiteSpace(log.PushName) ? "Não Informado" : log.PushName)</div>
+                                    <small class="text-muted">@log.SenderPhone</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary mb-1">@log.MessageType</span>
+                                    <div class="text-truncate" style="max-width: 250px;" title="@log.MessageText">
+                                        @(string.IsNullOrWhiteSpace(log.MessageText) ? "(sem legenda/texto)" : log.MessageText)
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (log.Status == "Processed")
+                                    {
+                                        <span class="badge bg-success px-3 py-2">
+                                            <span class="material-symbols-outlined fs-6 align-middle me-1">check_circle</span> Processado
+                                        </span>
+                                    }
+                                    else if (log.Status == "Ignored")
+                                    {
+                                        <span class="badge bg-warning text-dark px-3 py-2">
+                                            <span class="material-symbols-outlined fs-6 align-middle me-1">block</span> Idempotência (Ignorado)
+                                        </span>
+                                    }
+                                    else if (log.Status == "Failed")
+                                    {
+                                        <span class="badge bg-danger px-3 py-2">
+                                            <span class="material-symbols-outlined fs-6 align-middle me-1">error</span> Falha
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info text-dark px-3 py-2">
+                                            <span class="material-symbols-outlined fs-6 align-middle me-1">schedule</span> Recebido (Outbox)
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (log.MoradorId.HasValue)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success px-3 py-2">
+                                            <span class="material-symbols-outlined fs-6 align-middle me-1">verified</span> Morador #@log.MoradorId.Value
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-muted border px-3 py-2">
+                                            <span class="material-symbols-outlined fs-6 align-middle me-1">help_outline</span> Não Cadastrado
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => AbrirModal(log)">
+                                        <span class="material-symbols-outlined fs-6 align-middle">visibility</span> Detalhes
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@if (_logSelecionado != null)
+{
+    <WebhookDetailModal Log="_logSelecionado" OnClose="FecharModal" />
+}
+
+@code {
+    private bool _loading = true;
+    private WhatsAppConsumerMetricsDto? _metrics;
+    private List<WhatsAppWebhookLogDto>? _logs;
+    private WhatsAppWebhookLogDto? _logSelecionado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDadosAsync();
+    }
+
+    private async Task CarregarDadosAsync()
+    {
+        _loading = true;
+        try
+        {
+            var resMetrics = await WhatsAppApi.GetConsumerMetricsAsync();
+            if (resMetrics != null && resMetrics.IsSuccess)
+            {
+                _metrics = resMetrics.Data;
+            }
+
+            var resLogs = await WhatsAppApi.GetWebhookLogsAsync(pageSize: 50);
+            if (resLogs != null && resLogs.IsSuccess && resLogs.Data != null)
+            {
+                _logs = resLogs.Data.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar dados do consumidor: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void AbrirModal(WhatsAppWebhookLogDto log) => _logSelecionado = log;
+    private void FecharModal() => _logSelecionado = null;
+}

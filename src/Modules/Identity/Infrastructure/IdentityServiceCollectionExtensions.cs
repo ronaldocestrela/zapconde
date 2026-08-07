@@ -102,6 +102,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IUnitResidentService, UnitResidentService>();
         services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
         services.AddScoped<IWhatsAppOtpSender, StubWhatsAppOtpSender>();
+        services.AddScoped<Modules.Identity.Application.Services.IResidentLookupService, ResidentLookupService>();
 
         services.AddHttpClient("ViaCep", client =>
         {

@@ -23,6 +23,8 @@ public static class ServiceCollectionExtensions
     {
         services.AddInfrastructure(configuration, busConfigurator =>
         {
+            busConfigurator.AddConsumer<Modules.WhatsApp.Application.Consumers.WhatsAppInboundConsumer>();
+
             busConfigurator.AddEntityFrameworkOutbox<WhatsAppDbContext>(o =>
             {
                 o.UsePostgres();

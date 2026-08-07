@@ -575,7 +575,18 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Blazor UI (Stitch): Atualização de `/whatsapp/logs` (`WhatsAppLogsPage.razor`) com a nova coluna e badge visual `Enfileirado (Outbox)` + estilo `.wpp-badge-queued` em `whatsapp.css` em conformidade com os tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
 
 
-* [] **Subfase 6.3:** Consumidor em Background (`WhatsAppInboundConsumer`) para extrair telefone, texto/mídia e resolver o `tenant_id` e `morador_id` no Redis/Postgres.
+* [x] **Subfase 6.3:** Consumidor em Background (`WhatsAppInboundConsumer`) para extrair telefone, texto/mídia e resolver o `tenant_id` e `morador_id` no Redis/Postgres.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Consumidor MassTransit & Processador in Background: Criados `WhatsAppInboundConsumer` (implementando `IConsumer<WhatsAppMessageReceivedEvent>`) e `WhatsAppInboundProcessorService` para consumir eventos da fila RabbitMQ, extrair dados do remetente (E.164), conteúdo e mídias.
+  - Resolução Otimizada com Redis & Fallback Postgres: Serviço de busca `ResidentLookupService` e cache em duas camadas via `ICacheService` no Redis (povoando a chave `wpp:morador:phone:{Phone}` com TTL de 24h) com fallback no PostgreSQL (`IdentityDbContext`), além de controle de concorrência com trava distribuída `IDistributedLockService` (`wpp:lock:msg:{MessageId}`).
+  - Domínio & EF Core 10 Migration: Adicionada a propriedade `MoradorId` e método `MarcarComoProcessado(moradorId)` em `WhatsAppWebhookLog`, com índice `IX_WebhookLogs_Tenant_MoradorId` em `WhatsAppWebhookLogConfiguration` e migration `20260807141215_AddMoradorIdToWhatsAppWebhookLog`.
+  - Evento de Integração Downstream: Criado `WhatsAppMessageProcessedEvent` em `BuildingBlocks.Shared.Events` com metadados completos de tenant, morador e indicação de `CacheHit` para consumo posterior da Engine de IA (Fase 7).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase6_3_WhatsAppInboundConsumerResolucaoTenantMorador.feature`, suíte unitária `WhatsAppInboundConsumerTests` e testes de integração com Testcontainers (`WhatsAppInboundConsumerIntegrationTests` em PostgreSQL 17 real) — 100% aprovados.
+  - Blazor UI (Stitch): Página `/whatsapp/consumer` (`WhatsAppConsumerPage.razor`) com KPI cards (mensagens processadas, taxa de identificação de moradores, Redis hit rate, latência), tabela interativa com badges de status/morador e atualização do modal `WebhookDetailModal.razor`.
+  - Navegação: Atualização da barra de abas `WhatsAppNavTabs.razor` integrando a aba **Consumidor & Resolução**.
 
 
 

@@ -369,6 +369,7 @@ public class WhatsAppApplicationService : IWhatsAppApplicationService
         ErrorMessage: entity.ErrorMessage,
         ReceivedAt: entity.ReceivedAt,
         ProcessedAt: entity.ProcessedAt,
-        RawPayloadJson: entity.RawPayloadJson
+        RawPayloadJson: entity.RawPayloadJson,
+        MoradorId: entity.MoradorId
     );
 }

@@ -36,6 +36,17 @@
                             <span class="badge bg-success">@Log.Status</span>
                         </div>
                         <div class="col-md-4">
+                            <span class="text-muted small d-block">Morador Resolvido</span>
+                            @if (Log.MoradorId.HasValue)
+                            {
+                                <span class="badge bg-success-subtle text-success border border-success fw-bold">Morador #@Log.MoradorId.Value</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted border">Não Identificado</span>
+                            }
+                        </div>
+                        <div class="col-md-4">
                             <span class="text-muted small d-block">Data / Hora</span>
                             <span>@Log.ReceivedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
                         </div>

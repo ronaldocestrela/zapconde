@@ -24,6 +24,7 @@ public class WhatsAppWebhookLog : ITenantScoped
     public string RawPayloadJson { get; private set; } = string.Empty;
     public WhatsAppWebhookStatus Status { get; private set; }
     public string? ErrorMessage { get; private set; }
+    public int? MoradorId { get; private set; }
     public DateTimeOffset ReceivedAt { get; private set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? ProcessedAt { get; private set; }
 
@@ -85,9 +86,10 @@ public class WhatsAppWebhookLog : ITenantScoped
     /// <summary>
     /// Marca o log como processado com sucesso.
     /// </summary>
-    public void MarcarComoProcessado()
+    public void MarcarComoProcessado(int? moradorId = null)
     {
         Status = WhatsAppWebhookStatus.Processed;
+        MoradorId = moradorId;
         ProcessedAt = DateTimeOffset.UtcNow;
     }
 

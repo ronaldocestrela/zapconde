@@ -49,6 +49,9 @@ public class WhatsAppWebhookLogConfiguration : IEntityTypeConfiguration<WhatsApp
         builder.Property(w => w.ErrorMessage)
             .HasMaxLength(1000);
 
+        builder.Property(w => w.MoradorId)
+            .IsRequired(false);
+
         builder.HasIndex(w => new { w.TenantId, w.InstanceName })
             .HasDatabaseName("IX_WebhookLogs_Tenant_Instance");
 
@@ -60,5 +63,8 @@ public class WhatsAppWebhookLogConfiguration : IEntityTypeConfiguration<WhatsApp
 
         builder.HasIndex(w => new { w.TenantId, w.SenderPhone })
             .HasDatabaseName("IX_WebhookLogs_Tenant_SenderPhone");
+
+        builder.HasIndex(w => new { w.TenantId, w.MoradorId })
+            .HasDatabaseName("IX_WebhookLogs_Tenant_MoradorId");
     }
 }

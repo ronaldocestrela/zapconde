@@ -200,3 +200,36 @@ public sealed class GetWhatsAppWebhookSummaryEndpoint : EndpointWithoutRequest<R
         await SendAsync(result, 200, ct);
     }
 }
+
+/// <summary>
+/// Endpoint para obter as métricas de resolução e performance do consumidor em background (WhatsAppInboundConsumer).
+/// </summary>
+public sealed class GetWhatsAppConsumerMetricsEndpoint : EndpointWithoutRequest<Result<WhatsAppConsumerMetricsDto>>
+{
+    private readonly IWhatsAppInboundProcessorService _processorService;
+
+    public GetWhatsAppConsumerMetricsEndpoint(IWhatsAppInboundProcessorService processorService)
+    {
+        _processorService = processorService;
+    }
+
+    public override void Configure()
+    {
+        Get("/api/whatsapp/consumer/metrics");
+        AllowAnonymous();
+        Summary(s =>
+        {
+            s.Summary = "Métricas do Consumidor em Background WhatsApp";
+            s.Description = "Retorna contadores de processamento, taxa de identificação de moradores e métricas de cache do Redis.";
+        });
+    }
+
+    public override async Task HandleAsync(CancellationToken ct)
+    {
+        var tenantIdStr = HttpContext.Request.Query["tenantId"].FirstOrDefault();
+        int? tenantId = int.TryParse(tenantIdStr, out var tid) ? tid : null;
+
+        var metrics = await _processorService.GetMetricsAsync(tenantId, ct);
+        await SendAsync(Result<WhatsAppConsumerMetricsDto>.Success(metrics), 200, ct);
+    }
+}

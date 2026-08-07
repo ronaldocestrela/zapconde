@@ -23,7 +23,8 @@ public record WhatsAppWebhookLogDto(
     string? ErrorMessage,
     DateTimeOffset ReceivedAt,
     DateTimeOffset? ProcessedAt,
-    string RawPayloadJson
+    string RawPayloadJson,
+    int? MoradorId = null
 );
 
 public record WhatsAppInstanceConfigDto(

@@ -94,4 +94,21 @@ public class WhatsAppApiClient
             return Result<IEnumerable<WhatsAppWebhookLogDto>>.Failure($"Erro ao consultar logs de webhooks: {ex.Message}");
         }
     }
+
+    public async Task<Result<WhatsAppConsumerMetricsDto>?> GetConsumerMetricsAsync(int? tenantId = null)
+    {
+        try
+        {
+            var url = "/api/whatsapp/consumer/metrics";
+            if (tenantId.HasValue && tenantId.Value > 0)
+            {
+                url += $"?tenantId={tenantId.Value}";
+            }
+            return await _httpClient.GetFromJsonAsync<Result<WhatsAppConsumerMetricsDto>>(url);
+        }
+        catch (Exception ex)
+        {
+            return Result<WhatsAppConsumerMetricsDto>.Failure($"Erro ao obter métricas do consumidor WhatsApp: {ex.Message}");
+        }
+    }
 }
