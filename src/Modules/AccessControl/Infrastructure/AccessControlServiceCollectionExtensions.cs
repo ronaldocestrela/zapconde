@@ -23,6 +23,7 @@ public static class AccessControlServiceCollectionExtensions
         });
 
         services.AddScoped<IVisitanteApplicationService, VisitanteApplicationService>();
+        services.AddScoped<IEncomendaApplicationService, EncomendaApplicationService>();
 
         return services;
     }

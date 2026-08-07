@@ -1,0 +1,314 @@
+@page "/portaria/encomendas"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Modules.AccessControl.Application.DTOs
+@using Modules.AccessControl.Domain.Enums
+@using SmartCondo.Web.Services
+@inject AccessControlApiClient ApiClient
+@inject NavigationManager Navigation
+@inject AuthSession Session
+
+<PageTitle>Encomendas & Entregas - SmartCondo</PageTitle>
+
+<link href="css/packages.css" rel="stylesheet" />
+
+<div class="packages-container">
+    <AccessControlNavTabs />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 font-weight-bold" style="color: #2E5B88;">
+                <span class="material-symbols-outlined align-middle me-2">inventory_2</span>
+                Gestão de Encomendas & Correspondências
+            </h1>
+            <p class="text-muted small mb-0">Controle de recebimento na portaria, notificações aos moradores e registro de baixas.</p>
+        </div>
+        <button class="btn btn-primary-stitch d-flex align-items-center gap-2" @onclick="AbrirModalNovo">
+            <span class="material-symbols-outlined">add_box</span>
+            Registrar Nova Encomenda
+        </button>
+    </div>
+
+    @if (Resumo != null)
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="package-kpi-card" style="border-left: 4px solid #ffb74d;">
+                    <div class="package-kpi-label">Aguardando Retirada</div>
+                    <div class="package-kpi-val text-warning">@Resumo.AguardandoRetirada</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="package-kpi-card" style="border-left: 4px solid #A3C9A8;">
+                    <div class="package-kpi-label">Entregues Hoje</div>
+                    <div class="package-kpi-val text-success">@Resumo.EntreguesHoje</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="package-kpi-card" style="border-left: 4px solid #e57373;">
+                    <div class="package-kpi-label">Perecíveis Pendentes</div>
+                    <div class="package-kpi-val text-danger">@Resumo.Pereciveis</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="package-kpi-card" style="border-left: 4px solid #2E5B88;">
+                    <div class="package-kpi-label">Total Cadastrado</div>
+                    <div class="package-kpi-val">@Resumo.TotalEncomendas</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Barra de Filtros e Busca -->
+    <div class="card border-0 shadow-sm p-3 mb-4" style="border-radius: 12px; background: #ffffff;">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><span class="material-symbols-outlined fs-5 text-muted">search</span></span>
+                    <input type="text" class="form-control border-start-0 bg-light" placeholder="Buscar por código, descrição, unidade ou retirante..." @bind="TermoBusca" @bind:event="oninput" @keyup="OnSearchKeyUp" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select bg-light" @bind="FiltroStatusSelect">
+                    <option value="">Todos os Status</option>
+                    <option value="@StatusEncomenda.AguardandoRetirada">Aguardando Retirada</option>
+                    <option value="@StatusEncomenda.Entregue">Entregues</option>
+                    <option value="@StatusEncomenda.Devolvida">Devolvidas</option>
+                    <option value="@StatusEncomenda.Cancelada">Canceladas</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select bg-light" @bind="FiltroTipoSelect">
+                    <option value="">Todos os Tipos</option>
+                    <option value="@TipoEncomenda.Pacote">Pacote</option>
+                    <option value="@TipoEncomenda.Caixa">Caixa</option>
+                    <option value="@TipoEncomenda.Envelope">Envelope</option>
+                    <option value="@TipoEncomenda.Perecivel">Perecível</option>
+                    <option value="@TipoEncomenda.Outros">Outros</option>
+                </select>
+            </div>
+            <div class="col-md-2 text-end">
+                <button class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-1" @onclick="CarregarDadosAsync">
+                    <span class="material-symbols-outlined fs-5">refresh</span>
+                    <span>Atualizar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela Principal -->
+    @if (IsLoading)
+    {
+        <div class="text-center my-5 py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="text-muted mt-3 font-weight-semibold">Carregando correspondências e encomendas...</p>
+        </div>
+    }
+    else if (Encomendas == null || !Encomendas.Any())
+    {
+        <div class="card border-0 shadow-sm p-5 text-center my-4" style="border-radius: 12px;">
+            <span class="material-symbols-outlined fs-1 text-muted mb-2">mark_email_unread</span>
+            <h5 class="fw-bold text-secondary">Nenhuma encomenda encontrada</h5>
+            <p class="text-muted mb-3">Não existem encomendas registradas para os filtros selecionados.</p>
+            <div>
+                <button class="btn btn-primary-stitch" @onclick="AbrirModalNovo">Registrar Primeira Encomenda</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Unidade / Bloco</th>
+                            <th>Descrição / Volume</th>
+                            <th>Código / Transportadora</th>
+                            <th>Tipo</th>
+                            <th>Status</th>
+                            <th>Data Recebimento</th>
+                            <th>Retirada / Notificação</th>
+                            <th class="text-end pe-4">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in Encomendas)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark">@e.BlocoUnidade</div>
+                                    <small class="text-muted">Rec: @e.RecebidoPorNome</small>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@e.Descricao</div>
+                                    @if (!string.IsNullOrWhiteSpace(e.LocalArmazenamento))
+                                    {
+                                        <small class="text-secondary"><span class="material-symbols-outlined fs-6 align-middle me-1">shelves</span>@e.LocalArmazenamento</small>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(e.CodigoRastreio))
+                                    {
+                                        <span class="font-monospace small bg-light px-2 py-1 rounded border">@e.CodigoRastreio</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Sem rastreio</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(e.Transportadora))
+                                    {
+                                        <div class="small text-muted">@e.Transportadora</div>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge-tipo">@e.TipoDescricao</span>
+                                </td>
+                                <td>
+                                    <span class="@GetStatusBadgeClass(e.Status)">@e.StatusDescricao</span>
+                                </td>
+                                <td>
+                                    <div class="small fw-semibold">@e.DataRecebimento.ToString("dd/MM/yyyy HH:mm")</div>
+                                </td>
+                                <td>
+                                    @if (e.Status == StatusEncomenda.Entregue && !string.IsNullOrWhiteSpace(e.RetiradoPorNome))
+                                    {
+                                        <div class="small text-success fw-bold"><span class="material-symbols-outlined fs-6 align-middle me-1">check_circle</span>Retirado por: @e.RetiradoPorNome</div>
+                                        <div class="small text-muted">@e.DataRetirada?.ToString("dd/MM HH:mm")</div>
+                                    }
+                                    else if (e.NotificadoEm.HasValue)
+                                    {
+                                        <div class="small text-info"><span class="material-symbols-outlined fs-6 align-middle me-1">notifications_active</span>Notificado: @e.NotificadoEm.Value.ToString("dd/MM HH:mm")</div>
+                                    }
+                                    else
+                                    {
+                                        <span class="small text-muted">Aguardando aviso</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        @if (e.Status == StatusEncomenda.AguardandoRetirada)
+                                        {
+                                            <button class="btn btn-sm btn-outline-info d-flex align-items-center gap-1" title="Notificar Morador" @onclick="() => NotificarAsync(e.Id)">
+                                                <span class="material-symbols-outlined fs-6">notifications</span>
+                                            </button>
+                                            <button class="btn btn-sm btn-success d-flex align-items-center gap-1 font-weight-semibold" title="Dar Baixa" @onclick="() => AbrirModalBaixa(e)">
+                                                <span class="material-symbols-outlined fs-6">task_alt</span>
+                                                <span>Entregar</span>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<NewPackageModal @bind-IsOpen="ExibirModalNovo" OnSaved="CarregarDadosAsync" />
+<PickupPackageModal @bind-IsOpen="ExibirModalBaixa" Encomenda="EncomendaSelecionada" OnSaved="CarregarDadosAsync" />
+
+@code {
+    private IEnumerable<EncomendaDto>? Encomendas { get; set; }
+    private EncomendaSummaryDto? Resumo { get; set; }
+    private bool IsLoading { get; set; } = true;
+
+    private string TermoBusca { get; set; } = string.Empty;
+    private string _filtroStatus = string.Empty;
+    private string _filtroTipo = string.Empty;
+
+    private string FiltroStatusSelect
+    {
+        get => _filtroStatus;
+        set
+        {
+            _filtroStatus = value;
+            _ = CarregarDadosAsync();
+        }
+    }
+
+    private string FiltroTipoSelect
+    {
+        get => _filtroTipo;
+        set
+        {
+            _filtroTipo = value;
+            _ = CarregarDadosAsync();
+        }
+    }
+
+    private bool ExibirModalNovo { get; set; }
+    private bool ExibirModalBaixa { get; set; }
+    private EncomendaDto? EncomendaSelecionada { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDadosAsync();
+    }
+
+    private async Task CarregarDadosAsync()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        StatusEncomenda? statusFilter = Enum.TryParse<StatusEncomenda>(_filtroStatus, out var s) ? s : null;
+        TipoEncomenda? tipoFilter = Enum.TryParse<TipoEncomenda>(_filtroTipo, out var t) ? t : null;
+
+        var resultEncomendas = await ApiClient.GetEncomendasAsync(statusFilter, tipoFilter, null, TermoBusca);
+        if (resultEncomendas.IsSuccess && resultEncomendas.Data != null)
+        {
+            Encomendas = resultEncomendas.Data;
+        }
+
+        var resultResumo = await ApiClient.GetEncomendasSummaryAsync();
+        if (resultResumo.IsSuccess)
+        {
+            Resumo = resultResumo.Data;
+        }
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await CarregarDadosAsync();
+        }
+    }
+
+    private void AbrirModalNovo()
+    {
+        ExibirModalNovo = true;
+    }
+
+    private void AbrirModalBaixa(EncomendaDto e)
+    {
+        EncomendaSelecionada = e;
+        ExibirModalBaixa = true;
+    }
+
+    private async Task NotificarAsync(int id)
+    {
+        var res = await ApiClient.NotificarMoradorEncomendaAsync(id);
+        if (res.IsSuccess)
+        {
+            await CarregarDadosAsync();
+        }
+    }
+
+    private static string GetStatusBadgeClass(StatusEncomenda status) => status switch
+    {
+        StatusEncomenda.AguardandoRetirada => "badge-status-aguardando",
+        StatusEncomenda.Entregue => "badge-status-entregue",
+        StatusEncomenda.Devolvida => "badge-status-devolvida",
+        StatusEncomenda.Cancelada => "badge-status-cancelada",
+        _ => "badge bg-secondary"
+    };
+}

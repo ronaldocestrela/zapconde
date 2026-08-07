@@ -15,6 +15,7 @@ public class AccessControlDbContext : MultiTenantDbContext
     }
 
     public DbSet<Visitante> Visitantes => Set<Visitante>();
+    public DbSet<Encomenda> Encomendas => Set<Encomenda>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

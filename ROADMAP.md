@@ -523,7 +523,18 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Navegação: Barra de navegação por abas `AccessControlNavTabs.razor` (integrando Visitantes e preparando para Encomendas) e atualização de `NavMenuItems.cs`.
 
 
-* [] **Subfase 5.2:** [FN-ACC-02] Módulo de `Encomendas` (Registro de recebimento pela portaria e baixa pelo morador).
+* [x] **Subfase 5.2:** [FN-ACC-02] Módulo de `Encomendas` (Registro de recebimento pela portaria e baixa pelo morador).
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & Invariantes: Entidade Aggregate Root `Encomenda`, exceção `EncomendaDomainException` e enums `StatusEncomenda` e `TipoEncomenda` com isolamento multi-tenant (`ITenantScoped`), validações de recebimento, bloqueio de datas futuras, registro de baixa/retirada com responsável e notificação.
+  - EF Core 10 & Persistence: Mapeamento Fluent API em `AccessControlDbContext` (`access_control."Encomendas"`), índices compostos por `(TenantId, CondoId, Status)`, `(TenantId, UnidadeId)` e `(TenantId, CodigoRastreio)`, e migration `20260807125052_AddEncomendaModule`.
+  - Serviço de Aplicação: `EncomendaApplicationService` e `IEncomendaApplicationService` encapsulados com Result Pattern (`Result<T>`) e isolamento multi-tenant (`ITenantScoped`).
+  - FastEndpoints API: Endpoints sob `/api/access-control/packages` (`POST` registrar recebimento, `GET` listar com filtros por status/tipo/unidade/busca, `GET /{id}` obter por ID, `POST /{id}/pickup` registrar baixa/retirada, `POST /{id}/notify` notificar morador e `GET /summary` resumo KPI de correspondências).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase5_2_RegistroBaixaEncomendas.feature`, suíte unitária `EncomendaDomainTests` e testes de integração com Testcontainers (`EncomendaIntegrationTests` em PostgreSQL 17 real) — 100% aprovados.
+  - Blazor UI (Stitch): Páginas `/portaria/encomendas` (com KPI cards de encomendas aguardando/entregues/perecíveis, barra de filtros interativa, tabela com badges de status e tipo, modal wizard de recebimento `NewPackageModal.razor` e modal de baixa/retirada `PickupPackageModal.razor`) + estilos `packages.css` fiéis aos tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
+  - Navegação: Integração completa na barra de abas `AccessControlNavTabs.razor` e registro em `App.razor`.
 
 
 

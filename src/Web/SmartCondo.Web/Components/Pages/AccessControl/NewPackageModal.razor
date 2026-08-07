@@ -1,0 +1,284 @@
+@using Modules.AccessControl.Application.DTOs
+@using Modules.AccessControl.Domain.Enums
+@using SmartCondo.Web.Services
+@inject AccessControlApiClient ApiClient
+@inject UnitsApiClient UnitsApi
+
+@if (IsOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, #2E5B88, #1d3b59); color: white; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 1.5rem;">
+                    <div>
+                        <h5 class="modal-title font-weight-bold d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined fs-4">inventory_2</span>
+                            Registrar Recebimento de Encomenda
+                        </h5>
+                        <p class="small text-white-50 mb-0">Preencha os dados do volume recebido na portaria.</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close" @onclick="Fechar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                            <span class="material-symbols-outlined">error</span>
+                            <div>@ErrorMessage</div>
+                        </div>
+                    }
+
+                    <EditForm Model="FormModel" OnValidSubmit="SalvarAsync">
+                        <DataAnnotationsValidator />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-semibold mb-0">Bloco / Unidade <span class="text-danger">*</span></label>
+                                    @if (Unidades.Count > 0)
+                                    {
+                                        <button type="button" class="btn btn-link p-0 text-decoration-none small" style="font-size: 0.8rem;" @onclick="ToggleEntradaManual">
+                                            @(ModoEntradaManual ? "Selecionar da lista" : "Digitar manualmente")
+                                        </button>
+                                    }
+                                </div>
+
+                                @if (CarregandoUnidades)
+                                {
+                                    <div class="form-control bg-light text-muted d-flex align-items-center gap-2">
+                                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                                        <span>Carregando unidades do condomínio...</span>
+                                    </div>
+                                }
+                                else if (Unidades.Count > 0 && !ModoEntradaManual)
+                                {
+                                    <select class="form-select" @bind="SelectedUnitId" @bind:after="OnUnitSelected" required>
+                                        <option value="0">-- Selecione a Unidade / Bloco --</option>
+                                        @foreach (var u in Unidades)
+                                        {
+                                            <option value="@u.UnitId">
+                                                @(!string.IsNullOrWhiteSpace(u.BlocoCodigo) ? $"Bloco {u.BlocoCodigo} - " : "")Apt @u.Numero @(!string.IsNullOrWhiteSpace(u.MoradorNome) ? $"({u.MoradorNome})" : "")
+                                            </option>
+                                        }
+                                    </select>
+                                }
+                                else
+                                {
+                                    <input type="text" class="form-control" placeholder="Ex: Bloco A - Apt 202" @bind="FormModel.BlocoUnidade" required />
+                                }
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Código de Rastreio</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><span class="material-symbols-outlined fs-5 text-muted">qr_code_scanner</span></span>
+                                    <input type="text" class="form-control" placeholder="Ex: LOG123456789BR" @bind="FormModel.CodigoRastreio" />
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tipo de Volume <span class="text-danger">*</span></label>
+                                <select class="form-select" @bind="FormModel.Tipo">
+                                    <option value="@TipoEncomenda.Pacote">Pacote</option>
+                                    <option value="@TipoEncomenda.Caixa">Caixa</option>
+                                    <option value="@TipoEncomenda.Envelope">Envelope</option>
+                                    <option value="@TipoEncomenda.Perecivel">Perecível / Alimento</option>
+                                    <option value="@TipoEncomenda.Outros">Outros</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Descrição da Encomenda <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" placeholder="Ex: Caixa média parda do Mercado Livre" @bind="FormModel.Descricao" required />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Remetente / Loja</label>
+                                <input type="text" class="form-control" placeholder="Ex: Amazon, Mercado Livre, Shopee" @bind="FormModel.Remetente" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Transportadora</label>
+                                <input type="text" class="form-control" placeholder="Ex: Loggi, Correios, Jadlog" @bind="FormModel.Transportadora" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Local de Armazenamento</label>
+                                <input type="text" class="form-control" placeholder="Ex: Prateleira B3, Armário 2" @bind="FormModel.LocalArmazenamento" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Recebido na Portaria por <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" placeholder="Nome do porteiro/zelador" @bind="FormModel.RecebidoPorNome" required />
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Observações Internas</label>
+                                <textarea class="form-control" rows="2" placeholder="Ex: Pacote levemente amassado no canto esquerdo." @bind="FormModel.Observacoes"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-light" @onclick="Fechar">Cancelar</button>
+                            <button type="submit" class="btn btn-primary-stitch d-flex align-items-center gap-2" disabled="@IsSubmitting">
+                                @if (IsSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    <span>Salvando...</span>
+                                }
+                                else
+                                {
+                                    <span class="material-symbols-outlined fs-5">check_circle</span>
+                                    <span>Confirmar Recebimento</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+
+    private PackageFormModel FormModel { get; set; } = new();
+    private bool IsSubmitting { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    private List<UnitListItemModel> Unidades { get; set; } = new();
+    private bool CarregandoUnidades { get; set; }
+    private int SelectedUnitId { get; set; }
+    private bool ModoEntradaManual { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen)
+        {
+            ErrorMessage = null;
+            SelectedUnitId = 0;
+            ModoEntradaManual = false;
+            FormModel = new PackageFormModel
+            {
+                RecebidoPorNome = "Porteiro de Plantão"
+            };
+
+            await CarregarUnidadesAsync();
+        }
+    }
+
+    private async Task CarregarUnidadesAsync()
+    {
+        CarregandoUnidades = true;
+        try
+        {
+            var res = await UnitsApi.GetUnitsAsync(new UnitListQueryModel());
+            if (res.IsSuccess && res.Data != null)
+            {
+                Unidades = res.Data.OrderBy(u => u.BlocoCodigo).ThenBy(u => u.Numero).ToList();
+            }
+        }
+        catch
+        {
+            Unidades = new();
+        }
+        finally
+        {
+            CarregandoUnidades = false;
+        }
+    }
+
+    private void OnUnitSelected()
+    {
+        var unit = Unidades.FirstOrDefault(u => u.UnitId == SelectedUnitId);
+        if (unit != null)
+        {
+            FormModel.UnidadeId = unit.UnitId;
+            FormModel.BlocoUnidade = !string.IsNullOrWhiteSpace(unit.BlocoCodigo)
+                ? $"Bloco {unit.BlocoCodigo} - Apt {unit.Numero}"
+                : $"Apt {unit.Numero}";
+        }
+    }
+
+    private void ToggleEntradaManual()
+    {
+        ModoEntradaManual = !ModoEntradaManual;
+        if (ModoEntradaManual)
+        {
+            SelectedUnitId = 0;
+        }
+    }
+
+    private async Task Fechar()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private async Task SalvarAsync()
+    {
+        IsSubmitting = true;
+        ErrorMessage = null;
+
+        try
+        {
+            var bloco = !string.IsNullOrWhiteSpace(FormModel.BlocoUnidade) 
+                ? FormModel.BlocoUnidade 
+                : (FormModel.UnidadeId > 0 ? $"Unidade {FormModel.UnidadeId}" : "Portaria");
+
+            var recebidoPor = !string.IsNullOrWhiteSpace(FormModel.RecebidoPorNome)
+                ? FormModel.RecebidoPorNome
+                : "Porteiro de Plantão";
+
+            var req = new RegistrarRecebimentoEncomendaRequest(
+                CondoId: 1,
+                UnidadeId: FormModel.UnidadeId > 0 ? FormModel.UnidadeId : 1,
+                BlocoUnidade: bloco,
+                CodigoRastreio: FormModel.CodigoRastreio ?? string.Empty,
+                Descricao: FormModel.Descricao,
+                Remetente: FormModel.Remetente,
+                Transportadora: FormModel.Transportadora,
+                LocalArmazenamento: FormModel.LocalArmazenamento,
+                Tipo: FormModel.Tipo,
+                RecebidoPorNome: recebidoPor,
+                DataRecebimento: DateTimeOffset.UtcNow,
+                Observacoes: FormModel.Observacoes);
+
+            var result = await ApiClient.RegistrarRecebimentoEncomendaAsync(req);
+            if (result.IsSuccess)
+            {
+                await Fechar();
+                await OnSaved.InvokeAsync();
+            }
+            else
+            {
+                ErrorMessage = result.Message ?? "Falha ao registrar a encomenda.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    public class PackageFormModel
+    {
+        public string BlocoUnidade { get; set; } = string.Empty;
+        public int UnidadeId { get; set; } = 1;
+        public string? CodigoRastreio { get; set; }
+        public string Descricao { get; set; } = string.Empty;
+        public string? Remetente { get; set; }
+        public string? Transportadora { get; set; }
+        public string? LocalArmazenamento { get; set; }
+        public TipoEncomenda Tipo { get; set; } = TipoEncomenda.Pacote;
+        public string RecebidoPorNome { get; set; } = "Porteiro de Plantão";
+        public string? Observacoes { get; set; }
+    }
+}

@@ -1,0 +1,123 @@
+@using Modules.AccessControl.Application.DTOs
+@using SmartCondo.Web.Services
+@inject AccessControlApiClient ApiClient
+
+@if (IsOpen && Encomenda != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, #A3C9A8, #2E5B88); color: white; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 1.5rem;">
+                    <div>
+                        <h5 class="modal-title font-weight-bold d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined fs-4">task_alt</span>
+                            Confirmar Entrega / Retirada
+                        </h5>
+                        <p class="small text-white-50 mb-0">Registre quem está retirando a encomenda na portaria.</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close" @onclick="Fechar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="card bg-light border-0 mb-3 p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-primary">@Encomenda.BlocoUnidade</span>
+                            <span class="badge bg-secondary">@Encomenda.TipoDescricao</span>
+                        </div>
+                        <div class="mt-2 text-dark font-weight-semibold">@Encomenda.Descricao</div>
+                        @if (!string.IsNullOrWhiteSpace(Encomenda.CodigoRastreio))
+                        {
+                            <div class="small text-muted mt-1"><span class="fw-semibold">Rastreio:</span> @Encomenda.CodigoRastreio</div>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                            <span class="material-symbols-outlined">error</span>
+                            <div>@ErrorMessage</div>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nome de Quem Retirou <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="Ex: Morador, familiar ou prestador autorizado" @bind="RetiradoPorNome" autofocus />
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-2">
+                        <button type="button" class="btn btn-light" @onclick="Fechar">Cancelar</button>
+                        <button type="button" class="btn btn-success d-flex align-items-center gap-2 font-weight-bold" @onclick="ConfirmarBaixaAsync" disabled="@(IsSubmitting || string.IsNullOrWhiteSpace(RetiradoPorNome))">
+                            @if (IsSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span>Processando...</span>
+                            }
+                            else
+                            {
+                                <span class="material-symbols-outlined fs-5">check</span>
+                                <span>Dar Baixa (Entregue)</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EncomendaDto? Encomenda { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+
+    private string RetiradoPorNome { get; set; } = string.Empty;
+    private bool IsSubmitting { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen)
+        {
+            ErrorMessage = null;
+            RetiradoPorNome = string.Empty;
+        }
+    }
+
+    private async Task Fechar()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private async Task ConfirmarBaixaAsync()
+    {
+        if (Encomenda == null || string.IsNullOrWhiteSpace(RetiradoPorNome)) return;
+
+        IsSubmitting = true;
+        ErrorMessage = null;
+
+        try
+        {
+            var req = new RegistrarBaixaEncomendaRequest(RetiradoPorNome, DateTimeOffset.UtcNow);
+            var result = await ApiClient.RegistrarBaixaEncomendaAsync(Encomenda.Id, req);
+
+            if (result.IsSuccess)
+            {
+                await Fechar();
+                await OnSaved.InvokeAsync();
+            }
+            else
+            {
+                ErrorMessage = result.Message ?? "Não foi possível dar baixa na encomenda.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+}

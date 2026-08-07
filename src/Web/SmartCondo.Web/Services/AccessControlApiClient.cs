@@ -121,6 +121,96 @@ public sealed class AccessControlApiClient(HttpClient httpClient, AuthSession se
         }
     }
 
+    public async Task<ApiResult<IEnumerable<EncomendaDto>>> GetEncomendasAsync(
+        StatusEncomenda? status = null,
+        TipoEncomenda? tipo = null,
+        int? unidadeId = null,
+        string? busca = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var queryParams = new List<string>();
+            if (status.HasValue) queryParams.Add($"status={(int)status.Value}");
+            if (tipo.HasValue) queryParams.Add($"tipo={(int)tipo.Value}");
+            if (unidadeId.HasValue && unidadeId.Value > 0) queryParams.Add($"unidadeId={unidadeId.Value}");
+            if (!string.IsNullOrWhiteSpace(busca)) queryParams.Add($"busca={Uri.EscapeDataString(busca)}");
+
+            var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/access-control/packages{queryString}", null, ct);
+            return await ParseAsync<IEnumerable<EncomendaDto>>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<IEnumerable<EncomendaDto>>(ex);
+        }
+    }
+
+    public async Task<ApiResult<EncomendaDto>> GetEncomendaByIdAsync(int id, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, $"/api/access-control/packages/{id}", null, ct);
+            return await ParseAsync<EncomendaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<EncomendaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<EncomendaDto>> RegistrarRecebimentoEncomendaAsync(RegistrarRecebimentoEncomendaRequest request, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, "/api/access-control/packages", request, ct);
+            return await ParseAsync<EncomendaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<EncomendaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<EncomendaDto>> RegistrarBaixaEncomendaAsync(int id, RegistrarBaixaEncomendaRequest request, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/access-control/packages/{id}/pickup", request, ct);
+            return await ParseAsync<EncomendaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<EncomendaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<EncomendaDto>> NotificarMoradorEncomendaAsync(int id, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await SendAuthorizedAsync(HttpMethod.Post, $"/api/access-control/packages/{id}/notify", null, ct);
+            return await ParseAsync<EncomendaDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<EncomendaDto>(ex);
+        }
+    }
+
+    public async Task<ApiResult<EncomendaSummaryDto>> GetEncomendasSummaryAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await SendAuthorizedAsync(HttpMethod.Get, "/api/access-control/packages/summary", null, ct);
+            return await ParseAsync<EncomendaSummaryDto>(response, ct);
+        }
+        catch (Exception ex)
+        {
+            return ConnectionFailure<EncomendaSummaryDto>(ex);
+        }
+    }
+
     private async Task<HttpResponseMessage> SendAuthorizedAsync(
         HttpMethod method,
         string path,
@@ -168,6 +258,34 @@ public sealed class AccessControlApiClient(HttpClient httpClient, AuthSession se
 
             bool isSuccess = root.TryGetProperty("isSuccess", out var isSuccessProp) && isSuccessProp.GetBoolean();
             string message = root.TryGetProperty("message", out var msgProp) ? msgProp.GetString() ?? string.Empty : string.Empty;
+
+            if (!response.IsSuccessStatusCode || !isSuccess)
+            {
+                if (root.TryGetProperty("errors", out var errorsProp))
+                {
+                    if (errorsProp.ValueKind == JsonValueKind.Array)
+                    {
+                        var errList = JsonSerializer.Deserialize<List<string>>(errorsProp.GetRawText(), JsonOptions);
+                        if (errList != null && errList.Any())
+                        {
+                            message = string.Join("; ", errList);
+                        }
+                    }
+                    else if (errorsProp.ValueKind == JsonValueKind.Object)
+                    {
+                        var errDict = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(errorsProp.GetRawText(), JsonOptions);
+                        if (errDict != null && errDict.Any())
+                        {
+                            message = string.Join("; ", errDict.SelectMany(kv => kv.Value));
+                        }
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(message))
+                {
+                    message = $"Erro de requisição (HTTP {statusCode}).";
+                }
+            }
 
             T? data = default;
             if (root.TryGetProperty("data", out var dataProp) && dataProp.ValueKind != JsonValueKind.Null)

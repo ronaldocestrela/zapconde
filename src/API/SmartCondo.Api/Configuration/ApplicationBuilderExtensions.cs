@@ -29,7 +29,10 @@ public static class ApplicationBuilderExtensions
         app.UseAuthentication();
         app.UseTenantContext();
         app.UseAuthorization();
-        app.UseFastEndpoints();
+        app.UseFastEndpoints(c =>
+        {
+            c.Serializer.Options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        });
         Modules.Financial.Endpoints.AgreementEndpoints.MapAgreementEndpoints(app);
         Modules.Financial.Endpoints.DunningEndpoints.MapDunningEndpoints(app);
         Modules.Financial.Endpoints.DigitalBinderEndpoints.MapDigitalBinderEndpoints(app);
