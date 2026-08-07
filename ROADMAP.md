@@ -658,7 +658,17 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Blazor UI & Visual Design (Stitch): Atualização do cliente HTTP `AiApiClient.cs` e aprimoramento da página `/ai/plugins` (`AiPluginsPage.razor`) com KPI cards de plugins (2 ativos), seletor de abas de ferramentas (Boleto x Reserva), formulário com seletor de área comum, data/hora e convidados, e comprovante visual de solicitação no padrão Stitch.
 
 
-* [] **Subfase 7.2.3:** [FN-ACC-IA01] Plugin `AuthorizeGuest(nome, documento, data)` -> Registra liberação de visitante na portaria.
+* [x] **Subfase 7.2.3:** [FN-ACC-IA01] Plugin `AuthorizeGuest(nome, documento, data)` -> Registra liberação de visitante na portaria.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Plugin Semantic Kernel (Function Calling): Criado `PortariaPlugin.cs` em `Modules.AIEngine.Application.Plugins` expondo a ferramenta `[KernelFunction("AuthorizeGuest")]` para pré-autorização e liberação de visitantes e prestadores de serviço com validação de dados, tipos de visitante (`VisitanteSocial`, `PrestadorServico`), validade de datas, empresa, placa de veículo e observações.
+  - Registro no Kernel & Orchestrator: Atualizados `AiOrchestratorService.cs`, `Modules.AIEngine.csproj` e `AIEngineServiceCollectionExtensions.cs` para registrar e injetar o `PortariaPlugin` com injeção de dependência e suporte ao filtro global de multi-tenancy (`ITenantScoped`).
+  - FastEndpoints API: Endpoints em `PortariaPluginEndpoints.cs` sob `/api/ai/plugins/portaria` (`POST /api/ai/plugins/portaria/execute` para simulação interativa de Function Calling de autorização na portaria) retornando respostas estruturadas via Result Pattern (`Result<T>`).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase7_2_3_PluginAuthorizeGuestPortariaSemanticKernel.feature`, suíte de testes unitários `PortariaPluginTests` (100% aprovada) e teste de integração end-to-end com Testcontainers (`PortariaPluginIntegrationTests` executando em PostgreSQL 17 real) validando inserção no schema `access_control."Visitantes"` e isolamento por `tenant_id`.
+  - Blazor UI & Visual Design (Stitch): Atualização do cliente HTTP `AiApiClient.cs` (`ExecutePortariaPluginAsync`), atualização da página `/ai/plugins` (`AiPluginsPage.razor`) com KPI card atualizado (3 plugins ativos: Boleto, Reserva & Portaria), aba **Tool 3: AuthorizeGuest (Portaria & Visitantes)** com formulário interativo completo e comprovante visual de liberação no padrão visual Stitch.
+  - Navegação Consistente: Alinhamento das barras de navegação entre abas em `AINavTabs.razor` (módulo de IA) e `AccessControlNavTabs.razor` (módulo de portaria/controle de acesso).
 
 
 * [] **Subfase 7.2.4:** [FN-ACC-IA02] Leitura inteligente de etiquetas de encomenda via Vision/OCR + IA e notificação automática.

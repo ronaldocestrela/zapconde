@@ -33,7 +33,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-medium">Plugins Registrados</span>
-                        <h4 class="fw-bold text-dark mb-0 mt-1">2 (Boleto & Reserva)</h4>
+                        <h4 class="fw-bold text-dark mb-0 mt-1">3 (Boleto, Reserva & Portaria)</h4>
                     </div>
                     <div class="rounded-3 p-3 bg-primary-subtle text-primary">
                         <span class="material-symbols-outlined fs-3">extension</span>
@@ -47,7 +47,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-medium">Tools em Produção</span>
-                        <h6 class="fw-bold text-success mb-0 mt-1">GetPendingBoletos / ReserveCommonArea</h6>
+                        <h6 class="fw-bold text-success mb-0 mt-1">GetPendingBoletos / ReserveCommonArea / AuthorizeGuest</h6>
                     </div>
                     <div class="rounded-3 p-3 bg-success-subtle text-success">
                         <span class="material-symbols-outlined fs-3">function</span>
@@ -61,7 +61,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-medium">Recursos Inclusos</span>
-                        <h6 class="fw-bold text-dark mb-0 mt-1">PIX + PDF + Reserva Online</h6>
+                        <h6 class="fw-bold text-dark mb-0 mt-1">PIX + PDF + Reserva + Portaria</h6>
                     </div>
                     <div class="rounded-3 p-3 bg-info-subtle text-info">
                         <span class="material-symbols-outlined fs-3">event_available</span>
@@ -86,7 +86,7 @@
     </div>
 
     <!-- Navegação entre Tools -->
-    <div class="d-flex gap-2 mb-4">
+    <div class="d-flex gap-2 mb-4 flex-wrap">
         <button class="btn @(ActiveTab == "boleto" ? "btn-primary" : "btn-light") rounded-pill px-4 fw-semibold d-flex align-items-center gap-2"
                 @onclick='() => SetActiveTab("boleto")'>
             <span class="material-symbols-outlined fs-5">receipt_long</span>
@@ -96,6 +96,11 @@
                 @onclick='() => SetActiveTab("reserva")'>
             <span class="material-symbols-outlined fs-5">event_available</span>
             <span>Tool 2: ReserveCommonArea (Operações & Áreas)</span>
+        </button>
+        <button class="btn @(ActiveTab == "portaria" ? "btn-primary" : "btn-light") rounded-pill px-4 fw-semibold d-flex align-items-center gap-2"
+                @onclick='() => SetActiveTab("portaria")'>
+            <span class="material-symbols-outlined fs-5">badge</span>
+            <span>Tool 3: AuthorizeGuest (Portaria & Visitantes)</span>
         </button>
     </div>
 
@@ -108,136 +113,108 @@
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <span class="material-symbols-outlined text-primary fs-4">terminal</span>
-                        <h5 class="fw-bold text-dark mb-0">Simulador Function Calling: Boletos</h5>
+                        <h5 class="fw-bold text-dark mb-0">Simular Função Boleto</h5>
                     </div>
-                    <p class="text-muted small">
-                        Informe o ID do morador para acionar a tool <code>GetPendingBoletos(moradorId)</code> registrada no Semantic Kernel.
-                    </p>
+                    <p class="text-muted small">Invoca a ferramenta de consulta de faturas em aberto e geração de PIX/PDF para o morador informado.</p>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-dark">ID do Morador (moradorId)</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0">#</span>
-                            <input type="number" class="form-control bg-light border-start-0" @bind="SelectedMoradorId" placeholder="Ex: 10" />
-                        </div>
+                        <label class="form-label text-dark fw-semibold small">ID do Morador (moradorId)</label>
+                        <input type="number" class="form-control rounded-3" @bind="SelectedMoradorId" min="1" placeholder="Ex: 10" />
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-dark">Prompt Simulação de Morador</label>
-                        <textarea class="form-control bg-light" rows="3" readonly>
-"Pode me enviar a segunda via do boleto e a chave PIX para pagamento da fatura pendente?"
-                        </textarea>
+                    <div class="p-3 bg-light rounded-3 mb-4">
+                        <span class="text-muted small d-block mb-1 fw-medium">Comando equivalente em Linguagem Natural:</span>
+                        <code class="text-dark small">"Pode me mandar o boleto deste mês para o morador #@SelectedMoradorId?"</code>
                     </div>
 
-                    <div class="d-flex gap-2 mt-auto pt-3">
-                        <button class="btn btn-primary w-100 py-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-2"
-                                @onclick="ExecutarPluginBoleto" disabled="@IsLoading">
-                            @if (IsLoading)
-                            {
-                                <span class="spinner-border spinner-border-sm" role="status"></span>
-                                <span>Executando Tool...</span>
-                            }
-                            else
-                            {
-                                <span class="material-symbols-outlined fs-5">play_arrow</span>
-                                <span>Executar GetPendingBoletos</span>
-                            }
-                        </button>
-                    </div>
+                    <button class="btn btn-primary rounded-3 w-100 fw-semibold d-flex align-items-center justify-content-center gap-2 py-2"
+                            @onclick="ExecutarPluginBoleto" disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                            <span>Consultando Boleto...</span>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined fs-5">play_arrow</span>
+                            <span>Executar Function Calling (Boleto)</span>
+                        }
+                    </button>
 
                     @if (!string.IsNullOrEmpty(ErrorMessage))
                     {
-                        <div class="alert alert-danger rounded-3 mt-3 mb-0 small" role="alert">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>@ErrorMessage
+                        <div class="alert alert-danger rounded-3 mt-3 mb-0 small">
+                            <span class="material-symbols-outlined align-middle fs-5 me-1">error</span>
+                            @ErrorMessage
                         </div>
                     }
                 </div>
             </div>
 
-            <!-- Coluna de Resultado -->
+            <!-- Coluna de Resposta & Comprovante -->
             <div class="col-lg-7">
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="material-symbols-outlined text-success fs-4">smart_toy</span>
-                            <h5 class="fw-bold text-dark mb-0">Resposta Gerada pelo Agente</h5>
+                            <span class="material-symbols-outlined text-success fs-4">forum</span>
+                            <h5 class="fw-bold text-dark mb-0">Resposta Gerada pelo Agente (IA)</h5>
                         </div>
                         @if (ExecutionResultBoleto != null)
                         {
-                            <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-semibold">
-                                @(ExecutionResultBoleto.QuantidadePendencias > 0 ? $"{ExecutionResultBoleto.QuantidadePendencias} Débito(s) Encontrado(s)" : "Morador Adimplente")
-                            </span>
+                            <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 fw-semibold">Sucesso</span>
                         }
                     </div>
 
                     @if (ExecutionResultBoleto == null)
                     {
-                        <div class="text-center py-5 my-auto">
-                            <span class="material-symbols-outlined text-muted fs-1 mb-2">extension_off</span>
-                            <p class="text-muted mb-0">Nenhuma execução realizada. Clique no botão de execução para simular.</p>
+                        <div class="text-center py-5 my-auto text-muted">
+                            <span class="material-symbols-outlined fs-1 text-secondary opacity-50 mb-2">find_in_page</span>
+                            <p class="mb-0">Clique em "Executar Function Calling" para visualizar o retorno da ferramenta do Semantic Kernel.</p>
                         </div>
                     }
                     else
                     {
-                        <!-- Resposta em Linguagem Natural -->
-                        <div class="p-3 bg-light rounded-4 border mb-4">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="badge bg-primary text-white rounded-pill px-2 py-1 small">Agente de IA</span>
-                                <small class="text-muted">Function Choice: Auto</small>
-                            </div>
-                            <p class="text-dark mb-0 style-ai-response" style="white-space: pre-line;">@ExecutionResultBoleto.MensagemFormatadaFormatadaIa</p>
+                        <!-- Mensagem do Agente em Balão -->
+                        <div class="p-3 rounded-4 mb-4" style="background-color: #F4EAE1; border-left: 4px solid #2E5B88;">
+                            <span class="text-muted extra-small d-block mb-1 fw-bold text-uppercase">Resposta do Agente:</span>
+                            <p class="mb-0 text-dark fw-medium" style="white-space: pre-line;">@ExecutionResultBoleto.MensagemFormatadaFormatadaIa</p>
                         </div>
 
-                        <!-- Lista de Boletos Retornados -->
+                        <!-- Card Detalhado do Boleto/PIX -->
                         @if (ExecutionResultBoleto.Boletos != null && ExecutionResultBoleto.Boletos.Any())
                         {
-                            <h6 class="fw-bold text-dark mb-3">Detalhes do(s) Boleto(s) Retornado(s)</h6>
-                            <div class="d-flex flex-column gap-3">
-                                @foreach (var boleto in ExecutionResultBoleto.Boletos)
-                                {
-                                    <div class="card border border-light-subtle rounded-3 p-3 shadow-none bg-body-tertiary">
-                                        <div class="d-flex align-items-center justify-content-between mb-2">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="fw-bold text-dark">@boleto.NumeroFatura</span>
-                                                <span class="badge bg-secondary-subtle text-secondary">Comp: @boleto.Competencia</span>
-                                                @if (boleto.Vencido)
-                                                {
-                                                    <span class="badge bg-danger text-white">Vencido</span>
-                                                }
-                                            </div>
-                                            <h5 class="fw-bold text-primary mb-0">R$ @boleto.ValorTotal.ToString("F2")</h5>
-                                        </div>
+                            var primeiroBoleto = ExecutionResultBoleto.Boletos.First();
+                            <div class="card border border-light-subtle rounded-4 p-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-primary text-white rounded-2 px-2 py-1">Fatura #@primeiroBoleto.FaturaId</span>
+                                    <span class="fw-bold text-danger fs-5">R$ @primeiroBoleto.ValorTotal.ToString("F2")</span>
+                                </div>
+                                <p class="text-muted small mb-2">Vencimento: <strong>@primeiroBoleto.DataVencimento.ToString("dd/MM/yyyy")</strong></p>
 
-                                        <div class="row g-2 mb-3 small text-muted">
-                                            <div class="col-md-6">
-                                                <strong>Vencimento:</strong> @boleto.DataVencimento.ToString("dd/MM/yyyy")
-                                            </div>
-                                            <div class="col-md-6">
-                                                <strong>Linha Digitável:</strong> <code>@boleto.LinhaDigitavel</code>
-                                            </div>
-                                        </div>
-
-                                        @if (!string.IsNullOrEmpty(boleto.CodigoPixCopiaECola))
-                                        {
-                                            <div class="mb-2">
-                                                <label class="form-label small fw-semibold text-dark mb-1">Chave PIX Copia e Cola:</label>
-                                                <div class="input-group input-group-sm">
-                                                    <input type="text" class="form-control bg-white font-monospace small" value="@boleto.CodigoPixCopiaECola" readonly />
-                                                    <button class="btn btn-outline-primary" @onclick="() => CopiarPix(boleto.CodigoPixCopiaECola)">
-                                                        <span class="material-symbols-outlined fs-6 align-middle">content_copy</span> Copiar PIX
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        }
-
-                                        <div class="d-flex justify-content-end mt-2">
-                                            <a href="@boleto.PdfUrl" target="_blank" class="btn btn-sm btn-outline-dark rounded-2 d-flex align-items-center gap-1">
-                                                <span class="material-symbols-outlined fs-6">picture_as_pdf</span>
-                                                <span>Visualizar PDF</span>
-                                            </a>
-                                        </div>
+                                <div class="mb-3">
+                                    <label class="form-label extra-small text-muted mb-1">Chave PIX Copia e Cola:</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control form-control-sm font-monospace bg-white" value="@primeiroBoleto.CodigoPixCopiaECola" readonly />
+                                        <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" @onclick="() => CopiarPix(primeiroBoleto.CodigoPixCopiaECola)">
+                                            <span class="material-symbols-outlined fs-6">content_copy</span>
+                                            <span>Copiar</span>
+                                        </button>
                                     </div>
-                                }
+                                </div>
+
+                                <div class="d-flex justify-content-end">
+                                    <a href="@primeiroBoleto.PdfUrl" target="_blank" class="btn btn-outline-primary btn-sm rounded-3 d-flex align-items-center gap-1">
+                                        <span class="material-symbols-outlined fs-6">picture_as_pdf</span>
+                                        <span>Baixar PDF</span>
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info rounded-3 mb-0 small">
+                                <span class="material-symbols-outlined align-middle fs-5 me-1">check_circle</span>
+                                Nenhuma fatura pendente encontrada para este morador.
                             </div>
                         }
                     }
@@ -245,159 +222,326 @@
             </div>
         </div>
     }
-    else
+    else if (ActiveTab == "reserva")
     {
-        <!-- Seção de Teste de Function Calling (Reserva de Área Comum) -->
+        <!-- Seção de Teste de Function Calling (Reserva de Áreas Comuns) -->
         <div class="row g-4">
-            <!-- Coluna de Entrada & Formulário -->
+            <!-- Coluna de Formulário de Entrada -->
             <div class="col-lg-5">
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <span class="material-symbols-outlined text-primary fs-4">event_available</span>
-                        <h5 class="fw-bold text-dark mb-0">Simulador Function Calling: Reservas</h5>
+                        <h5 class="fw-bold text-dark mb-0">Simular Agendamento de Área</h5>
                     </div>
-                    <p class="text-muted small">
-                        Selecione a área e informe os dados para acionar a tool <code>ReserveCommonArea(areaId, dataInicio, dataFim, moradorId, quantidadePessoas)</code>.
-                    </p>
+                    <p class="text-muted small">Invoca a ferramenta de checagem de colisão e agendamento de áreas comuns (`ReserveCommonArea`).</p>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-dark">Área Comum</label>
-                        <select class="form-select bg-light" @bind="ReservaAreaId">
-                            @if (ActiveAreas == null || !ActiveAreas.Any())
-                            {
-                                <option value="1">Salão de Festas Principal (ID #1)</option>
-                                <option value="2">Churrasqueira Gourmet (ID #2)</option>
-                            }
-                            else
-                            {
+                        <label class="form-label text-dark fw-semibold small">Área Comum</label>
+                        @if (ActiveAreas != null && ActiveAreas.Any())
+                        {
+                            <select class="form-select rounded-3" @bind="ReservaAreaId">
                                 @foreach (var area in ActiveAreas)
                                 {
-                                    <option value="@area.Id">@area.Nome (Capacidade: @area.CapacidadeMaxima) - ID #@area.Id</option>
+                                    <option value="@area.Id">@area.Nome (Capacidade: @area.CapacidadeMaxima | R$ @area.CustoTotalReserva.ToString("F2"))</option>
                                 }
-                            }
-                        </select>
+                            </select>
+                        }
+                        else
+                        {
+                            <input type="number" class="form-control rounded-3" @bind="ReservaAreaId" min="1" placeholder="ID da Área (ex: 1)" />
+                        }
                     </div>
 
                     <div class="row g-2 mb-3">
                         <div class="col-6">
-                            <label class="form-label fw-semibold text-dark small">ID Morador</label>
-                            <input type="number" class="form-control bg-light" @bind="ReservaMoradorId" />
+                            <label class="form-label text-dark fw-semibold small">ID Morador</label>
+                            <input type="number" class="form-control rounded-3" @bind="ReservaMoradorId" min="1" />
                         </div>
                         <div class="col-6">
-                            <label class="form-label fw-semibold text-dark small">Qtd Pessoas</label>
-                            <input type="number" class="form-control bg-light" @bind="ReservaQtdPessoas" />
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label class="form-label fw-semibold text-dark small">Data/Hora Início</label>
-                            <input type="text" class="form-control bg-light" @bind="ReservaDataInicio" placeholder="yyyy-MM-dd HH:mm" />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label fw-semibold text-dark small">Data/Hora Término</label>
-                            <input type="text" class="form-control bg-light" @bind="ReservaDataFim" placeholder="yyyy-MM-dd HH:mm" />
+                            <label class="form-label text-dark fw-semibold small">Convidados</label>
+                            <input type="number" class="form-control rounded-3" @bind="ReservaQtdPessoas" min="1" />
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-dark small">Observações do Agendamento</label>
-                        <input type="text" class="form-control bg-light" @bind="ReservaObservacao" placeholder="Ex: Aniversário da família" />
+                        <label class="form-label text-dark fw-semibold small">Data/Hora Início</label>
+                        <input type="text" class="form-control rounded-3" @bind="ReservaDataInicio" placeholder="yyyy-MM-dd HH:mm" />
                     </div>
 
-                    <div class="d-flex gap-2 mt-auto pt-3">
-                        <button class="btn btn-primary w-100 py-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-2"
-                                @onclick="ExecutarPluginReserva" disabled="@IsLoading">
-                            @if (IsLoading)
-                            {
-                                <span class="spinner-border spinner-border-sm" role="status"></span>
-                                <span>Agendando Área...</span>
-                            }
-                            else
-                            {
-                                <span class="material-symbols-outlined fs-5">play_arrow</span>
-                                <span>Executar ReserveCommonArea</span>
-                            }
-                        </button>
+                    <div class="mb-3">
+                        <label class="form-label text-dark fw-semibold small">Data/Hora Término</label>
+                        <input type="text" class="form-control rounded-3" @bind="ReservaDataFim" placeholder="yyyy-MM-dd HH:mm" />
                     </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-dark fw-semibold small">Observação do Evento</label>
+                        <input type="text" class="form-control rounded-3" @bind="ReservaObservacao" placeholder="Ex: Aniversário da família" />
+                    </div>
+
+                    <button class="btn btn-primary rounded-3 w-100 fw-semibold d-flex align-items-center justify-content-center gap-2 py-2"
+                            @onclick="ExecutarPluginReserva" disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                            <span>Reservando Área...</span>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined fs-5">play_arrow</span>
+                            <span>Executar Function Calling (ReserveCommonArea)</span>
+                        }
+                    </button>
 
                     @if (!string.IsNullOrEmpty(ErrorMessage))
                     {
-                        <div class="alert alert-danger rounded-3 mt-3 mb-0 small" role="alert">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>@ErrorMessage
+                        <div class="alert alert-danger rounded-3 mt-3 mb-0 small">
+                            <span class="material-symbols-outlined align-middle fs-5 me-1">error</span>
+                            @ErrorMessage
                         </div>
                     }
                 </div>
             </div>
 
-            <!-- Coluna de Resultado -->
+            <!-- Coluna de Resposta & Comprovante de Reserva -->
             <div class="col-lg-7">
                 <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="material-symbols-outlined text-success fs-4">confirmation_number</span>
-                            <h5 class="fw-bold text-dark mb-0">Comprovante & Resposta da IA</h5>
+                            <span class="material-symbols-outlined text-success fs-4">forum</span>
+                            <h5 class="fw-bold text-dark mb-0">Resposta Gerada pelo Agente (IA)</h5>
                         </div>
                         @if (ExecutionResultReserva != null)
                         {
-                            <span class="badge @(ExecutionResultReserva.Sucesso ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger") px-3 py-2 rounded-pill fw-semibold">
-                                @(ExecutionResultReserva.Sucesso ? $"Reserva #{ExecutionResultReserva.ReservaId} ({ExecutionResultReserva.Status})" : "Agendamento Recusado")
+                            <span class="badge @(ExecutionResultReserva.Sucesso ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger") rounded-pill px-3 py-2 fw-semibold">
+                                @(ExecutionResultReserva.Sucesso ? "Reserva Efetuada" : "Erro / Conflito")
                             </span>
                         }
                     </div>
 
                     @if (ExecutionResultReserva == null)
                     {
-                        <div class="text-center py-5 my-auto">
-                            <span class="material-symbols-outlined text-muted fs-1 mb-2">event_busy</span>
-                            <p class="text-muted mb-0">Nenhum agendamento executado. Clique no botão de execução para simular a chamada da tool.</p>
+                        <div class="text-center py-5 my-auto text-muted">
+                            <span class="material-symbols-outlined fs-1 text-secondary opacity-50 mb-2">event_seat</span>
+                            <p class="mb-0">Preencha os dados e clique em "Executar Function Calling" para simular a reserva de área comum via assistente virtual.</p>
                         </div>
                     }
                     else
                     {
-                        <!-- Resposta em Linguagem Natural -->
-                        <div class="p-3 bg-light rounded-4 border mb-4">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="badge bg-primary text-white rounded-pill px-2 py-1 small">Agente de IA</span>
-                                <small class="text-muted">Tool: ReserveCommonArea</small>
-                            </div>
-                            <p class="text-dark mb-0 style-ai-response">@ExecutionResultReserva.MensagemFormatadaIa</p>
+                        <!-- Mensagem do Agente em Balão -->
+                        <div class="p-3 rounded-4 mb-4" style="background-color: #F4EAE1; border-left: 4px solid #2E5B88;">
+                            <span class="text-muted extra-small d-block mb-1 fw-bold text-uppercase">Resposta do Agente:</span>
+                            <p class="mb-0 text-dark fw-medium" style="white-space: pre-line;">@ExecutionResultReserva.MensagemFormatadaIa</p>
                         </div>
 
-                        <!-- Card de Confirmação da Reserva (Stitch Design) -->
-                        <div class="card border border-primary-subtle rounded-4 p-4 bg-primary-subtle text-dark shadow-sm">
-                            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-primary-subtle pb-3">
+                        <!-- Card Detalhado do Comprovante de Reserva -->
+                        <div class="card border border-light-subtle rounded-4 p-3 bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                                    <span class="text-muted small fw-medium">Comprovante de Solicitacao</span>
-                                    <h4 class="fw-bold text-primary mb-0">@ExecutionResultReserva.NomeAreaComum</h4>
+                                    <span class="badge bg-primary text-white rounded-2 px-2 py-1 mb-1">Reserva #@(ExecutionResultReserva.ReservaId?.ToString() ?? "N/A")</span>
+                                    <h5 class="fw-bold text-dark mb-0">@ExecutionResultReserva.NomeAreaComum</h5>
                                 </div>
-                                <div class="text-end">
-                                    <span class="badge bg-primary text-white px-3 py-2 rounded-pill">Status: @ExecutionResultReserva.Status</span>
+                                <span class="badge bg-info-subtle text-info px-3 py-2 rounded-pill fw-semibold">@ExecutionResultReserva.Status</span>
+                            </div>
+
+                            <div class="row g-2 text-muted small mb-3">
+                                <div class="col-6">
+                                    <span>Início: <strong>@ExecutionResultReserva.DataInicio</strong></span>
+                                </div>
+                                <div class="col-6">
+                                    <span>Término: <strong>@ExecutionResultReserva.DataFim</strong></span>
+                                </div>
+                                <div class="col-6">
+                                    <span>Solicitante: <strong>Morador #@ExecutionResultReserva.MoradorId</strong></span>
+                                </div>
+                                <div class="col-6">
+                                    <span>Convidados: <strong>@ExecutionResultReserva.QuantidadePessoas pessoa(s)</strong></span>
                                 </div>
                             </div>
 
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-6">
-                                    <span class="text-muted small d-block">Morador / Solicitante</span>
-                                    <strong class="text-dark">Morador #@ExecutionResultReserva.MoradorId</strong>
-                                </div>
-                                <div class="col-md-6">
-                                    <span class="text-muted small d-block">Qtd Convidados</span>
-                                    <strong class="text-dark">@ExecutionResultReserva.QuantidadePessoas Pessoa(s)</strong>
-                                </div>
-                                <div class="col-md-6">
-                                    <span class="text-muted small d-block">Data / Hora Inicio</span>
-                                    <strong class="text-dark">@ExecutionResultReserva.DataInicio</strong>
-                                </div>
-                                <div class="col-md-6">
-                                    <span class="text-muted small d-block">Data / Hora Termino</span>
-                                    <strong class="text-dark">@ExecutionResultReserva.DataFim</strong>
-                                </div>
-                            </div>
-
-                            <div class="d-flex align-items-center justify-content-between pt-3 border-top border-primary-subtle">
-                                <span class="fw-semibold text-muted">Valor Total Calculado:</span>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <span class="text-muted small fw-medium">Valor Total da Taxa:</span>
                                 <h3 class="fw-bold text-success mb-0">R$ @ExecutionResultReserva.ValorTotal.ToString("F2")</h3>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else if (ActiveTab == "portaria")
+    {
+        <!-- Seção de Teste de Function Calling (Portaria & Liberação de Visitantes) -->
+        <div class="row g-4">
+            <!-- Coluna de Formulário de Entrada -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined text-primary fs-4">badge</span>
+                        <h5 class="fw-bold text-dark mb-0">Simular Liberação na Portaria</h5>
+                    </div>
+                    <p class="text-muted small">Invoca a ferramenta de pré-autorização de visitante ou prestador (`AuthorizeGuest`).</p>
+
+                    <div class="mb-3">
+                        <label class="form-label text-dark fw-semibold small">Nome Completo</label>
+                        <input type="text" class="form-control rounded-3" @bind="PortariaNome" placeholder="Ex: Carlos Eduardo" />
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-dark fw-semibold small">CPF / RG</label>
+                            <input type="text" class="form-control rounded-3" @bind="PortariaDocumento" placeholder="Ex: 123.456.789-00" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-dark fw-semibold small">Tipo de Entrada</label>
+                            <select class="form-select rounded-3" @bind="PortariaTipo">
+                                <option value="Visitante">Visitante</option>
+                                <option value="PrestadorServico">Prestador de Serviço</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    @if (PortariaTipo == "PrestadorServico")
+                    {
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-semibold small">Empresa / Razão Social <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-3" @bind="PortariaEmpresa" placeholder="Ex: Manutenção Tech Ltda" />
+                        </div>
+                    }
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-dark fw-semibold small">ID Unidade</label>
+                            <input type="number" class="form-control rounded-3" @bind="PortariaUnidadeId" min="1" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-dark fw-semibold small">Bloco / Apto</label>
+                            <input type="text" class="form-control rounded-3" @bind="PortariaBlocoUnidade" placeholder="Ex: Bloco A - 102" />
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-dark fw-semibold small">Validade Início</label>
+                            <input type="text" class="form-control rounded-3" @bind="PortariaValidadeInicio" placeholder="yyyy-MM-dd HH:mm" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-dark fw-semibold small">Validade Fim</label>
+                            <input type="text" class="form-control rounded-3" @bind="PortariaValidadeFim" placeholder="yyyy-MM-dd HH:mm" />
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-dark fw-semibold small">Placa do Veículo</label>
+                            <input type="text" class="form-control rounded-3" @bind="PortariaPlacaVeiculo" placeholder="Ex: ABC-1234" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-dark fw-semibold small">Telefone</label>
+                            <input type="text" class="form-control rounded-3" @bind="PortariaTelefone" placeholder="+5575999998888" />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-dark fw-semibold small">Observações Portaria</label>
+                        <input type="text" class="form-control rounded-3" @bind="PortariaObservacoes" placeholder="Ex: Convidado para jantar" />
+                    </div>
+
+                    <button class="btn btn-primary rounded-3 w-100 fw-semibold d-flex align-items-center justify-content-center gap-2 py-2"
+                            @onclick="ExecutarPluginPortaria" disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                            <span>Cadastrando Autorização...</span>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined fs-5">play_arrow</span>
+                            <span>Executar Function Calling (AuthorizeGuest)</span>
+                        }
+                    </button>
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger rounded-3 mt-3 mb-0 small">
+                            <span class="material-symbols-outlined align-middle fs-5 me-1">error</span>
+                            @ErrorMessage
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Coluna de Resposta & Comprovante de Autorização na Portaria -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined text-success fs-4">forum</span>
+                            <h5 class="fw-bold text-dark mb-0">Resposta Gerada pelo Agente (IA)</h5>
+                        </div>
+                        @if (ExecutionResultPortaria != null)
+                        {
+                            <span class="badge @(ExecutionResultPortaria.Sucesso ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger") rounded-pill px-3 py-2 fw-semibold">
+                                @(ExecutionResultPortaria.Sucesso ? "Autorização Registrada" : "Erro")
+                            </span>
+                        }
+                    </div>
+
+                    @if (ExecutionResultPortaria == null)
+                    {
+                        <div class="text-center py-5 my-auto text-muted">
+                            <span class="material-symbols-outlined fs-1 text-secondary opacity-50 mb-2">badge</span>
+                            <p class="mb-0">Preencha os dados e clique em "Executar Function Calling" para simular a liberação de acesso na portaria via assistente virtual.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Mensagem do Agente em Balão -->
+                        <div class="p-3 rounded-4 mb-4" style="background-color: #F4EAE1; border-left: 4px solid #2E5B88;">
+                            <span class="text-muted extra-small d-block mb-1 fw-bold text-uppercase">Resposta do Agente:</span>
+                            <p class="mb-0 text-dark fw-medium" style="white-space: pre-line;">@ExecutionResultPortaria.MensagemFormatadaIa</p>
+                        </div>
+
+                        <!-- Card Detalhado do Comprovante de Liberação na Portaria -->
+                        <div class="card border border-light-subtle rounded-4 p-3 bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <span class="badge bg-primary text-white rounded-2 px-2 py-1 mb-1">Autorização #@(ExecutionResultPortaria.AutorizacaoId?.ToString() ?? "N/A")</span>
+                                    <h5 class="fw-bold text-dark mb-0">@ExecutionResultPortaria.NomeCompleto</h5>
+                                    <span class="text-muted small">CPF/RG: @ExecutionResultPortaria.Documento</span>
+                                </div>
+                                <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-semibold">@ExecutionResultPortaria.Status</span>
+                            </div>
+
+                            <div class="row g-2 text-muted small mb-3">
+                                <div class="col-6">
+                                    <span>Tipo: <strong>@ExecutionResultPortaria.Tipo</strong></span>
+                                </div>
+                                <div class="col-6">
+                                    <span>Destino: <strong>@ExecutionResultPortaria.BlocoUnidade</strong></span>
+                                </div>
+                                <div class="col-6">
+                                    <span>Validez Início: <strong>@ExecutionResultPortaria.ValidadeInicio</strong></span>
+                                </div>
+                                <div class="col-6">
+                                    <span>Validez Término: <strong>@ExecutionResultPortaria.ValidadeFim</strong></span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(ExecutionResultPortaria.Empresa))
+                                {
+                                    <div class="col-6">
+                                        <span>Empresa: <strong>@ExecutionResultPortaria.Empresa</strong></span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(ExecutionResultPortaria.PlacaVeiculo))
+                                {
+                                    <div class="col-6">
+                                        <span>Placa Veículo: <strong>@ExecutionResultPortaria.PlacaVeiculo</strong></span>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <span class="text-muted small fw-medium">Status de Liberação:</span>
+                                <span class="badge bg-success text-white rounded-pill px-3 py-1">Pronto para Entrada na Portaria</span>
                             </div>
                         </div>
                     }
@@ -419,10 +563,24 @@
     private string ReservaDataFim = DateTime.UtcNow.AddDays(3).Date.AddHours(22).ToString("yyyy-MM-dd HH:mm");
     private string ReservaObservacao = "Festa de Aniversário Familiar";
 
+    // Campos Simulador de Portaria
+    private string PortariaNome = "Carlos Eduardo";
+    private string PortariaDocumento = "123.456.789-00";
+    private string PortariaTipo = "Visitante";
+    private string? PortariaEmpresa = null;
+    private int PortariaUnidadeId = 102;
+    private string PortariaBlocoUnidade = "Bloco A - Apto 102";
+    private string PortariaValidadeInicio = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+    private string PortariaValidadeFim = DateTime.UtcNow.AddDays(1).ToString("yyyy-MM-dd HH:mm");
+    private string? PortariaPlacaVeiculo = "ABC-1234";
+    private string? PortariaTelefone = "+5575988887777";
+    private string? PortariaObservacoes = "Convidado de jantar";
+
     private bool IsLoading = false;
     private string? ErrorMessage;
     private BoletoPluginExecutionResultDto? ExecutionResultBoleto;
     private ReservaPluginExecutionResultDto? ExecutionResultReserva;
+    private AuthorizeGuestPluginExecutionResultDto? ExecutionResultPortaria;
     private IEnumerable<AreaComumDto>? ActiveAreas;
 
     protected override async Task OnInitializedAsync()
@@ -464,9 +622,13 @@
         {
             await ExecutarPluginBoleto();
         }
-        else
+        else if (ActiveTab == "reserva")
         {
             await ExecutarPluginReserva();
+        }
+        else
+        {
+            await ExecutarPluginPortaria();
         }
     }
 
@@ -539,6 +701,60 @@
         catch (Exception ex)
         {
             ErrorMessage = $"Exceção ao invocar a API de reservas: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task ExecutarPluginPortaria()
+    {
+        ErrorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(PortariaNome) || string.IsNullOrWhiteSpace(PortariaDocumento))
+        {
+            ErrorMessage = "Preencha o nome completo e documento (CPF/RG) do visitante.";
+            return;
+        }
+
+        if (PortariaTipo == "PrestadorServico" && string.IsNullOrWhiteSpace(PortariaEmpresa))
+        {
+            ErrorMessage = "Informe a empresa para prestadores de serviço.";
+            return;
+        }
+
+        IsLoading = true;
+
+        try
+        {
+            var req = new ExecuteAuthorizeGuestPluginRequest(
+                Nome: PortariaNome,
+                Documento: PortariaDocumento,
+                DataInicio: PortariaValidadeInicio,
+                DataFim: PortariaValidadeFim,
+                Tipo: PortariaTipo,
+                UnidadeId: PortariaUnidadeId,
+                BlocoUnidade: PortariaBlocoUnidade,
+                MoradorId: SelectedMoradorId,
+                Telefone: PortariaTelefone,
+                Empresa: PortariaEmpresa,
+                PlacaVeiculo: PortariaPlacaVeiculo,
+                Observacoes: PortariaObservacoes);
+
+            var result = await AiClient.ExecutePortariaPluginAsync(req);
+            if (result != null && result.IsSuccess && result.Data != null)
+            {
+                ExecutionResultPortaria = result.Data;
+            }
+            else
+            {
+                ErrorMessage = result?.Message ?? "Não foi possível autorizar o visitante na portaria.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Exceção ao invocar a API de portaria: {ex.Message}";
         }
         finally
         {

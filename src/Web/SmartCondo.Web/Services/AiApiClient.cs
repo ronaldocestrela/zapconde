@@ -209,5 +209,18 @@ public class AiApiClient
             return Result<IEnumerable<Modules.Operations.Application.DTOs.AreaComumDto>>.Failure($"Erro ao consultar áreas comuns ativas: {ex.Message}");
         }
     }
+
+    public async Task<Result<Modules.AIEngine.Endpoints.AuthorizeGuestPluginExecutionResultDto>?> ExecutePortariaPluginAsync(Modules.AIEngine.Endpoints.ExecuteAuthorizeGuestPluginRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/ai/plugins/portaria/execute", request);
+            return await response.Content.ReadFromJsonAsync<Result<Modules.AIEngine.Endpoints.AuthorizeGuestPluginExecutionResultDto>>();
+        }
+        catch (Exception ex)
+        {
+            return Result<Modules.AIEngine.Endpoints.AuthorizeGuestPluginExecutionResultDto>.Failure($"Erro ao executar plugin de portaria: {ex.Message}");
+        }
+    }
 }
 

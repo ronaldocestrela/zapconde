@@ -17,19 +17,22 @@ public class AiOrchestratorService : IAiOrchestratorService
     private readonly IAiKernelFactory _kernelFactory;
     private readonly Application.Plugins.BoletoPlugin? _boletoPlugin;
     private readonly Application.Plugins.ReservaPlugin? _reservaPlugin;
+    private readonly Application.Plugins.PortariaPlugin? _portariaPlugin;
 
     public AiOrchestratorService(
         AiDbContext dbContext,
         ICurrentTenantService currentTenantService,
         IAiKernelFactory kernelFactory,
         Application.Plugins.BoletoPlugin? boletoPlugin = null,
-        Application.Plugins.ReservaPlugin? reservaPlugin = null)
+        Application.Plugins.ReservaPlugin? reservaPlugin = null,
+        Application.Plugins.PortariaPlugin? portariaPlugin = null)
     {
         _dbContext = dbContext;
         _currentTenantService = currentTenantService;
         _kernelFactory = kernelFactory;
         _boletoPlugin = boletoPlugin;
         _reservaPlugin = reservaPlugin;
+        _portariaPlugin = portariaPlugin;
     }
 
 
@@ -144,6 +147,7 @@ public class AiOrchestratorService : IAiOrchestratorService
                 var pluginList = new List<object>();
                 if (_boletoPlugin != null) pluginList.Add(_boletoPlugin);
                 if (_reservaPlugin != null) pluginList.Add(_reservaPlugin);
+                if (_portariaPlugin != null) pluginList.Add(_portariaPlugin);
                 var kernel = _kernelFactory.CreateKernel(config, pluginList);
 
                 var executionSettings = new PromptExecutionSettings

@@ -30,6 +30,7 @@ public static class AIEngineServiceCollectionExtensions
         services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
         services.AddScoped<Application.Plugins.BoletoPlugin>();
         services.AddScoped<Application.Plugins.ReservaPlugin>();
+        services.AddScoped<Application.Plugins.PortariaPlugin>();
 
         return services;
     }
