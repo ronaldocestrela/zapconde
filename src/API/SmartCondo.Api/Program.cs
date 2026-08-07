@@ -1,3 +1,4 @@
+using Modules.AccessControl.Infrastructure;
 using Modules.Financial.Infrastructure;
 using Modules.Identity.Infrastructure;
 using Modules.Operations.Infrastructure;
@@ -21,6 +22,7 @@ if (app.Environment.IsDevelopment())
             await IdentityDbMigrator.MigrateAsync(app.Services, app.Configuration);
             await FinancialDbMigrator.MigrateAsync(app.Services, app.Configuration);
             await OperationsDbMigrator.MigrateAsync(app.Services, app.Configuration);
+            await AccessControlDbMigrator.MigrateAsync(app.Services, app.Configuration);
         }
 
         if (app.Configuration.GetValue<bool>("Identity:SeedOnStartup"))

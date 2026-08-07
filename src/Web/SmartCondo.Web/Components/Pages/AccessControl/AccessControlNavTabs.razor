@@ -1,0 +1,18 @@
+@using Microsoft.AspNetCore.Components.Routing
+
+<div class="mb-4">
+    <ul class="nav nav-tabs border-bottom-0">
+        <li class="nav-item">
+            <NavLink class="nav-link d-flex align-items-center gap-2 fw-semibold" href="/portaria/visitantes" Match="NavLinkMatch.Prefix">
+                <span class="material-symbols-outlined fs-5">badge</span>
+                Visitantes & Prestadores
+            </NavLink>
+        </li>
+        <li class="nav-item">
+            <NavLink class="nav-link d-flex align-items-center gap-2 fw-semibold" href="/portaria/encomendas" Match="NavLinkMatch.Prefix">
+                <span class="material-symbols-outlined fs-5">inventory_2</span>
+                Encomendas & Entregas
+            </NavLink>
+        </li>
+    </ul>
+</div>

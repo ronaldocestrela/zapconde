@@ -1,0 +1,100 @@
+/* Visitors & Access Control Module Styling (Stitch Identity) */
+
+.visitors-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.visitor-kpi-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #2E5B88;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.visitor-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.visitor-kpi-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.visitor-kpi-val {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2E5B88;
+    margin-top: 0.25rem;
+}
+
+.btn-primary-stitch {
+    background-color: #2E5B88;
+    border-color: #2E5B88;
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-primary-stitch:hover {
+    background-color: #24486c;
+    border-color: #24486c;
+    color: #ffffff;
+}
+
+.badge-status-agendado {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 6px;
+}
+
+.badge-status-presente {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 6px;
+}
+
+.badge-status-finalizado {
+    background-color: #f5f5f5;
+    color: #616161;
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 6px;
+}
+
+.badge-status-cancelado {
+    background-color: #ffebee;
+    color: #b71c1c;
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 6px;
+}
+
+.badge-tipo-visitante {
+    background-color: #F4EAE1;
+    color: #2E5B88;
+    font-weight: 600;
+    padding: 0.3em 0.6em;
+    border-radius: 6px;
+}
+
+.badge-tipo-prestador {
+    background-color: #e0f2f1;
+    color: #004d40;
+    font-weight: 600;
+    padding: 0.3em 0.6em;
+    border-radius: 6px;
+}

@@ -1,0 +1,338 @@
+@page "/portaria/visitantes"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Modules.AccessControl.Application.DTOs
+@using Modules.AccessControl.Domain.Enums
+@using SmartCondo.Web.Services
+@inject AccessControlApiClient AccessControlApi
+@inject NavigationManager Navigation
+@inject AuthSession Session
+
+<PageTitle>Portaria & Controle de Acesso - SmartCondo</PageTitle>
+
+<link href="css/visitors.css" rel="stylesheet" />
+
+<div class="visitors-container">
+    <AccessControlNavTabs />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 font-weight-bold" style="color: #2E5B88;">
+                <span class="material-symbols-outlined align-middle me-2">badge</span>
+                Controle de Acesso de Visitantes & Prestadores
+            </h1>
+            <p class="text-muted small mb-0">Registre entradas, saídas e autorizações prévias para segurança da portaria.</p>
+        </div>
+        <button class="btn btn-primary-stitch d-flex align-items-center gap-2" @onclick="AbrirModalNovo">
+            <span class="material-symbols-outlined">person_add</span>
+            Nova Liberação / Acesso
+        </button>
+    </div>
+
+    @if (Resumo != null)
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="visitor-kpi-card" style="border-left: 4px solid #2E5B88;">
+                    <div class="visitor-kpi-label">Entradas Hoje</div>
+                    <div class="visitor-kpi-val">@Resumo.EntradasHoje</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="visitor-kpi-card" style="border-left: 4px solid #A3C9A8;">
+                    <div class="visitor-kpi-label">Presentes no Condomínio</div>
+                    <div class="visitor-kpi-val text-success">@Resumo.PresentesAgora</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="visitor-kpi-card" style="border-left: 4px solid #ffb74d;">
+                    <div class="visitor-kpi-label">Agendados Pendentes</div>
+                    <div class="visitor-kpi-val text-warning">@Resumo.AgendadosPendentes</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="visitor-kpi-card" style="border-left: 4px solid #78909c;">
+                    <div class="visitor-kpi-label">Saídas Registradas</div>
+                    <div class="visitor-kpi-val text-secondary">@Resumo.SaidasHoje</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Filtros de Busca -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+        <div class="card-body p-3">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <span class="material-symbols-outlined text-muted">search</span>
+                        </span>
+                        <input type="text" class="form-control border-start-0" placeholder="Buscar por nome, documento, empresa, placa..." @bind="FiltroBusca" @bind:event="oninput" @onkeyup="Filtrar" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" @bind="FiltroTipo" @bind:after="RecarregarAsync">
+                        <option value="">Todos os Tipos</option>
+                        <option value="@TipoVisitante.VisitanteSocial">Visitante Social</option>
+                        <option value="@TipoVisitante.PrestadorServico">Prestador de Serviço</option>
+                        <option value="@TipoVisitante.Entregador">Entregador</option>
+                        <option value="@TipoVisitante.Manutencao">Manutenção</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" @bind="FiltroStatus" @bind:after="RecarregarAsync">
+                        <option value="">Todos os Status</option>
+                        <option value="@StatusVisitante.Agendado">Agendado</option>
+                        <option value="@StatusVisitante.Presente">Presente (No Prédio)</option>
+                        <option value="@StatusVisitante.Finalizado">Finalizado (Saída)</option>
+                        <option value="@StatusVisitante.Cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <div class="col-md-2 text-end">
+                    <button class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-1" @onclick="LimparFiltros">
+                        <span class="material-symbols-outlined">refresh</span>
+                        Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Visitantes -->
+    @if (Carregando)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Carregando controle de acesso...</p>
+        </div>
+    }
+    else if (Visitantes == null || !Visitantes.Any())
+    {
+        <div class="text-center py-5 card border-0 shadow-sm" style="border-radius: 12px;">
+            <span class="material-symbols-outlined text-muted display-4 mb-2">person_off</span>
+            <h5 class="fw-bold text-secondary">Nenhum visitante ou prestador localizado</h5>
+            <p class="text-muted small mb-3">Utilize o botão 'Nova Liberação / Acesso' para cadastrar um novo registro na portaria.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Visitante / Prestador</th>
+                            <th>Tipo</th>
+                            <th>Unidade</th>
+                            <th>Empresa / Veículo</th>
+                            <th>Entrada</th>
+                            <th>Saída</th>
+                            <th>Status</th>
+                            <th class="pe-4 text-end">Ações da Portaria</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Visitantes)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark">@item.NomeCompleto</div>
+                                    <div class="text-muted small">Doc: @item.Documento @(string.IsNullOrWhiteSpace(item.Telefone) ? "" : $"| Tel: {item.Telefone}")</div>
+                                </td>
+                                <td>
+                                    <span class="@GetTipoBadgeClass(item.Tipo)">
+                                        @item.Tipo
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-primary-stitch">@item.BlocoUnidade</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.Empresa))
+                                    {
+                                        <div class="small fw-semibold text-dark">@item.Empresa</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(item.PlacaVeiculo))
+                                    {
+                                        <div class="small text-muted">Placa: <span class="badge bg-light text-dark border">@item.PlacaVeiculo</span></div>
+                                    }
+                                    @if (string.IsNullOrWhiteSpace(item.Empresa) && string.IsNullOrWhiteSpace(item.PlacaVeiculo))
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.DataHoraEntrada.HasValue)
+                                    {
+                                        <span class="small fw-semibold text-success">@item.DataHoraEntrada.Value.ToString("dd/MM HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.DataHoraSaida.HasValue)
+                                    {
+                                        <span class="small fw-semibold text-secondary">@item.DataHoraSaida.Value.ToString("dd/MM HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="@GetStatusBadgeClass(item.Status)">
+                                        @item.Status
+                                    </span>
+                                </td>
+                                <td class="pe-4 text-end">
+                                    @if (item.Status == StatusVisitante.Agendado)
+                                    {
+                                        <button class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 me-1" @onclick="() => RegistrarEntrada(item.Id)">
+                                            <span class="material-symbols-outlined fs-6">login</span>
+                                            Entrada
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1" @onclick="() => CancelarAutorizacao(item.Id)">
+                                            <span class="material-symbols-outlined fs-6">cancel</span>
+                                        </button>
+                                    }
+                                    else if (item.Status == StatusVisitante.Presente)
+                                    {
+                                        <button class="btn btn-sm btn-warning d-inline-flex align-items-center gap-1 text-dark fw-semibold" @onclick="() => RegistrarSaida(item.Id)">
+                                            <span class="material-symbols-outlined fs-6">logout</span>
+                                            Registrar Saída
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Concluído</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@if (ExibirModalNovo)
+{
+    <NewVisitorModal OnClose="() => ExibirModalNovo = false" OnSave="CadastrarVisitanteAsync" />
+}
+
+@code {
+    private bool Carregando { get; set; } = true;
+    private bool ExibirModalNovo { get; set; } = false;
+    private IEnumerable<VisitanteDto>? Visitantes { get; set; }
+    private VisitanteSummaryDto? Resumo { get; set; }
+
+    private string? FiltroBusca { get; set; }
+    private TipoVisitante? FiltroTipo { get; set; }
+    private StatusVisitante? FiltroStatus { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        await Session.EnsureLoadedAsync();
+        if (string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            Navigation.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        await RecarregarAsync();
+        Carregando = false;
+        StateHasChanged();
+    }
+
+    private async Task RecarregarAsync()
+    {
+        Carregando = true;
+        var summaryResult = await AccessControlApi.GetSummaryAsync();
+        if (summaryResult.IsSuccess)
+        {
+            Resumo = summaryResult.Data;
+        }
+
+        var listResult = await AccessControlApi.GetVisitantesAsync(FiltroTipo, FiltroStatus, null, FiltroBusca);
+        if (listResult.IsSuccess)
+        {
+            Visitantes = listResult.Data;
+        }
+
+        Carregando = false;
+    }
+
+    private async Task Filtrar()
+    {
+        await RecarregarAsync();
+    }
+
+    private async Task LimparFiltros()
+    {
+        FiltroBusca = null;
+        FiltroTipo = null;
+        FiltroStatus = null;
+        await RecarregarAsync();
+    }
+
+    private void AbrirModalNovo() => ExibirModalNovo = true;
+
+    private async Task CadastrarVisitanteAsync(CreateVisitanteRequestDto request)
+    {
+        var result = await AccessControlApi.AuthorizeVisitanteAsync(request);
+        if (result.IsSuccess)
+        {
+            ExibirModalNovo = false;
+            await RecarregarAsync();
+        }
+    }
+
+    private async Task RegistrarEntrada(int id)
+    {
+        var result = await AccessControlApi.RegistrarEntradaAsync(id);
+        if (result.IsSuccess)
+        {
+            await RecarregarAsync();
+        }
+    }
+
+    private async Task RegistrarSaida(int id)
+    {
+        var result = await AccessControlApi.RegistrarSaidaAsync(id);
+        if (result.IsSuccess)
+        {
+            await RecarregarAsync();
+        }
+    }
+
+    private async Task CancelarAutorizacao(int id)
+    {
+        var result = await AccessControlApi.CancelarAutorizacaoAsync(id, "Cancelado na portaria");
+        if (result.IsSuccess)
+        {
+            await RecarregarAsync();
+        }
+    }
+
+    private string GetTipoBadgeClass(TipoVisitante tipo) => tipo switch
+    {
+        TipoVisitante.PrestadorServico => "badge-tipo-prestador",
+        TipoVisitante.Manutencao => "badge-tipo-prestador",
+        _ => "badge-tipo-visitante"
+    };
+
+    private string GetStatusBadgeClass(StatusVisitante status) => status switch
+    {
+        StatusVisitante.Agendado => "badge-status-agendado",
+        StatusVisitante.Presente => "badge-status-presente",
+        StatusVisitante.Finalizado => "badge-status-finalizado",
+        StatusVisitante.Cancelado => "badge-status-cancelado",
+        _ => "badge bg-secondary"
+    };
+}

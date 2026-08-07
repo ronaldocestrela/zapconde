@@ -509,7 +509,18 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 > 
 > 
 
-* [] **Subfase 5.1:** [FN-ACC-01] Cadastro e controle de fluxo de `Visitante` e `PrestadorServico`.
+* [x] **Subfase 5.1:** [FN-ACC-01] Cadastro e controle de fluxo de `Visitante` e `PrestadorServico`.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & Invariantes: Entidade Aggregate Root `Visitante` e enums `TipoVisitante` e `StatusVisitante` com isolamento multi-tenant (`ITenantScoped`), validações de invariantes para liberação prévia, registro de entrada/saída com operador e empresa obrigatória para prestadores de serviços.
+  - EF Core 10 & Persistence: Mapeamento Fluent API em `AccessControlDbContext` (`access_control."Visitantes"`), índices compostos por `(TenantId, CondoId, Status)`, `(TenantId, UnidadeId)` e `(TenantId, Documento)`, e migration `20260807031456_InitialAccessControl`.
+  - Serviço de Aplicação: `VisitanteApplicationService` e `IVisitanteApplicationService` encapsulados com Result Pattern (`Result<T>`) e isolamento multi-tenant (`ITenantScoped`).
+  - FastEndpoints API: Endpoints sob `/api/access-control/visitors` (`POST` autorizar visitante/prestador, `GET` listar com filtros por tipo/status/unidade/busca, `GET /{id}` obter por ID, `POST /{id}/entry` registrar entrada na portaria, `POST /{id}/exit` registrar saída, `PATCH /{id}/cancel` cancelar autorização e `GET /summary` resumo KPI de fluxo de acesso).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase5_1_CadastroControleFluxoVisitantesPrestadores.feature`, suíte unitária `VisitanteDomainTests` e testes de integração com Testcontainers (`VisitanteIntegrationTests` em PostgreSQL 17 real) — 100% aprovados.
+  - Blazor UI (Stitch): Página `/portaria/visitantes` (com KPI cards de entradas/presentes/agendados/saídas, barra de filtros interativa, tabela com badges de status e tipo, e modal wizard de cadastro/liberação `NewVisitorModal.razor`) + estilos `visitors.css` fiéis aos tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
+  - Navegação: Barra de navegação por abas `AccessControlNavTabs.razor` (integrando Visitantes e preparando para Encomendas) e atualização de `NavMenuItems.cs`.
 
 
 * [] **Subfase 5.2:** [FN-ACC-02] Módulo de `Encomendas` (Registro de recebimento pela portaria e baixa pelo morador).

@@ -29,6 +29,7 @@
     <ProjectReference Include="..\..\src\Modules\Identity\Modules.Identity.csproj" />
     <ProjectReference Include="..\..\src\Modules\Financial\Modules.Financial.csproj" />
     <ProjectReference Include="..\..\src\Modules\Operations\Modules.Operations.csproj" />
+    <ProjectReference Include="..\..\src\Modules\AccessControl\Modules.AccessControl.csproj" />
     <ProjectReference Include="..\..\src\Web\SmartCondo.Web\SmartCondo.Web.csproj" />
   </ItemGroup>
 

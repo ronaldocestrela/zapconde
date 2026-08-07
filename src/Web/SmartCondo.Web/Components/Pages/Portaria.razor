@@ -42,6 +42,6 @@ else
         }
 
         _sessionReady = true;
-        StateHasChanged();
+        Navigation.NavigateTo("/portaria/visitantes", replace: true);
     }
 }

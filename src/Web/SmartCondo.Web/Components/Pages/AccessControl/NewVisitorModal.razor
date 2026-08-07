@@ -1,0 +1,175 @@
+@using Modules.AccessControl.Application.DTOs
+@using Modules.AccessControl.Domain.Enums
+
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header text-white" style="background-color: #2E5B88;">
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined">person_add</span>
+                    Nova Autorização / Liberação de Acesso
+                </h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="OnClose"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                @if (!string.IsNullOrWhiteSpace(MensagemErro))
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                        <span class="material-symbols-outlined">error</span>
+                        <div>@MensagemErro</div>
+                    </div>
+                }
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Tipo de Acesso <span class="text-danger">*</span></label>
+                        <select class="form-select" @bind="Tipo">
+                            <option value="@TipoVisitante.VisitanteSocial">Visitante Social</option>
+                            <option value="@TipoVisitante.PrestadorServico">Prestador de Serviço</option>
+                            <option value="@TipoVisitante.Entregador">Entregador</option>
+                            <option value="@TipoVisitante.Manutencao">Manutenção / Obras</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Unidade de Destino <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" placeholder="Número da Unidade (ex: 101)" @bind="UnidadeId" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nome Completo do Visitante <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="Nome completo" @bind="NomeCompleto" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">CPF ou RG <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="Documento com foto" @bind="Documento" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Telefone de Contato</label>
+                        <input type="text" class="form-control" placeholder="(00) 00000-0000" @bind="Telefone" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Bloco / Descrição da Unidade</label>
+                        <input type="text" class="form-control" placeholder="ex: Bloco A - Apt 101" @bind="BlocoUnidade" />
+                    </div>
+
+                    @if (Tipo == TipoVisitante.PrestadorServico || Tipo == TipoVisitante.Manutencao || Tipo == TipoVisitante.Entregador)
+                    {
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Empresa / Razão Social <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" placeholder="ex: TechFix Elétrica" @bind="Empresa" />
+                        </div>
+                    }
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Placa do Veículo</label>
+                        <input type="text" class="form-control" placeholder="ex: ABC-1D23" @bind="PlacaVeiculo" />
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="checkEntradaImediata" @bind="RegistrarEntradaImediata" />
+                            <label class="form-check-label fw-semibold" for="checkEntradaImediata">
+                                Registrar entrada imediata agora (Visitante está na portaria)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">Observações / Instruções para a Portaria</label>
+                        <textarea class="form-control" rows="2" placeholder="Observações importantes..." @bind="Observacoes"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light px-4 py-3">
+                <button type="button" class="btn btn-outline-secondary" @onclick="OnClose" disabled="@Processando">Cancelar</button>
+                <button type="button" class="btn btn-primary-stitch d-flex align-items-center gap-2" @onclick="Salvar" disabled="@Processando">
+                    @if (Processando)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                        <span>Salvando...</span>
+                    }
+                    else
+                    {
+                        <span class="material-symbols-outlined">check_circle</span>
+                        <span>Confirmar Autorização</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<CreateVisitanteRequestDto> OnSave { get; set; }
+
+    private TipoVisitante Tipo { get; set; } = TipoVisitante.VisitanteSocial;
+    private int UnidadeId { get; set; } = 101;
+    private string NomeCompleto { get; set; } = string.Empty;
+    private string Documento { get; set; } = string.Empty;
+    private string? Telefone { get; set; }
+    private string? BlocoUnidade { get; set; }
+    private string? Empresa { get; set; }
+    private string? PlacaVeiculo { get; set; }
+    private string? Observacoes { get; set; }
+    private bool RegistrarEntradaImediata { get; set; } = true;
+
+    private bool Processando { get; set; }
+    private string? MensagemErro { get; set; }
+
+    private async Task Salvar()
+    {
+        MensagemErro = null;
+
+        if (string.IsNullOrWhiteSpace(NomeCompleto))
+        {
+            MensagemErro = "O nome completo do visitante é obrigatório.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Documento))
+        {
+            MensagemErro = "O documento de identificação é obrigatório.";
+            return;
+        }
+
+        if (UnidadeId <= 0)
+        {
+            MensagemErro = "Informe o número da unidade.";
+            return;
+        }
+
+        if (Tipo == TipoVisitante.PrestadorServico && string.IsNullOrWhiteSpace(Empresa))
+        {
+            MensagemErro = "Informe a Empresa / Razão Social do prestador de serviço.";
+            return;
+        }
+
+        Processando = true;
+
+        var request = new CreateVisitanteRequestDto(
+            NomeCompleto: NomeCompleto,
+            Documento: Documento,
+            Telefone: Telefone,
+            Tipo: Tipo,
+            UnidadeId: UnidadeId,
+            BlocoUnidade: string.IsNullOrWhiteSpace(BlocoUnidade) ? $"Unidade {UnidadeId}" : BlocoUnidade,
+            MoradorId: null,
+            DataHoraInicioAutorizacao: DateTimeOffset.UtcNow,
+            DataHoraFimAutorizacao: DateTimeOffset.UtcNow.AddDays(1),
+            Empresa: Empresa,
+            PlacaVeiculo: PlacaVeiculo,
+            Observacoes: Observacoes,
+            RegistrarEntradaImediata: RegistrarEntradaImediata
+        );
+
+        await OnSave.InvokeAsync(request);
+        Processando = false;
+    }
+}

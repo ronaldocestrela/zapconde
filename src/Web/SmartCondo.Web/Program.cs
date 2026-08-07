@@ -3,6 +3,7 @@ using BuildingBlocks.Infrastructure.MultiTenancy;
 using BuildingBlocks.Shared.Caching;
 using BuildingBlocks.Shared.MultiTenancy;
 using Microsoft.AspNetCore.Components.Authorization;
+using Modules.AccessControl.Infrastructure;
 using Modules.Financial.Infrastructure;
 using Modules.Operations.Infrastructure;
 using SmartCondo.Web.Components;
@@ -50,11 +51,18 @@ builder.Services.AddHttpClient<OperationsApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+
+builder.Services.AddHttpClient<AccessControlApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 builder.Services.AddSingleton<Modules.Financial.Domain.Services.CalculadoraFinanceira>();
 builder.Services.AddScoped<ICurrentTenantService, CurrentTenantService>();
 builder.Services.AddSingleton<ICacheService, InMemoryCacheService>();
 builder.Services.AddFinancialModule(builder.Configuration);
 builder.Services.AddOperationsModule(builder.Configuration);
+builder.Services.AddAccessControlModule(builder.Configuration);
 
 var app = builder.Build();
 
@@ -64,6 +72,7 @@ if (app.Environment.IsDevelopment())
     {
         await FinancialDbMigrator.MigrateAsync(app.Services, app.Configuration);
         await OperationsDbMigrator.MigrateAsync(app.Services, app.Configuration);
+        await AccessControlDbMigrator.MigrateAsync(app.Services, app.Configuration);
     }
 }
 else
