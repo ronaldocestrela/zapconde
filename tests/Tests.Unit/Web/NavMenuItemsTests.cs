@@ -7,10 +7,10 @@ namespace Tests.Unit.Web;
 public class NavMenuItemsTests
 {
     [Theory]
-    [InlineData(SmartCondoRoles.Sindico, new[] { "Início", "Unidades e Moradores", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Inadimplência e Régua", "Prestação de Contas", "Conciliação Bancária", "Relatórios Consolidados", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Manutenção Preventiva", "Assembleias Virtuais", "Portaria", "WhatsApp / IA", "Configurações" })]
-    [InlineData(SmartCondoRoles.Administradora, new[] { "Início", "Unidades e Moradores", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Inadimplência e Régua", "Prestação de Contas", "Conciliação Bancária", "Relatórios Consolidados", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Manutenção Preventiva", "Assembleias Virtuais", "Portaria", "WhatsApp / IA", "Configurações" })]
-    [InlineData(SmartCondoRoles.Condomino, new[] { "Início", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Prestação de Contas", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Assembleias Virtuais", "Portaria", "Configurações" })]
-    [InlineData(SmartCondoRoles.Portaria, new[] { "Início", "Portaria", "Configurações" })]
+    [InlineData(SmartCondoRoles.Sindico, new[] { "Dashboard", "Unidades e Moradores", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Inadimplência e Régua", "Prestação de Contas", "Conciliação Bancária", "Relatórios Consolidados", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Manutenção Preventiva", "Assembleias Virtuais", "Portaria", "WhatsApp / IA", "Configurações" })]
+    [InlineData(SmartCondoRoles.Administradora, new[] { "Dashboard", "Unidades e Moradores", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Inadimplência e Régua", "Prestação de Contas", "Conciliação Bancária", "Relatórios Consolidados", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Manutenção Preventiva", "Assembleias Virtuais", "Portaria", "WhatsApp / IA", "Configurações" })]
+    [InlineData(SmartCondoRoles.Condomino, new[] { "Dashboard", "Financeiro", "Simulador Financeiro", "Acordos de Renegociação", "Prestação de Contas", "Áreas Comuns", "Reservas", "Ocorrências e Chamados", "Assembleias Virtuais", "Portaria", "Configurações" })]
+    [InlineData(SmartCondoRoles.Portaria, new[] { "Dashboard", "Portaria", "Configurações" })]
     public void GetItemsForRole_Should_ReturnExpectedItems(string role, string[] expectedLabels)
     {
         var labels = NavMenuItems.GetItemsForRole(role).Select(i => i.Label).ToArray();
@@ -37,7 +37,7 @@ public class NavMenuItemsTests
     {
         var grouped = NavMenuItems.GetGroupedMainItemsForRole(SmartCondoRoles.Sindico).SelectMany(g => g).ToList();
         grouped.Should().NotContain(i => i.IsFooter);
-        grouped.Should().Contain(i => i.Label == "Início");
+        grouped.Should().Contain(i => i.Label == "Dashboard");
     }
 
     [Theory]

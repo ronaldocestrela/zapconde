@@ -1,61 +1,268 @@
-﻿@page "/"
-@layout AppShellLayout
+@page "/"
+@layout MainLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject AuthSession Session
 @inject NavigationManager Navigation
 
-<PageTitle>ZapCond</PageTitle>
+<PageTitle>ZapCond | Inteligência Artificial para Condomínios</PageTitle>
 
-@if (!_sessionReady)
-{
-    <p>Carregando...</p>
-}
-else if (Session.Context is null)
-{
-    <section class="tenant-empty-state">
-        <span class="material-symbols-outlined" style="font-size:3rem;color:#0f436f;">domain_disabled</span>
-        <h2>Sem tenant ativo</h2>
-        <p>Selecione um perfil de acesso para visualizar os dados do seu condomínio.</p>
-        <a class="tenant-empty-cta" href="/selecionar-perfil">
-            <span class="material-symbols-outlined">link</span>
-            Solicitar Acesso ou Vincular Condomínio
-        </a>
-    </section>
-}
-else
-{
-    <section>
-        <h1 style="color:#0f436f;margin-top:0;">Dashboard</h1>
-        <p>Bem-vindo! Perfil ativo: <strong>@Session.Context.Role</strong></p>
-        <p>Contexto: Tenant @Session.Context.TenantId / Condo @Session.Context.CondoId</p>
-    </section>
-}
+<div class="landing-body dot-grid">
+    <!-- Header Glassmorphism -->
+    <header class="landing-header">
+        <div class="landing-header-container">
+            <a href="/" class="landing-brand">
+                <span class="material-symbols-outlined" style="font-size: 2.25rem; color: var(--stitch-primary);" aria-hidden="true">shield</span>
+                <span class="landing-brand-name">ZapCond</span>
+            </a>
+
+            <nav class="landing-nav">
+                <a href="#features" class="landing-nav-link">Recursos</a>
+                <a href="#como-funciona" class="landing-nav-link">Como Funciona</a>
+                <a href="#whatsapp-ai" class="landing-nav-link">WhatsApp IA</a>
+                <a href="#seguranca" class="landing-nav-link">Segurança</a>
+            </nav>
+
+            <div class="landing-header-actions">
+                @if (_isAuthenticated)
+                {
+                    <a href="/dashboard" class="btn-portal-login">Acessar Dashboard</a>
+                }
+                else
+                {
+                    <a href="/login" class="btn-portal-login">Portal Login</a>
+                }
+                <a href="/onboarding" class="btn-request-demo">Solicitar Demo</a>
+                <button type="button" class="mobile-menu-btn" @onclick="ToggleMobileMenu" aria-label="Menu">
+                    <span class="material-symbols-outlined">@(_mobileMenuOpen ? "close" : "menu")</span>
+                </button>
+            </div>
+        </div>
+
+        @if (_mobileMenuOpen)
+        {
+            <div style="padding: 1rem 1.5rem; background: #ffffff; border-bottom: 1px solid var(--stitch-outline-variant); display: flex; flex-direction: column; gap: 0.75rem;">
+                <a href="#features" class="landing-nav-link" @onclick="CloseMobileMenu">Recursos</a>
+                <a href="#como-funciona" class="landing-nav-link" @onclick="CloseMobileMenu">Como Funciona</a>
+                <a href="#whatsapp-ai" class="landing-nav-link" @onclick="CloseMobileMenu">WhatsApp IA</a>
+                <a href="#seguranca" class="landing-nav-link" @onclick="CloseMobileMenu">Segurança</a>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    @if (_isAuthenticated)
+                    {
+                        <a href="/dashboard" class="btn-portal-login" style="display: block; text-align: center; width: 100%;">Dashboard</a>
+                    }
+                    else
+                    {
+                        <a href="/login" class="btn-portal-login" style="display: block; text-align: center; width: 100%;">Login</a>
+                    }
+                    <a href="/onboarding" class="btn-request-demo" style="display: block; text-align: center; width: 100%;">Demo</a>
+                </div>
+            </div>
+        }
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">smart_toy</span>
+                    <span>Gestão Condominial por IA</span>
+                </div>
+
+                <h1 class="hero-title">
+                    Tranquilidade e segurança para seu condomínio, direto no WhatsApp.
+                </h1>
+
+                <p class="hero-subtitle">
+                    Automatize a gestão financeira, atendimento aos moradores e portaria com uma Inteligência Artificial acolhedora. Sem burocracia, sem aplicativos difíceis.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="/whatsapp" class="btn-hero-primary">
+                        <span class="material-symbols-outlined">chat</span>
+                        Experimentar no WhatsApp
+                    </a>
+                    <a href="#como-funciona" class="btn-hero-secondary">
+                        <span class="material-symbols-outlined">play_circle</span>
+                        Ver Como Funciona
+                    </a>
+                </div>
+
+                <!-- Social Proof -->
+                <div class="hero-social-proof">
+                    <div class="avatar-stack">
+                        <div class="avatar-item">
+                            <span class="material-symbols-outlined" style="font-size:2rem;color:#0f436f;background:#eff4ff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">account_circle</span>
+                        </div>
+                        <div class="avatar-item">
+                            <span class="material-symbols-outlined" style="font-size:2rem;color:#44664b;background:#c2e9c7;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">person</span>
+                        </div>
+                        <div class="avatar-item">
+                            <span class="material-symbols-outlined" style="font-size:2rem;color:#2e5b88;background:#d1e4ff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">face</span>
+                        </div>
+                        <div class="avatar-item avatar-count">+150</div>
+                    </div>
+                    <p class="social-proof-text">
+                        Confiado por +150 administradoras e mais de 20.000 moradores.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Visual Mockups -->
+            <div class="hero-visual">
+                <!-- Background Dashboard Layer -->
+                <div class="dashboard-mockup-bg">
+                    <div class="dashboard-header-bar">
+                        <div class="dot-btn" style="background:#ff5f56;"></div>
+                        <div class="dot-btn" style="background:#ffbd2e;"></div>
+                        <div class="dot-btn" style="background:#27c93f;"></div>
+                    </div>
+                    <div class="dashboard-body-grid">
+                        <div class="dashboard-card-sm">
+                            <div style="width:50%;height:8px;background:var(--stitch-outline-variant);border-radius:4px;margin-bottom:8px;"></div>
+                            <div style="width:75%;height:24px;background:rgba(15,67,111,0.2);border-radius:6px;"></div>
+                        </div>
+                        <div class="dashboard-card-sm">
+                            <div style="width:50%;height:8px;background:var(--stitch-outline-variant);border-radius:4px;margin-bottom:8px;"></div>
+                            <div style="width:75%;height:24px;background:rgba(68,102,75,0.2);border-radius:6px;"></div>
+                        </div>
+                        <div class="dashboard-card-lg">
+                            <div class="bar-item" style="height: 100%;"><div class="bar-fill" style="height: 60%;"></div></div>
+                            <div class="bar-item" style="height: 100%;"><div class="bar-fill" style="height: 85%;"></div></div>
+                            <div class="bar-item" style="height: 100%;"><div class="bar-fill" style="height: 40%;"></div></div>
+                            <div class="bar-item" style="height: 100%;"><div class="bar-fill" style="height: 95%;"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Foreground WhatsApp Mobile Mockup -->
+                <div class="whatsapp-mockup">
+                    <div class="wa-header">
+                        <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span>
+                        <div class="wa-avatar">
+                            <span class="material-symbols-outlined" style="font-size:20px;">smart_toy</span>
+                        </div>
+                        <div>
+                            <p style="margin:0;font-weight:700;font-size:0.875rem;">ZapCond AI</p>
+                            <p style="margin:0;font-size:0.65rem;opacity:0.85;">online 24/7</p>
+                        </div>
+                    </div>
+
+                    <div class="wa-chat-body">
+                        <div class="msg-user">
+                            Oi, gostaria da 2ª via do boleto de condomínio deste mês.
+                            <span style="display:block;font-size:0.6rem;opacity:0.6;text-align:right;margin-top:2px;">14:32</span>
+                        </div>
+
+                        <div class="msg-ai">
+                            <span>Olá! Localizei seu cadastro no Ed. Belvedere. Aqui está seu código PIX e o boleto:</span>
+                            <div class="pix-box">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <strong style="font-size:0.65rem;color:var(--stitch-primary);">BOLETO VENC. 10/11</strong>
+                                    <span class="material-symbols-outlined" style="font-size:14px;color:var(--stitch-primary);">qr_code_2</span>
+                                </div>
+                                <code style="font-size:0.6rem;background:#ffffff;padding:4px;border-radius:4px;word-break:break-all;">00020126440014br.gov.bcb.pix...</code>
+                                <button type="button" class="btn-pix-copy" @onclick="CopyPixDemo">
+                                    @(_copiedPix ? "COPIADO!" : "COPIAR PIX")
+                                </button>
+                            </div>
+                            <span style="font-size:0.6rem;opacity:0.6;">14:32</span>
+                        </div>
+                    </div>
+
+                    <div class="wa-input-bar">
+                        <span class="material-symbols-outlined" style="color:var(--stitch-on-surface-variant);opacity:0.5;font-size:18px;">sentiment_satisfied</span>
+                        <div style="flex:1;height:8px;background:rgba(0,0,0,0.08);border-radius:4px;"></div>
+                        <span class="material-symbols-outlined" style="color:var(--stitch-primary);font-size:20px;">send</span>
+                    </div>
+                </div>
+
+                <!-- Floating Notification Badge -->
+                <div class="floating-card">
+                    <div class="floating-card-icon">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                    <div>
+                        <p style="margin:0;font-size:0.8rem;font-weight:700;color:var(--stitch-on-surface);">Pagamento Confirmado</p>
+                        <p style="margin:0;font-size:0.7rem;color:var(--stitch-on-surface-variant);">Apt 402 - R$ 850,00</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bento Grid Section -->
+        <section id="features" class="bento-section">
+            <div class="bento-card bento-card-sand">
+                <span class="material-symbols-outlined bento-icon">account_tree</span>
+                <h3 class="bento-title">Automação Financeira</h3>
+                <p class="bento-desc">
+                    Gere boletos, controle inadimplência, acerte acordos e envie lembretes de pagamento automaticamente via WhatsApp.
+                </p>
+            </div>
+
+            <div class="bento-card bento-card-high">
+                <span class="material-symbols-outlined bento-icon">verified_user</span>
+                <h3 class="bento-title">Portaria Inteligente</h3>
+                <p class="bento-desc">
+                    Autorize visitantes, cadastre entregas e receba avisos de encomendas via WhatsApp com total segurança e agilidade.
+                </p>
+            </div>
+
+            <div class="bento-card bento-card-primary">
+                <span class="material-symbols-outlined bento-icon">chat_bubble</span>
+                <h3 class="bento-title">Concierge Digital 24/7</h3>
+                <p class="bento-desc">
+                    Tire dúvidas sobre atas, regimentos internos, reservas de salão de festas e abertura de ocorrências com IA RAG.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="landing-footer-container">
+            <div class="landing-footer-top">
+                <div class="landing-brand">
+                    <span class="material-symbols-outlined" style="font-size: 1.75rem; color: var(--stitch-primary);" aria-hidden="true">shield</span>
+                    <span class="landing-brand-name">ZapCond</span>
+                </div>
+                <div class="landing-footer-links">
+                    <a href="#" class="landing-footer-link">Termos</a>
+                    <a href="#" class="landing-footer-link">Privacidade</a>
+                    <a href="#" class="landing-footer-link">Suporte</a>
+                    <a href="#" class="landing-footer-link">Contato</a>
+                </div>
+            </div>
+            <p class="landing-footer-copy">© 2026 ZapCond. Gestão Condominial Inteligente. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+</div>
 
 @code {
-    private bool _sessionReady;
+    private bool _mobileMenuOpen;
+    private bool _copiedPix;
+    private bool _isAuthenticated;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _sessionReady)
+        if (firstRender)
         {
-            return;
+            await Session.EnsureLoadedAsync();
+            _isAuthenticated = !string.IsNullOrWhiteSpace(Session.AccessToken);
+            StateHasChanged();
         }
+    }
 
-        await Session.EnsureLoadedAsync();
+    private void ToggleMobileMenu() => _mobileMenuOpen = !_mobileMenuOpen;
+    private void CloseMobileMenu() => _mobileMenuOpen = false;
 
-        if (string.IsNullOrWhiteSpace(Session.AccessToken))
-        {
-            Navigation.NavigateTo("/login", replace: true);
-            return;
-        }
-
-        if (Session.Context is null && Session.Profiles.Count > 0)
-        {
-            Navigation.NavigateTo("/selecionar-perfil", replace: true);
-            return;
-        }
-
-        _sessionReady = true;
+    private async Task CopyPixDemo()
+    {
+        _copiedPix = true;
+        StateHasChanged();
+        await Task.Delay(2500);
+        _copiedPix = false;
         StateHasChanged();
     }
 }

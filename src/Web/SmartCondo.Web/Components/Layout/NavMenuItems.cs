@@ -22,7 +22,7 @@ public static class NavMenuItems
 {
     public static IReadOnlyList<NavMenuItem> All { get; } =
     [
-        new("Início", "/", "dashboard", NavSection.Principal,
+        new("Dashboard", "/dashboard", "dashboard", NavSection.Principal,
             [SmartCondoRoles.Sindico, SmartCondoRoles.Administradora, SmartCondoRoles.Condomino, SmartCondoRoles.Portaria, SmartCondoRoles.Zelador]),
         new("Unidades e Moradores", "/unidades", "apartment", NavSection.Gestao,
             [SmartCondoRoles.Sindico, SmartCondoRoles.Administradora]),

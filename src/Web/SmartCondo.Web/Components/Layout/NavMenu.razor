@@ -47,10 +47,10 @@
     }
 
     private static NavLinkMatch GetMatch(string href) =>
-        href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix;
+        href == "/dashboard" ? NavLinkMatch.All : NavLinkMatch.Prefix;
 
     private static string? GetAriaCurrent(string href) =>
-        href == "/" ? "page" : null;
+        href == "/dashboard" ? "page" : null;
 
     private async Task HandleNavigate()
     {

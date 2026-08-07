@@ -1,0 +1,61 @@
+@page "/dashboard"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject AuthSession Session
+@inject NavigationManager Navigation
+
+<PageTitle>ZapCond - Dashboard</PageTitle>
+
+@if (!_sessionReady)
+{
+    <p>Carregando...</p>
+}
+else if (Session.Context is null)
+{
+    <section class="tenant-empty-state">
+        <span class="material-symbols-outlined" style="font-size:3rem;color:#0f436f;">domain_disabled</span>
+        <h2>Sem tenant ativo</h2>
+        <p>Selecione um perfil de acesso para visualizar os dados do seu condomínio.</p>
+        <a class="tenant-empty-cta" href="/selecionar-perfil">
+            <span class="material-symbols-outlined">link</span>
+            Solicitar Acesso ou Vincular Condomínio
+        </a>
+    </section>
+}
+else
+{
+    <section>
+        <h1 style="color:#0f436f;margin-top:0;">Dashboard</h1>
+        <p>Bem-vindo! Perfil ativo: <strong>@Session.Context.Role</strong></p>
+        <p>Contexto: Tenant @Session.Context.TenantId / Condo @Session.Context.CondoId</p>
+    </section>
+}
+
+@code {
+    private bool _sessionReady;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _sessionReady)
+        {
+            return;
+        }
+
+        await Session.EnsureLoadedAsync();
+
+        if (string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            Navigation.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        if (Session.Context is null && Session.Profiles.Count > 0)
+        {
+            Navigation.NavigateTo("/selecionar-perfil", replace: true);
+            return;
+        }
+
+        _sessionReady = true;
+        StateHasChanged();
+    }
+}
