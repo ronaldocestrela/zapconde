@@ -1,0 +1,90 @@
+@using Modules.WhatsApp.Application.DTOs
+
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header" style="background-color: #2E5B88; color: white; border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                <h5 class="modal-header-title m-0 fw-bold d-flex align-items-center gap-2" style="color: white;">
+                    <span class="material-symbols-outlined">code</span>
+                    Detalhes do Payload do Webhook #@Log?.Id
+                </h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="OnClose"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                @if (Log != null)
+                {
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <span class="text-muted small d-block">Instância</span>
+                            <span class="fw-semibold">@Log.InstanceName</span>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="text-muted small d-block">Remetente</span>
+                            <span class="fw-semibold">@Log.SenderPhone (@Log.PushName)</span>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="text-muted small d-block">Message ID</span>
+                            <span class="font-monospace small">@Log.MessageId</span>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="text-muted small d-block">Tipo de Mensagem</span>
+                            <span class="badge bg-secondary">@Log.MessageType</span>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="text-muted small d-block">Status de Ingestão</span>
+                            <span class="badge bg-success">@Log.Status</span>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="text-muted small d-block">Data / Hora</span>
+                            <span>@Log.ReceivedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Log.MessageText))
+                    {
+                        <div class="mb-3">
+                            <label class="fw-semibold text-muted small mb-1">Texto Extraído</label>
+                            <div class="p-3 bg-light rounded border text-dark">
+                                @Log.MessageText
+                            </div>
+                        </div>
+                    }
+
+                    <div class="mb-2">
+                        <label class="fw-semibold text-muted small mb-1">Payload JSON Bruto (Evolution API)</label>
+                        <div class="wpp-json-box">
+                            <pre class="m-0"><code>@FormattedJson</code></pre>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer border-top-0 px-4 pb-4">
+                <button type="button" class="btn btn-secondary fw-semibold" @onclick="OnClose">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public WhatsAppWebhookLogDto? Log { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string FormattedJson
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Log?.RawPayloadJson)) return "{}";
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(Log.RawPayloadJson);
+                return System.Text.Json.JsonSerializer.Serialize(doc.RootElement, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            }
+            catch
+            {
+                return Log.RawPayloadJson;
+            }
+        }
+    }
+}

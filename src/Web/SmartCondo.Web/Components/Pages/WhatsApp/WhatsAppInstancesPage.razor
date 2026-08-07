@@ -1,0 +1,212 @@
+@page "/whatsapp/instances"
+@layout AppShellLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Modules.WhatsApp.Application.DTOs
+@using SmartCondo.Web.Services
+@inject WhatsAppApiClient WhatsAppApi
+@inject NavigationManager Navigation
+@inject AuthSession Session
+
+<PageTitle>WhatsApp & Integrações - SmartCondo</PageTitle>
+
+<link href="css/whatsapp.css" rel="stylesheet" />
+
+<div class="whatsapp-container">
+    <WhatsAppNavTabs />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 font-weight-bold" style="color: #2E5B88;">
+                <span class="material-symbols-outlined align-middle me-2">smart_toy</span>
+                Instâncias & Conexão WhatsApp API
+            </h1>
+            <p class="text-muted small mb-0">Gerencie as instâncias da Evolution API vinculadas ao atendimento inteligente do condomínio.</p>
+        </div>
+        <button class="btn text-white fw-bold d-flex align-items-center gap-2" style="background-color: #2E5B88;" @onclick="AbrirModalNovaInstancia">
+            <span class="material-symbols-outlined">add</span>
+            Nova Instância
+        </button>
+    </div>
+
+    @if (Resumo != null)
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="wpp-kpi-card" style="border-left: 4px solid #2E5B88;">
+                    <div class="wpp-kpi-label">Instâncias Ativas</div>
+                    <div class="wpp-kpi-val">@Resumo.InstanciasAtivas</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="wpp-kpi-card" style="border-left: 4px solid #A3C9A8;">
+                    <div class="wpp-kpi-label">Recebidos Hoje</div>
+                    <div class="wpp-kpi-val">@Resumo.TotalRecebidosHoje</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="wpp-kpi-card" style="border-left: 4px solid #198754;">
+                    <div class="wpp-kpi-label">Processados</div>
+                    <div class="wpp-kpi-val">@Resumo.ProcessadosComSucesso</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="wpp-kpi-card" style="border-left: 4px solid #dc3545;">
+                    <div class="wpp-kpi-label">Falhas</div>
+                    <div class="wpp-kpi-val">@Resumo.Falhas</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px;">
+        <div class="card-body p-4">
+            <h6 class="fw-bold mb-2 text-dark d-flex align-items-center gap-2">
+                <span class="material-symbols-outlined text-primary">link</span>
+                URL Global de Webhook para Configuração na Evolution API
+            </h6>
+            <p class="text-muted small mb-2">Copie e cole este endpoint nas configurações da sua instância na Evolution API (Evento: <code>messages.upsert</code>):</p>
+            <div class="d-flex align-items-center gap-2">
+                <div class="webhook-url-box flex-grow-1">
+                    @WebhookUrlGlobal
+                </div>
+                <button class="btn btn-outline-primary d-flex align-items-center gap-1" @onclick="CopiarWebhookUrl">
+                    <span class="material-symbols-outlined">content_copy</span>
+                    <span>@_textoCopiado</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="text-muted mt-2">Carregando instâncias de WhatsApp...</p>
+        </div>
+    }
+    else if (Instancias == null || !Instancias.Any())
+    {
+        <div class="card border-0 shadow-sm p-5 text-center" style="border-radius: 14px;">
+            <span class="material-symbols-outlined display-3 text-muted mb-3">hub</span>
+            <h5 class="fw-bold text-dark">Nenhuma instância cadastrada</h5>
+            <p class="text-muted">Cadastre uma instância da Evolution API para iniciar o recebimento de mensagens do condomínio.</p>
+            <div class="mt-2">
+                <button class="btn text-white fw-bold" style="background-color: #2E5B88;" @onclick="AbrirModalNovaInstancia">
+                    Cadastrar Primeira Instância
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var inst in Instancias)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="wpp-instance-card h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="badge bg-light text-dark border mb-1">@inst.Provider</span>
+                                    <h5 class="fw-bold m-0 text-dark">@inst.InstanceName</h5>
+                                </div>
+                                <span class="wpp-badge-status @(inst.IsActive ? "wpp-badge-connected" : "wpp-badge-disconnected")">
+                                    @(inst.IsActive ? "Conectada" : "Desconectada")
+                                </span>
+                            </div>
+
+                            <div class="small text-muted mb-2">
+                                <span class="d-block"><strong>URL Server:</strong> @inst.BaseUrl</span>
+                                <span class="d-block text-truncate"><strong>API Key:</strong> ••••••••••••</span>
+                                <span class="d-block"><strong>Criada em:</strong> @inst.CriadoEm.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-top d-flex justify-content-between align-items-center mt-3">
+                            <span class="small text-muted">
+                                @(inst.UltimaConexaoEm.HasValue ? $"Ativa desde: {inst.UltimaConexaoEm.Value.ToLocalTime():dd/MM HH:mm}" : "Sem registros")
+                            </span>
+                            <button class="btn btn-sm @(inst.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                    @onclick="() => AlternarStatusAsync(inst.Id)">
+                                @(inst.IsActive ? "Desativar" : "Ativar")
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (_exibirModalCadastro)
+{
+    <NewWhatsAppInstanceModal CondoId="1"
+                               OnSaved="OnInstanciaSalvaAsync"
+                               OnClose="() => _exibirModalCadastro = false" />
+}
+
+@code {
+    private bool _loading = true;
+    private bool _exibirModalCadastro;
+    private string _textoCopiado = "Copiar";
+
+    private WhatsAppWebhookSummaryDto? Resumo;
+    private List<WhatsAppInstanceConfigDto>? Instancias;
+
+    private string WebhookUrlGlobal => $"{Navigation.BaseUri}api/whatsapp/webhook/evolution";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        await Session.EnsureLoadedAsync();
+        if (string.IsNullOrWhiteSpace(Session.AccessToken))
+        {
+            Navigation.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        await CarregarDadosAsync();
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private async Task CarregarDadosAsync()
+    {
+        var resumoRes = await WhatsAppApi.GetSummaryAsync();
+        if (resumoRes != null && resumoRes.IsSuccess)
+        {
+            Resumo = resumoRes.Data;
+        }
+
+        var listRes = await WhatsAppApi.GetInstancesAsync();
+        if (listRes != null && listRes.IsSuccess)
+        {
+            Instancias = listRes.Data?.ToList();
+        }
+    }
+
+    private void AbrirModalNovaInstancia()
+    {
+        _exibirModalCadastro = true;
+    }
+
+    private async Task OnInstanciaSalvaAsync()
+    {
+        _exibirModalCadastro = false;
+        await CarregarDadosAsync();
+    }
+
+    private async Task AlternarStatusAsync(int instanceId)
+    {
+        await WhatsAppApi.ToggleInstanceStatusAsync(instanceId);
+        await CarregarDadosAsync();
+    }
+
+    private void CopiarWebhookUrl()
+    {
+        _textoCopiado = "Copiado!";
+    }
+}

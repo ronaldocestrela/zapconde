@@ -6,26 +6,16 @@
 
 <PageTitle>ZapCond - WhatsApp / IA</PageTitle>
 
-@if (!_sessionReady)
-{
-    <p>Carregando...</p>
-}
-else
-{
-    <ModuleStub Title="WhatsApp / IA"
-                Description="Configuração de IA, RAG e monitoramento de conversas estará disponível em breve."
-                Icon="smart_toy" />
-}
+<div class="p-4 text-center">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando Módulo de WhatsApp...</span>
+    </div>
+</div>
 
 @code {
-    private bool _sessionReady;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _sessionReady)
-        {
-            return;
-        }
+        if (!firstRender) return;
 
         await Session.EnsureLoadedAsync();
 
@@ -41,7 +31,6 @@ else
             return;
         }
 
-        _sessionReady = true;
-        StateHasChanged();
+        Navigation.NavigateTo("/whatsapp/instances", replace: true);
     }
 }

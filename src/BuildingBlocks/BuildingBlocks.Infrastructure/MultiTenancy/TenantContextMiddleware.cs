@@ -20,7 +20,7 @@ public sealed class TenantContextMiddleware(RequestDelegate next)
             return;
         }
 
-        if (TryResolveFromHeaders(context.Request.Headers, tenantService))
+        if (IsWebhookPath(context.Request.Path) && TryResolveFromHeaders(context.Request.Headers, tenantService))
         {
             await next(context);
             return;
@@ -73,5 +73,6 @@ public sealed class TenantContextMiddleware(RequestDelegate next)
     }
 
     private static bool IsWebhookPath(PathString path) =>
-        path.StartsWithSegments("/api/webhooks", StringComparison.OrdinalIgnoreCase);
+        path.StartsWithSegments("/api/webhooks", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/api/whatsapp/webhook", StringComparison.OrdinalIgnoreCase);
 }

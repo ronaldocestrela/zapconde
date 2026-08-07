@@ -12,6 +12,7 @@
     <ProjectReference Include="..\..\Modules\Financial\Modules.Financial.csproj" />
     <ProjectReference Include="..\..\Modules\Operations\Modules.Operations.csproj" />
     <ProjectReference Include="..\..\Modules\AccessControl\Modules.AccessControl.csproj" />
+    <ProjectReference Include="..\..\Modules\WhatsApp\Modules.WhatsApp.csproj" />
   </ItemGroup>
 
 </Project>

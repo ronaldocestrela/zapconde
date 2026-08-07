@@ -1,0 +1,125 @@
+/* Estilos do Módulo WhatsApp - Identidade Visual Stitch */
+
+:root {
+  --wpp-primary: #2E5B88;
+  --wpp-primary-light: #eef4fa;
+  --wpp-accent: #A3C9A8;
+  --wpp-bg-subtle: #F4EAE1;
+  --wpp-dark: #2D3142;
+  --wpp-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.whatsapp-container {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.wpp-kpi-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: var(--wpp-card-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.wpp-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+}
+
+.wpp-kpi-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.wpp-kpi-val {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--wpp-primary);
+}
+
+.wpp-instance-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: var(--wpp-card-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.wpp-instance-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 100%;
+  background-color: var(--wpp-primary);
+}
+
+.wpp-badge-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35em 0.75em;
+  border-radius: 50rem;
+  text-transform: uppercase;
+}
+
+.wpp-badge-connected {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.wpp-badge-disconnected {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.wpp-badge-received {
+  background-color: #cff4fc;
+  color: #055160;
+}
+
+.wpp-badge-processed {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.wpp-badge-failed {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.wpp-badge-ignored {
+  background-color: #e2e3e5;
+  color: #41464b;
+}
+
+.wpp-json-box {
+  background-color: #1e1e2e;
+  color: #a6adc8;
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  padding: 1rem;
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.webhook-url-box {
+  background-color: #f8f9fa;
+  border: 1px dashed var(--wpp-primary);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #2D3142;
+  word-break: break-all;
+}

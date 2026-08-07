@@ -547,7 +547,19 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 > 
 > 
 
-* [] **Subfase 6.1:** [FN-WPP-01] Endpoint de Webhook para recepção de payloads de mensagem do WhatsApp API (Twilio, Z-API, Evolution API).
+* [x] **Subfase 6.1:** [FN-WPP-01] Endpoint de Webhook para recepção de payloads de mensagem do WhatsApp API (Twilio, Z-API, Evolution API).
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & Invariantes: Entidades Aggregate Root `WhatsAppWebhookLog` e `WhatsAppInstanceConfig` com enums `WhatsAppProvider`, `WhatsAppMessageType`, `WhatsAppWebhookStatus`, exceção de domínio `WhatsAppDomainException` e validações de invariantes com isolamento multi-tenant (`ITenantScoped`).
+  - Evolution API Parser: Engine normalizadora `EvolutionPayloadParser` e `IEvolutionPayloadParser` para extrair mensagens de texto, mídias (imagens, áudios, documentos), remetente no formato E.164 (`+55...`) e dados de idempotência (`MessageId`).
+  - EF Core 10 & Persistence: Mapeamento Fluent API em `WhatsAppDbContext` (`whatsapp."WebhookLogs"` e `whatsapp."InstanceConfigs"`), índices compostos por `(TenantId, InstanceName)`, `(TenantId, MessageId)`, `(TenantId, Status)` e `(TenantId, SenderPhone)`, e migration `20260807132728_InitialWhatsAppModule`.
+  - Serviço de Aplicação: `WhatsAppApplicationService` e `IWhatsAppApplicationService` encapsulados com Result Pattern (`Result<T>`), suporte a idempotência e resolução dinâmica de tenant.
+  - FastEndpoints API: Endpoints sob `/api/whatsapp` (`POST /api/whatsapp/webhook/evolution` para recepção de webhook, `POST /api/whatsapp/instances` para cadastro de instâncias, `GET /api/whatsapp/instances` para listagem, `PATCH /api/whatsapp/instances/{id}/status` para alternar ativo/inativo, `GET /api/whatsapp/logs` para consulta paginada e `GET /api/whatsapp/summary` para resumo KPI).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase6_1_WebhookRecepcaoEvolutionApi.feature`, suíte unitária (`WhatsAppDomainTests`, `EvolutionPayloadParserTests`) e testes de integração com Testcontainers (`WhatsAppIntegrationTests` em PostgreSQL 17 real) — 100% aprovados.
+  - Blazor UI (Stitch): Páginas `/whatsapp/instances` (com KPI cards de instâncias/recebidos/falhas, box de cópia rápida da URL do webhook, modal `NewWhatsAppInstanceModal.razor`) e `/whatsapp/logs` (com barra de filtros, tabela interativa e modal `WebhookDetailModal.razor` para inspecionar JSON bruto) + estilos `whatsapp.css` fiéis aos tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
+  - Navegação: Componente de abas `WhatsAppNavTabs.razor` integrado em todas as páginas do módulo WhatsApp e redirecionamento automático em `WhatsAppModule.razor`.
 
 
 * [] **Subfase 6.2:** Publicação imediata do payload no RabbitMQ via MassTransit com resposta HTTP `200 OK` instantânea para o gateway.

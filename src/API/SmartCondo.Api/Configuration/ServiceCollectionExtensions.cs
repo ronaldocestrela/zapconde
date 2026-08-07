@@ -4,6 +4,7 @@ using Modules.Identity.Infrastructure;
 using Modules.Financial.Infrastructure;
 using Modules.Operations.Infrastructure;
 using Modules.AccessControl.Infrastructure;
+using Modules.WhatsApp.Infrastructure;
 
 namespace SmartCondo.Api.Configuration;
 
@@ -23,6 +24,7 @@ public static class ServiceCollectionExtensions
         services.AddFinancialModule(configuration);
         services.AddOperationsModule(configuration);
         services.AddAccessControlModule(configuration);
+        services.AddWhatsAppModule(configuration);
 
         services.AddFastEndpoints(config =>
         {
@@ -32,7 +34,8 @@ public static class ServiceCollectionExtensions
                 typeof(Modules.Identity.Endpoints.LoginEndpoint).Assembly,
                 typeof(Modules.Financial.Endpoints.GetInvoicesEndpoint).Assembly,
                 typeof(Modules.Operations.Endpoints.CreateAreaComumEndpoint).Assembly,
-                typeof(Modules.AccessControl.Infrastructure.AccessControlServiceCollectionExtensions).Assembly
+                typeof(Modules.AccessControl.Infrastructure.AccessControlServiceCollectionExtensions).Assembly,
+                typeof(Modules.WhatsApp.Endpoints.ReceiveEvolutionWebhookEndpoint).Assembly
             ];
         });
 
