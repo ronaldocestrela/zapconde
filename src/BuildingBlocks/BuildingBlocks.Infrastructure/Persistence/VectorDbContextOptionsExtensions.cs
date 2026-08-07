@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Pgvector.EntityFrameworkCore;
 
 namespace BuildingBlocks.Infrastructure.Persistence;
 
@@ -28,7 +29,7 @@ public static class VectorDbContextOptionsExtensions
         dataSourceBuilder.UseVector();
         var dataSource = dataSourceBuilder.Build();
 
-        return optionsBuilder.UseNpgsql(dataSource);
+        return optionsBuilder.UseNpgsql(dataSource, npgsqlOptions => npgsqlOptions.UseVector());
     }
 
     /// <summary>
@@ -49,6 +50,6 @@ public static class VectorDbContextOptionsExtensions
         dataSourceBuilder.UseVector();
         var dataSource = dataSourceBuilder.Build();
 
-        return optionsBuilder.UseNpgsql(dataSource);
+        return optionsBuilder.UseNpgsql(dataSource, npgsqlOptions => npgsqlOptions.UseVector());
     }
 }
