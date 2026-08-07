@@ -46,6 +46,11 @@ public class EncomendaApplicationService : IEncomendaApplicationService
                 dataRecebimento: dataRecebimento,
                 observacoes: request.Observacoes);
 
+            if (!string.IsNullOrWhiteSpace(request.FotoEtiquetaUrl) || request.ConfiancaOcr.HasValue || !string.IsNullOrWhiteSpace(request.DadosOcrJson))
+            {
+                encomenda.AssociarMetadadosVision(request.FotoEtiquetaUrl, request.ConfiancaOcr, request.DadosOcrJson);
+            }
+
             _dbContext.Encomendas.Add(encomenda);
             await _dbContext.SaveChangesAsync(ct);
 
@@ -234,6 +239,9 @@ public class EncomendaApplicationService : IEncomendaApplicationService
             e.RetiradoPorNome,
             e.NotificadoEm,
             e.Observacoes,
+            e.FotoEtiquetaUrl,
+            e.ConfiancaOcr,
+            e.DadosOcrJson,
             e.CriadoEm,
             e.AtualizadoEm);
     }

@@ -23,6 +23,9 @@ public record EncomendaDto(
     string? RetiradoPorNome,
     DateTimeOffset? NotificadoEm,
     string? Observacoes,
+    string? FotoEtiquetaUrl,
+    double? ConfiancaOcr,
+    string? DadosOcrJson,
     DateTimeOffset CriadoEm,
     DateTimeOffset? AtualizadoEm);
 
@@ -38,7 +41,10 @@ public record RegistrarRecebimentoEncomendaRequest(
     TipoEncomenda Tipo,
     string RecebidoPorNome,
     DateTimeOffset? DataRecebimento,
-    string? Observacoes);
+    string? Observacoes,
+    string? FotoEtiquetaUrl = null,
+    double? ConfiancaOcr = null,
+    string? DadosOcrJson = null);
 
 public record RegistrarBaixaEncomendaRequest(
     string RetiradoPorNome,

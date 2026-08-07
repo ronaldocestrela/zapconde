@@ -23,10 +23,16 @@
             </h1>
             <p class="text-muted small mb-0">Controle de recebimento na portaria, notificações aos moradores e registro de baixas.</p>
         </div>
-        <button class="btn btn-primary-stitch d-flex align-items-center gap-2" @onclick="AbrirModalNovo">
-            <span class="material-symbols-outlined">add_box</span>
-            Registrar Nova Encomenda
-        </button>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary d-flex align-items-center gap-2" style="border-color: #2E5B88; color: #2E5B88;" @onclick="AbrirModalVision">
+                <span class="material-symbols-outlined">center_focus_strong</span>
+                Leitura com IA (OCR)
+            </button>
+            <button class="btn btn-primary-stitch d-flex align-items-center gap-2" @onclick="AbrirModalNovo">
+                <span class="material-symbols-outlined">add_box</span>
+                Registrar Nova Encomenda
+            </button>
+        </div>
     </div>
 
     @if (Resumo != null)
@@ -212,6 +218,7 @@
 
 <NewPackageModal @bind-IsOpen="ExibirModalNovo" OnSaved="CarregarDadosAsync" />
 <PickupPackageModal @bind-IsOpen="ExibirModalBaixa" Encomenda="EncomendaSelecionada" OnSaved="CarregarDadosAsync" />
+<ProcessPackageVisionModal @bind-IsOpen="ExibirModalVision" OnSaved="CarregarDadosAsync" />
 
 @code {
     private IEnumerable<EncomendaDto>? Encomendas { get; set; }
@@ -244,6 +251,7 @@
 
     private bool ExibirModalNovo { get; set; }
     private bool ExibirModalBaixa { get; set; }
+    private bool ExibirModalVision { get; set; }
     private EncomendaDto? EncomendaSelecionada { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -286,6 +294,11 @@
     private void AbrirModalNovo()
     {
         ExibirModalNovo = true;
+    }
+
+    private void AbrirModalVision()
+    {
+        ExibirModalVision = true;
     }
 
     private void AbrirModalBaixa(EncomendaDto e)

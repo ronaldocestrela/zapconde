@@ -47,6 +47,14 @@ public class EncomendaConfiguration : IEntityTypeConfiguration<Encomenda>
         builder.Property(e => e.Observacoes)
             .HasMaxLength(1000);
 
+        builder.Property(e => e.FotoEtiquetaUrl)
+            .HasMaxLength(1000);
+
+        builder.Property(e => e.ConfiancaOcr);
+
+        builder.Property(e => e.DadosOcrJson)
+            .HasColumnType("text");
+
         builder.HasIndex(e => new { e.TenantId, e.CondoId, e.Status })
             .HasDatabaseName("IX_Encomendas_Tenant_Condo_Status");
 
@@ -55,5 +63,8 @@ public class EncomendaConfiguration : IEntityTypeConfiguration<Encomenda>
 
         builder.HasIndex(e => new { e.TenantId, e.CodigoRastreio })
             .HasDatabaseName("IX_Encomendas_Tenant_CodigoRastreio");
+
+        builder.HasIndex(e => new { e.TenantId, e.Status, e.ConfiancaOcr })
+            .HasDatabaseName("IX_Encomendas_Tenant_Status_ConfiancaOcr");
     }
 }

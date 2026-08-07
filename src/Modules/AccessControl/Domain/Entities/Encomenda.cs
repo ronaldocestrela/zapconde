@@ -28,6 +28,9 @@ public class Encomenda : ITenantScoped
     public string? RetiradoPorNome { get; private set; }
     public DateTimeOffset? NotificadoEm { get; private set; }
     public string? Observacoes { get; private set; }
+    public string? FotoEtiquetaUrl { get; private set; }
+    public double? ConfiancaOcr { get; private set; }
+    public string? DadosOcrJson { get; private set; }
     public DateTimeOffset CriadoEm { get; private set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? AtualizadoEm { get; private set; }
 
@@ -143,6 +146,23 @@ public class Encomenda : ITenantScoped
         Observacoes = string.IsNullOrWhiteSpace(Observacoes) 
             ? $"[CANCELADA]: {motivo.Trim()}" 
             : $"{Observacoes} | [CANCELADA]: {motivo.Trim()}";
+        AtualizadoEm = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Vincula foto e metadados de leitura OCR/Visão à encomenda.
+    /// </summary>
+    public void AssociarMetadadosVision(string? fotoUrl, double? confianca, string? dadosJson)
+    {
+        if (!string.IsNullOrWhiteSpace(fotoUrl))
+            FotoEtiquetaUrl = fotoUrl.Trim();
+
+        if (confianca.HasValue && confianca.Value >= 0 && confianca.Value <= 100)
+            ConfiancaOcr = confianca.Value;
+
+        if (!string.IsNullOrWhiteSpace(dadosJson))
+            DadosOcrJson = dadosJson.Trim();
+
         AtualizadoEm = DateTimeOffset.UtcNow;
     }
 }

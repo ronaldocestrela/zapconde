@@ -222,5 +222,44 @@ public class AiApiClient
             return Result<Modules.AIEngine.Endpoints.AuthorizeGuestPluginExecutionResultDto>.Failure($"Erro ao executar plugin de portaria: {ex.Message}");
         }
     }
+
+    public async Task<Result<Modules.AIEngine.Application.DTOs.PackageLabelExtractionResultDto>?> ProcessPackageLabelAsync(Modules.AIEngine.Application.DTOs.ProcessPackageLabelRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/ai/vision/package-label/process", request);
+            return await response.Content.ReadFromJsonAsync<Result<Modules.AIEngine.Application.DTOs.PackageLabelExtractionResultDto>>();
+        }
+        catch (Exception ex)
+        {
+            return Result<Modules.AIEngine.Application.DTOs.PackageLabelExtractionResultDto>.Failure($"Erro ao processar imagem da etiqueta via OCR: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<Modules.AccessControl.Application.DTOs.EncomendaDto>?> ProcessPackageLabelAndRegisterAsync(Modules.AIEngine.Application.DTOs.ProcessPackageLabelRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/ai/vision/package-label/process-and-register", request);
+            return await response.Content.ReadFromJsonAsync<Result<Modules.AccessControl.Application.DTOs.EncomendaDto>>();
+        }
+        catch (Exception ex)
+        {
+            return Result<Modules.AccessControl.Application.DTOs.EncomendaDto>.Failure($"Erro ao registrar encomenda via visão computacional: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<Modules.AIEngine.Endpoints.PackageVisionPluginExecutionResultDto>?> ExecutePackageVisionPluginAsync(Modules.AIEngine.Endpoints.ExecutePackageVisionPluginRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/ai/plugins/packages/execute", request);
+            return await response.Content.ReadFromJsonAsync<Result<Modules.AIEngine.Endpoints.PackageVisionPluginExecutionResultDto>>();
+        }
+        catch (Exception ex)
+        {
+            return Result<Modules.AIEngine.Endpoints.PackageVisionPluginExecutionResultDto>.Failure($"Erro ao executar plugin de leitura de etiquetas: {ex.Message}");
+        }
+    }
 }
 

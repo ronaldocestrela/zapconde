@@ -28,9 +28,11 @@ public static class AIEngineServiceCollectionExtensions
         services.AddSingleton<ITextChunkerService, TextChunkerService>();
         services.AddScoped<ITextEmbeddingService, TextEmbeddingService>();
         services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
+        services.AddScoped<IPackageVisionOcrService, PackageVisionOcrService>();
         services.AddScoped<Application.Plugins.BoletoPlugin>();
         services.AddScoped<Application.Plugins.ReservaPlugin>();
         services.AddScoped<Application.Plugins.PortariaPlugin>();
+        services.AddScoped<Application.Plugins.PackageVisionPlugin>();
 
         return services;
     }

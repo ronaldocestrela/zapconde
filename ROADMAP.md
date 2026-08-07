@@ -671,7 +671,17 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Navegação Consistente: Alinhamento das barras de navegação entre abas em `AINavTabs.razor` (módulo de IA) e `AccessControlNavTabs.razor` (módulo de portaria/controle de acesso).
 
 
-* [] **Subfase 7.2.4:** [FN-ACC-IA02] Leitura inteligente de etiquetas de encomenda via Vision/OCR + IA e notificação automática.
+* [x] **Subfase 7.2.4:** [FN-ACC-IA02] Leitura inteligente de etiquetas de encomenda via Vision/OCR + IA e notificação automática.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & EF Core 10 Migration: Adicionadas propriedades de Visão/OCR (`FotoEtiquetaUrl`, `ConfiancaOcr`, `DadosOcrJson`), método de domínio `AssociarMetadadosVision(...)` em `Encomenda.cs`, mapeamento Fluent API em `EncomendaConfiguration.cs` com índice composto `(TenantId, Status, ConfiancaOcr)` e migration `20260807211500_AddVisionOcrToEncomenda` no schema `access_control."Encomendas"`.
+  - Service de Visão/OCR & Plugin Semantic Kernel: Abstração `IPackageVisionOcrService` e serviço `PackageVisionOcrService` com integração LLM multimodal (`gpt-4o`) e fallback OCR inteligente. Criado `PackageVisionPlugin.cs` em `Modules.AIEngine.Application.Plugins` expondo `[KernelFunction("ReadPackageLabel")]` e `[KernelFunction("ReadPackageLabelAndNotify")]` com auto-registro no `Kernel`.
+  - FastEndpoints API (Result Pattern): Endpoints em `PackageVisionEndpoints.cs` sob `/api/ai/vision/package-label/process` (processamento OCR), `/api/ai/vision/package-label/process-and-register` (OCR + cadastro na portaria + notificação WhatsApp) e `/api/ai/plugins/packages/execute` (simulador interativo de Function Calling).
+  - LivingDoc & TDD: Especificação BDD em Gherkin `tests/LivingDoc/Features/Fase7_2_4_LeituraEtiquetaEncomendaVisionOcr.feature`, suíte de testes unitários `PackageVisionPluginTests` (100% aprovada) e testes de integração `PackageVisionIntegrationTests` com Testcontainers (PostgreSQL 17 real) validando isolamento por `tenant_id` e notificação ao morador.
+  - Blazor UI & Stitch Visual Design: Atualização do cliente `AiApiClient.cs`, modal interativo `ProcessPackageVisionModal.razor` (preenchimento automático e notificação por imagem da etiqueta), botão "Leitura com IA (OCR)" em `/portaria/encomendas` (`PackagesPage.razor`) e nova aba **Tool 4: ReadPackageLabel (Visão/OCR & Encomendas)** na página `/ai/plugins` (`AiPluginsPage.razor`).
+  - Navegação Consistente: Alinhamento e integração das abas de navegação cruzadas em `AINavTabs.razor` e `AccessControlNavTabs.razor`.
 
 
 * [] **Subfase 7.2.5:** [FN-OPE-IA02] Triagem de ocorrências enviadas por foto/áudio e abertura automática de chamados direcionados.

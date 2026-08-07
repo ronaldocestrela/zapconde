@@ -33,7 +33,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-medium">Plugins Registrados</span>
-                        <h4 class="fw-bold text-dark mb-0 mt-1">3 (Boleto, Reserva & Portaria)</h4>
+                        <h4 class="fw-bold text-dark mb-0 mt-1">4 (Boleto, Reserva, Portaria & Vision OCR)</h4>
                     </div>
                     <div class="rounded-3 p-3 bg-primary-subtle text-primary">
                         <span class="material-symbols-outlined fs-3">extension</span>
@@ -47,7 +47,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-medium">Tools em Produção</span>
-                        <h6 class="fw-bold text-success mb-0 mt-1">GetPendingBoletos / ReserveCommonArea / AuthorizeGuest</h6>
+                        <h6 class="fw-bold text-success mb-0 mt-1">Boleto / Reserva / Portaria / Vision OCR</h6>
                     </div>
                     <div class="rounded-3 p-3 bg-success-subtle text-success">
                         <span class="material-symbols-outlined fs-3">function</span>
@@ -61,7 +61,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-medium">Recursos Inclusos</span>
-                        <h6 class="fw-bold text-dark mb-0 mt-1">PIX + PDF + Reserva + Portaria</h6>
+                        <h6 class="fw-bold text-dark mb-0 mt-1">PIX + PDF + Reserva + OCR Etiquetas</h6>
                     </div>
                     <div class="rounded-3 p-3 bg-info-subtle text-info">
                         <span class="material-symbols-outlined fs-3">event_available</span>
@@ -101,6 +101,11 @@
                 @onclick='() => SetActiveTab("portaria")'>
             <span class="material-symbols-outlined fs-5">badge</span>
             <span>Tool 3: AuthorizeGuest (Portaria & Visitantes)</span>
+        </button>
+        <button class="btn @(ActiveTab == "package_vision" ? "btn-primary" : "btn-light") rounded-pill px-4 fw-semibold d-flex align-items-center gap-2"
+                @onclick='() => SetActiveTab("package_vision")'>
+            <span class="material-symbols-outlined fs-5">center_focus_strong</span>
+            <span>Tool 4: ReadPackageLabel (Visão/OCR & Encomendas)</span>
         </button>
     </div>
 
@@ -549,6 +554,117 @@
             </div>
         </div>
     }
+
+    @if (ActiveTab == "package_vision")
+    {
+        <!-- Seção de Teste de Function Calling (Vision OCR Etiquetas) -->
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                    <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-primary fs-4">center_focus_strong</span>
+                        <span>Parâmetros de Leitura de Etiqueta (OCR)</span>
+                    </h5>
+                    <p class="text-muted small">Simule a captura e análise multimodal de uma etiqueta de pacote na portaria para extração e notificação automática.</p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted small">Imagens de Exemplo para Teste</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-sm btn-outline-primary" @onclick='() => VisionImagemEtiqueta = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=500"'>Mercado Livre (102)</button>
+                            <button class="btn btn-sm btn-outline-warning" @onclick='() => VisionImagemEtiqueta = "https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?w=500"'>Amazon (204)</button>
+                            <button class="btn btn-sm btn-outline-success" @onclick='() => VisionImagemEtiqueta = "https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=500"'>Correios (301)</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted small">Foto / URL da Etiqueta <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" @bind="VisionImagemEtiqueta" placeholder="https://exemplo.com/etiqueta.jpg ou Base64..." />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted small">Operador Responsável</label>
+                        <input type="text" class="form-control rounded-3" @bind="VisionRecebidoPor" placeholder="Ex: Portaria Central" />
+                    </div>
+
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" id="visionCheckNotif" @bind="VisionEnviarNotificacao" />
+                        <label class="form-check-label fw-semibold text-dark small" for="visionCheckNotif">
+                            Notificar morador no WhatsApp imediatamente após extração
+                        </label>
+                    </div>
+
+                    <button class="btn btn-primary rounded-3 w-100 py-2.5 fw-semibold d-flex align-items-center justify-content-center gap-2"
+                            @onclick="ExecutarPluginPackageVision" disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                            <span>Executando Visão OCR...</span>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined fs-5">scan</span>
+                            <span>Executar Tool ReadPackageLabelAndNotify</span>
+                        }
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                    <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-success fs-4">terminal</span>
+                        <span>Resultado da Execução do Agente</span>
+                    </h5>
+
+                    @if (ExecutionResultPackageVision == null && !IsLoading)
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <span class="material-symbols-outlined fs-1 text-black-50 mb-2">qr_code_scanner</span>
+                            <p class="mb-0">Clique em "Executar Tool ReadPackageLabelAndNotify" para simular a extração e cadastro da encomenda.</p>
+                        </div>
+                    }
+
+                    @if (ExecutionResultPackageVision != null)
+                    {
+                        <div class="alert alert-success border-0 rounded-4 p-3 mb-3 d-flex align-items-center gap-3" style="background: #e8f5e9;">
+                            <span class="material-symbols-outlined fs-2 text-success">check_circle</span>
+                            <div>
+                                <h6 class="fw-bold text-success mb-1">Status: @ExecutionResultPackageVision.Status</h6>
+                                <p class="small text-dark mb-0">@ExecutionResultPackageVision.MensagemFormatadaIa</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <div class="text-muted small">Encomenda Cadastrada</div>
+                                    <div class="fw-bold fs-5 text-dark">#@ExecutionResultPackageVision.EncomendaId</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <div class="text-muted small">Destino Identificado</div>
+                                    <div class="fw-bold fs-5 text-primary">@ExecutionResultPackageVision.BlocoUnidade</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <div class="text-muted small">Código de Rastreio</div>
+                                    <div class="fw-bold text-dark font-monospace">@ExecutionResultPackageVision.CodigoRastreio</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3">
+                                    <div class="text-muted small">Notificação WhatsApp</div>
+                                    <div class="fw-bold text-success">@(ExecutionResultPackageVision.NotificacaoMoradorEnviada ? "Enviada ao Morador" : "Pendente")</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -576,11 +692,17 @@
     private string? PortariaTelefone = "+5575988887777";
     private string? PortariaObservacoes = "Convidado de jantar";
 
+    // Campos Simulador de Vision OCR
+    private string VisionImagemEtiqueta = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=500";
+    private string VisionRecebidoPor = "Portaria IA (Vision OCR)";
+    private bool VisionEnviarNotificacao = true;
+
     private bool IsLoading = false;
     private string? ErrorMessage;
     private BoletoPluginExecutionResultDto? ExecutionResultBoleto;
     private ReservaPluginExecutionResultDto? ExecutionResultReserva;
     private AuthorizeGuestPluginExecutionResultDto? ExecutionResultPortaria;
+    private PackageVisionPluginExecutionResultDto? ExecutionResultPackageVision;
     private IEnumerable<AreaComumDto>? ActiveAreas;
 
     protected override async Task OnInitializedAsync()
@@ -755,6 +877,40 @@
         catch (Exception ex)
         {
             ErrorMessage = $"Exceção ao invocar a API de portaria: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task ExecutarPluginPackageVision()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        ExecutionResultPackageVision = null;
+
+        try
+        {
+            var req = new ExecutePackageVisionPluginRequest(
+                ImagemEtiqueta: VisionImagemEtiqueta,
+                EnviarNotificacao: VisionEnviarNotificacao,
+                RecebidoPorNome: VisionRecebidoPor,
+                CondoId: 1);
+
+            var result = await AiClient.ExecutePackageVisionPluginAsync(req);
+            if (result != null && result.IsSuccess && result.Data != null)
+            {
+                ExecutionResultPackageVision = result.Data;
+            }
+            else
+            {
+                ErrorMessage = result?.Message ?? "Não foi possível executar o plugin de visão/OCR de encomendas.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Exceção ao invocar a API de leitura de etiquetas: {ex.Message}";
         }
         finally
         {

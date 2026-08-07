@@ -1,0 +1,262 @@
+@using Modules.AccessControl.Application.DTOs
+@using Modules.AIEngine.Application.DTOs
+@using SmartCondo.Web.Services
+@inject AiApiClient AiClient
+@inject AccessControlApiClient AccessControlApi
+
+@if (IsOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, #2E5B88, #1d3b59); color: white; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 1.5rem;">
+                    <div>
+                        <h5 class="modal-title font-weight-bold d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined fs-4">center_focus_strong</span>
+                            Leitura Inteligente de Etiqueta (Visão / OCR IA)
+                        </h5>
+                        <p class="small text-white-50 mb-0">Capture ou faça upload da foto da etiqueta para cadastro e notificação automática ao morador.</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close" @onclick="Fechar"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                            <span class="material-symbols-outlined">error</span>
+                            <div>@ErrorMessage</div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(SuccessMessage))
+                    {
+                        <div class="alert alert-success d-flex align-items-center gap-2" role="alert">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            <div>@SuccessMessage</div>
+                        </div>
+                    }
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Selecione uma imagem de etiqueta para demonstração:</label>
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" @onclick='() => SelecionarSample("mercadolivre")'>
+                                    <span class="material-symbols-outlined fs-6">local_shipping</span> Mercado Livre (Apto 102)
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1" @onclick='() => SelecionarSample("amazon")'>
+                                    <span class="material-symbols-outlined fs-6">package_2</span> Amazon Logistics (Apto 204)
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1" @onclick='() => SelecionarSample("correios")'>
+                                    <span class="material-symbols-outlined fs-6">markunread_mailbox</span> Correios Sedex (Apto 301)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">URL da Imagem da Etiqueta ou Base64:</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><span class="material-symbols-outlined fs-5 text-muted">image</span></span>
+                                <input type="text" class="form-control" placeholder="https://exemplo.com/etiqueta.jpg" @bind="ImageUrl" />
+                                <button class="btn btn-primary-stitch d-flex align-items-center gap-1" @onclick="ExecutarOcrAsync" disabled="@IsProcessing">
+                                    @if (IsProcessing)
+                                    {
+                                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                                        <span>Analisando...</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="material-symbols-outlined fs-5">scan</span>
+                                        <span>Extrair com OCR</span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (ResultadoExtraido != null)
+                    {
+                        <div class="card border-0 bg-light p-3 rounded-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0 text-primary d-flex align-items-center gap-2" style="color: #2E5B88 !important;">
+                                    <span class="material-symbols-outlined">auto_awesome</span>
+                                    Dados Extraídos pela IA
+                                </h6>
+                                <span class="badge bg-success px-2 py-1 fs-6">Confiança: @ResultadoExtraido.ConfiancaPercentual.ToString("F1")%</span>
+                            </div>
+
+                            <div class="row g-2 small">
+                                <div class="col-md-6">
+                                    <strong>Destinatário:</strong> <span class="text-dark">@ResultadoExtraido.NomeDestinatario</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Unidade / Bloco:</strong> <span class="badge bg-secondary">@ResultadoExtraido.BlocoUnidade</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Código Rastreio:</strong> <span class="text-primary font-monospace">@ResultadoExtraido.CodigoRastreio</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Transportadora:</strong> <span class="text-dark">@ResultadoExtraido.Transportadora</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Tipo Sugerido:</strong> <span class="badge bg-info text-dark">@ResultadoExtraido.TipoSugerido</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Remetente:</strong> <span class="text-muted">@(ResultadoExtraido.Remetente ?? "Não informado")</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="checkNotificar" @bind="EnviarNotificacaoWhatsApp" />
+                            <label class="form-check-label fw-semibold text-dark" for="checkNotificar">
+                                Disparar notificação automática ao morador via WhatsApp após o registro
+                            </label>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <button type="button" class="btn btn-light" @onclick="Fechar">Cancelar</button>
+                        @if (ResultadoExtraido != null)
+                        {
+                            <button type="button" class="btn btn-success d-flex align-items-center gap-2" @onclick="ConfirmarERegistrarAsync" disabled="@IsSubmitting">
+                                @if (IsSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                    <span>Registrando...</span>
+                                }
+                                else
+                                {
+                                    <span class="material-symbols-outlined">send</span>
+                                    <span>Confirmar e Registrar Encomenda</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+
+    private string ImageUrl { get; set; } = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400";
+    private bool IsProcessing { get; set; }
+    private bool IsSubmitting { get; set; }
+    private bool EnviarNotificacaoWhatsApp { get; set; } = true;
+    private string? ErrorMessage { get; set; }
+    private string? SuccessMessage { get; set; }
+    private PackageLabelExtractionResultDto? ResultadoExtraido { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen)
+        {
+            ErrorMessage = null;
+            SuccessMessage = null;
+            ResultadoExtraido = null;
+            EnviarNotificacaoWhatsApp = true;
+        }
+    }
+
+    private void SelecionarSample(string tipo)
+    {
+        ErrorMessage = null;
+        ResultadoExtraido = null;
+        if (tipo == "mercadolivre")
+        {
+            ImageUrl = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=500&q=80";
+        }
+        else if (tipo == "amazon")
+        {
+            ImageUrl = "https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?w=500&q=80";
+        }
+        else
+        {
+            ImageUrl = "https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=500&q=80";
+        }
+    }
+
+    private async Task ExecutarOcrAsync()
+    {
+        IsProcessing = true;
+        ErrorMessage = null;
+        ResultadoExtraido = null;
+
+        try
+        {
+            var req = new ProcessPackageLabelRequest(
+                Base64Image: null,
+                ImageUrl: ImageUrl,
+                CondoId: 1);
+
+            var res = await AiClient.ProcessPackageLabelAsync(req);
+            if (res != null && res.IsSuccess && res.Data != null)
+            {
+                ResultadoExtraido = res.Data;
+            }
+            else
+            {
+                ErrorMessage = res?.Message ?? "Erro ao extrair metadados da foto da etiqueta.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    private async Task ConfirmarERegistrarAsync()
+    {
+        if (ResultadoExtraido == null) return;
+
+        IsSubmitting = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            var req = new ProcessPackageLabelRequest(
+                Base64Image: null,
+                ImageUrl: ImageUrl,
+                CondoId: 1,
+                EnviarNotificacaoMorador: EnviarNotificacaoWhatsApp,
+                RecebidoPorNome: "Portaria IA (Vision OCR)");
+
+            var res = await AiClient.ProcessPackageLabelAndRegisterAsync(req);
+            if (res != null && res.IsSuccess && res.Data != null)
+            {
+                SuccessMessage = $"Encomenda #{res.Data.Id} registrada com sucesso para {res.Data.BlocoUnidade}!";
+                await Task.Delay(1200);
+                await Fechar();
+                await OnSaved.InvokeAsync();
+            }
+            else
+            {
+                ErrorMessage = res?.Message ?? "Não foi possível registrar a encomenda.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task Fechar()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+}
