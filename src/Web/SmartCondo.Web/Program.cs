@@ -1,8 +1,10 @@
 using BuildingBlocks.Infrastructure.Caching;
+using BuildingBlocks.Infrastructure.DependencyInjection;
 using BuildingBlocks.Infrastructure.MultiTenancy;
 using BuildingBlocks.Shared.Caching;
 using BuildingBlocks.Shared.MultiTenancy;
 using Microsoft.AspNetCore.Components.Authorization;
+using Modules.Identity.Infrastructure;
 using Modules.AccessControl.Infrastructure;
 using Modules.WhatsApp.Infrastructure;
 using Modules.Financial.Infrastructure;
@@ -64,8 +66,8 @@ builder.Services.AddHttpClient<WhatsAppApiClient>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 builder.Services.AddSingleton<Modules.Financial.Domain.Services.CalculadoraFinanceira>();
-builder.Services.AddScoped<ICurrentTenantService, CurrentTenantService>();
-builder.Services.AddSingleton<ICacheService, InMemoryCacheService>();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddFinancialModule(builder.Configuration);
 builder.Services.AddOperationsModule(builder.Configuration);
 builder.Services.AddAccessControlModule(builder.Configuration);
@@ -77,6 +79,7 @@ if (app.Environment.IsDevelopment())
 {
     if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
     {
+        await IdentityDbMigrator.MigrateAsync(app.Services, app.Configuration);
         await FinancialDbMigrator.MigrateAsync(app.Services, app.Configuration);
         await OperationsDbMigrator.MigrateAsync(app.Services, app.Configuration);
         await AccessControlDbMigrator.MigrateAsync(app.Services, app.Configuration);
