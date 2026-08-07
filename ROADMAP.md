@@ -562,7 +562,17 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Navegação: Componente de abas `WhatsAppNavTabs.razor` integrado em todas as páginas do módulo WhatsApp e redirecionamento automático em `WhatsAppModule.razor`.
 
 
-* [] **Subfase 6.2:** Publicação imediata do payload no RabbitMQ via MassTransit com resposta HTTP `200 OK` instantânea para o gateway.
+* [x] **Subfase 6.2:** Publicação imediata do payload no RabbitMQ via MassTransit com resposta HTTP `200 OK` instantânea para o gateway.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Contrato de Evento de Integração: Criado `WhatsAppMessageReceivedEvent` em `BuildingBlocks.Shared.Events` implementando `IIntegrationEvent` e `ITenantScoped` com metadados completos de isolamento por tenant, remetente, tipo de mensagem e payload JSON bruto.
+  - Ingestão & Publicação no Barramento: Atualizado `WhatsAppApplicationService` com injeção de `IPublishEndpoint` para enfileirar `WhatsAppMessageReceivedEvent` via MassTransit antes de persistir o `WhatsAppWebhookLog`.
+  - Transactional Outbox Pattern: Configurado `AddEntityFrameworkOutbox<WhatsAppDbContext>` no bootstrap da API (`SmartCondo.Api`) e `MultiTenantDbContext`, garantindo escrita atômica do evento na tabela `whatsapp."OutboxMessage"` em transação única no PostgreSQL.
+  - Resposta HTTP Instantânea: Ingestão não-bloqueante no endpoint `/api/whatsapp/webhook/evolution` devolvendo `HTTP 200 OK` e `Result<WebhookIngestionResultDto>` instantâneo ao gateway da Evolution API.
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase6_2_PublicacaoMensageriaRabbitMQMassTransit.feature`, testes unitários `WhatsAppMessagingUnitTests` e testes de integração com Testcontainers (`WhatsAppMessagingIntegrationTests` em PostgreSQL 17 real) — 100% aprovados.
+  - Blazor UI (Stitch): Atualização de `/whatsapp/logs` (`WhatsAppLogsPage.razor`) com a nova coluna e badge visual `Enfileirado (Outbox)` + estilo `.wpp-badge-queued` em `whatsapp.css` em conformidade com os tokens da marca (`#2E5B88`, `#A3C9A8`, `#F4EAE1`).
 
 
 * [] **Subfase 6.3:** Consumidor em Background (`WhatsAppInboundConsumer`) para extrair telefone, texto/mídia e resolver o `tenant_id` e `morador_id` no Redis/Postgres.

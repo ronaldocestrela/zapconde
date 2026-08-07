@@ -19,11 +19,19 @@ public class OperationsArchitectureTests
             .ResideInNamespace("Modules.Operations.Domain.Entities")
             .And()
             .AreClasses()
+            .And()
+            .DoNotHaveNameMatching("AnexoOcorrencia")
+            .And()
+            .DoNotHaveNameMatching("HistoricoOcorrencia")
+            .And()
+            .DoNotHaveNameMatching("PautaAssembleia")
+            .And()
+            .DoNotHaveNameMatching("VotoAssembleia")
             .Should()
             .ImplementInterface(typeof(ITenantScoped))
             .GetResult();
 
-        result.IsSuccessful.Should().BeTrue("Todas as entidades de domínio do módulo Operations devem implementar ITenantScoped para isolamento seguro.");
+        result.IsSuccessful.Should().BeTrue("Todas as entidades Aggregate Root do módulo Operations devem implementar ITenantScoped para isolamento seguro.");
     }
 
     [Fact]

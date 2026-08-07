@@ -90,7 +90,7 @@ public sealed class AssembleiaIntegrationTests : IAsyncLifetime
             // 4. Register Vote for Unit 101
             var vote1Request = new RegistrarVotoRequest("morador-101", "101", "Sim");
             var vote1Result = await service.RegistrarVotoAsync(assembleiaId, pautaContas.Id, vote1Request);
-            vote1Result.IsSuccess.Should().BeTrue();
+            vote1Result.IsSuccess.Should().BeTrue(vote1Result.Message);
 
             // 5. Attempt Duplicate Vote for Unit 101 -> Should Fail
             var vote2Request = new RegistrarVotoRequest("outro-morador-101", "101", "Não");

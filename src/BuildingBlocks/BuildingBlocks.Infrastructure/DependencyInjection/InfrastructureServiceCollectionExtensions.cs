@@ -20,7 +20,10 @@ public static class InfrastructureServiceCollectionExtensions
     /// <summary>
     /// Registra serviços de infraestrutura e validações básicas de persistência.
     /// </summary>
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Action<IBusRegistrationConfigurator>? configureBus = null)
     {
         var postgresConnectionString = configuration.GetConnectionString("Postgres");
         var rabbitMqConnectionString = configuration.GetConnectionString("RabbitMQ");
@@ -55,6 +58,8 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddMassTransit(busConfigurator =>
         {
+            configureBus?.Invoke(busConfigurator);
+
             busConfigurator.UsingRabbitMq((context, cfg) =>
             {
                 var hostUri = BuildRabbitMqHostUri(rabbitMqOptions!, rabbitMqConnectionString);

@@ -41,7 +41,7 @@ public sealed class PhoneVerificationIntegrationTests : IClassFixture<IdentityWe
 
         verifyResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var payload = await verifyResponse.Content.ReadAsStringAsync();
-        payload.Should().Contain("\"status\":2");
+        payload.Should().Contain("\"status\":\"Validado\"");
         payload.Should().Contain("+5511987654321");
     }
 

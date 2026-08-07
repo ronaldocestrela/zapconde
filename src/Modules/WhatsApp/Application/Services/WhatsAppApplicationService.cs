@@ -1,5 +1,7 @@
 using BuildingBlocks.Shared;
+using BuildingBlocks.Shared.Events;
 using BuildingBlocks.Shared.MultiTenancy;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Modules.WhatsApp.Application.DTOs;
@@ -15,6 +17,7 @@ public class WhatsAppApplicationService : IWhatsAppApplicationService
     private readonly WhatsAppDbContext _dbContext;
     private readonly ICurrentTenantService _currentTenantService;
     private readonly IEvolutionPayloadParser _parser;
+    private readonly IPublishEndpoint? _publishEndpoint;
     private readonly ILogger<WhatsAppApplicationService> _logger;
 
     public WhatsAppApplicationService(
@@ -22,10 +25,21 @@ public class WhatsAppApplicationService : IWhatsAppApplicationService
         ICurrentTenantService currentTenantService,
         IEvolutionPayloadParser parser,
         ILogger<WhatsAppApplicationService> logger)
+        : this(dbContext, currentTenantService, parser, publishEndpoint: null, logger)
+    {
+    }
+
+    public WhatsAppApplicationService(
+        WhatsAppDbContext dbContext,
+        ICurrentTenantService currentTenantService,
+        IEvolutionPayloadParser parser,
+        IPublishEndpoint? publishEndpoint,
+        ILogger<WhatsAppApplicationService> logger)
     {
         _dbContext = dbContext;
         _currentTenantService = currentTenantService;
         _parser = parser;
+        _publishEndpoint = publishEndpoint;
         _logger = logger;
     }
 
@@ -113,6 +127,29 @@ public class WhatsAppApplicationService : IWhatsAppApplicationService
             );
 
             _dbContext.WebhookLogs.Add(log);
+
+            if (_publishEndpoint != null)
+            {
+                var integrationEvent = new WhatsAppMessageReceivedEvent
+                {
+                    TenantId = tenantId,
+                    CondoId = condoId,
+                    WebhookLogId = log.Id,
+                    InstanceName = parsed.InstanceName,
+                    Provider = parsed.Provider.ToString(),
+                    MessageId = parsed.MessageId,
+                    SenderPhone = log.SenderPhone,
+                    PushName = parsed.PushName,
+                    MessageType = parsed.MessageType.ToString(),
+                    MessageText = parsed.MessageText,
+                    MediaUrl = parsed.MediaUrl,
+                    RawPayloadJson = rawJson
+                };
+
+                await _publishEndpoint.Publish(integrationEvent, ct);
+                _logger.LogInformation("Evento WhatsAppMessageReceivedEvent publicado no barramento MassTransit para a mensagem {MessageId}.", parsed.MessageId);
+            }
+
             await _dbContext.SaveChangesAsync(ct);
 
             _logger.LogInformation(
@@ -124,7 +161,7 @@ public class WhatsAppApplicationService : IWhatsAppApplicationService
                     IsSuccess: true,
                     IsDuplicate: false,
                     WebhookLogId: log.Id,
-                    Message: "Webhook recebido e registrado com sucesso"
+                    Message: "Webhook recebido, registrado e enfileirado na mensageria com sucesso"
                 ),
                 "Webhook processado com sucesso"
             );

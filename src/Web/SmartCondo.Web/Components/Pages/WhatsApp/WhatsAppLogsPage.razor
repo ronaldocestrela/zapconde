@@ -93,7 +93,8 @@
                             <th>Remetente</th>
                             <th>Tipo</th>
                             <th>Conteúdo Extraído</th>
-                            <th>Status</th>
+                            <th>Status Ingestão</th>
+                            <th>Fila MassTransit</th>
                             <th class="text-end">Ações</th>
                         </tr>
                     </thead>
@@ -115,7 +116,7 @@
                                     <span class="badge bg-secondary">@log.MessageType</span>
                                 </td>
                                 <td>
-                                    <span class="text-truncate d-inline-block" style="max-width: 300px;" title="@log.MessageText">
+                                    <span class="text-truncate d-inline-block" style="max-width: 250px;" title="@log.MessageText">
                                         @(string.IsNullOrWhiteSpace(log.MessageText) ? "(sem texto)" : log.MessageText)
                                     </span>
                                 </td>
@@ -123,6 +124,23 @@
                                     <span class="wpp-badge-status @GetBadgeStatusClass(log.Status)">
                                         @log.Status
                                     </span>
+                                </td>
+                                <td>
+                                    @if (log.Status == "Received" || log.Status == "Processed")
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success d-inline-flex align-items-center gap-1">
+                                            <span class="material-symbols-outlined fs-6">published_with_changes</span>
+                                            Enfileirado (Outbox)
+                                        </span>
+                                    }
+                                    else if (log.Status == "Ignored")
+                                    {
+                                        <span class="badge bg-light text-muted border">Ignorado</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border">Falha</span>
+                                    }
                                 </td>
                                 <td class="text-end">
                                     <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"

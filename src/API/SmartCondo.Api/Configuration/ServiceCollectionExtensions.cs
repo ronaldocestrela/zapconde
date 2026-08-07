@@ -1,10 +1,12 @@
 using FastEndpoints;
 using BuildingBlocks.Infrastructure.DependencyInjection;
+using MassTransit;
 using Modules.Identity.Infrastructure;
 using Modules.Financial.Infrastructure;
 using Modules.Operations.Infrastructure;
 using Modules.AccessControl.Infrastructure;
 using Modules.WhatsApp.Infrastructure;
+using Modules.WhatsApp.Infrastructure.Persistence;
 
 namespace SmartCondo.Api.Configuration;
 
@@ -19,7 +21,14 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddInfrastructure(configuration);
+        services.AddInfrastructure(configuration, busConfigurator =>
+        {
+            busConfigurator.AddEntityFrameworkOutbox<WhatsAppDbContext>(o =>
+            {
+                o.UsePostgres();
+                o.UseBusOutbox();
+            });
+        });
         services.AddIdentityModule(configuration);
         services.AddFinancialModule(configuration);
         services.AddOperationsModule(configuration);

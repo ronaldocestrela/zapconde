@@ -26,7 +26,8 @@ public class VotoAssembleia : ITenantScoped
         string moradorUserId,
         string unidadeId,
         string opcaoEscolhida,
-        double pesoVoto = 1.0)
+        double pesoVoto = 1.0,
+        Guid? id = null)
     {
         if (tenantId <= 0)
             throw new AssembleiaDomainException("TenantId é obrigatório.");
@@ -54,7 +55,7 @@ public class VotoAssembleia : ITenantScoped
 
         return new VotoAssembleia
         {
-            Id = Guid.NewGuid(),
+            Id = id ?? Guid.Empty,
             TenantId = tenantId,
             CondoId = condoId,
             AssembleiaId = assembleiaId,

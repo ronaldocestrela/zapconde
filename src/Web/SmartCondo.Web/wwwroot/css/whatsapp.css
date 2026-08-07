@@ -102,6 +102,11 @@
   color: #41464b;
 }
 
+.wpp-badge-queued {
+  background-color: #e0cffc;
+  color: #3d008d;
+}
+
 .wpp-json-box {
   background-color: #1e1e2e;
   color: #a6adc8;
