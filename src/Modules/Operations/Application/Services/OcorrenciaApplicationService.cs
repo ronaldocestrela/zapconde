@@ -53,6 +53,18 @@ public class OcorrenciaApplicationService : IOcorrenciaApplicationService
                 localizacao: request.Localizacao
             );
 
+            if (!string.IsNullOrWhiteSpace(request.OrigemTriagemIa) || !string.IsNullOrWhiteSpace(request.ResumoTriagemIa))
+            {
+                ocorrencia.AssociarTriagemIa(
+                    origem: request.OrigemTriagemIa ?? "IA_Multimodal",
+                    resumo: request.ResumoTriagemIa ?? string.Empty,
+                    confianca: request.ConfiancaTriagemIa ?? 0.9,
+                    setorSugerido: request.SetorResponsavelSugerido,
+                    audioUrl: request.AudioUrl,
+                    transcricaoAudio: request.TranscricaoAudio
+                );
+            }
+
             if (request.AnexosIniciais != null && request.AnexosIniciais.Count > 0)
             {
                 foreach (var a in request.AnexosIniciais)
@@ -192,7 +204,13 @@ public class OcorrenciaApplicationService : IOcorrenciaApplicationService
             ResponsavelNome: ocorrencia.ResponsavelNome,
             ObservacaoResolucao: ocorrencia.ObservacaoResolucao,
             Anexos: ocorrencia.Anexos.Select(MapToAnexoDto).ToList(),
-            Historico: ocorrencia.Historico.OrderByDescending(h => h.DataAlteracao).Select(MapToHistoricoDto).ToList()
+            Historico: ocorrencia.Historico.OrderByDescending(h => h.DataAlteracao).Select(MapToHistoricoDto).ToList(),
+            OrigemTriagemIa: ocorrencia.OrigemTriagemIa,
+            ResumoTriagemIa: ocorrencia.ResumoTriagemIa,
+            ConfiancaTriagemIa: ocorrencia.ConfiancaTriagemIa,
+            AudioUrl: ocorrencia.AudioUrl,
+            TranscricaoAudio: ocorrencia.TranscricaoAudio,
+            SetorResponsavelSugerido: ocorrencia.SetorResponsavelSugerido
         );
     }
 

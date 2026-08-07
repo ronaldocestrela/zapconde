@@ -26,6 +26,14 @@ public class Ocorrencia : ITenantScoped
     public string? ResponsavelNome { get; private set; }
     public string? ObservacaoResolucao { get; private set; }
 
+    // Rastreabilidade de Triagem Inteligente via IA / Semantic Kernel
+    public string? OrigemTriagemIa { get; private set; }
+    public string? ResumoTriagemIa { get; private set; }
+    public double? ConfiancaTriagemIa { get; private set; }
+    public string? AudioUrl { get; private set; }
+    public string? TranscricaoAudio { get; private set; }
+    public string? SetorResponsavelSugerido { get; private set; }
+
     public IReadOnlyCollection<AnexoOcorrencia> Anexos => _anexos.AsReadOnly();
     public IReadOnlyCollection<HistoricoOcorrencia> Historico => _historico.AsReadOnly();
 
@@ -113,6 +121,22 @@ public class Ocorrencia : ITenantScoped
 
         ResponsavelId = responsavelId;
         ResponsavelNome = string.IsNullOrWhiteSpace(responsavelNome) ? "Atendente" : responsavelNome.Trim();
+    }
+
+    public void AssociarTriagemIa(
+        string origem,
+        string resumo,
+        double confianca,
+        string? setorSugerido = null,
+        string? audioUrl = null,
+        string? transcricaoAudio = null)
+    {
+        OrigemTriagemIa = string.IsNullOrWhiteSpace(origem) ? "IA_Multimodal" : origem.Trim();
+        ResumoTriagemIa = resumo?.Trim();
+        ConfiancaTriagemIa = Math.Clamp(confianca, 0.0, 1.0);
+        SetorResponsavelSugerido = setorSugerido?.Trim();
+        if (!string.IsNullOrWhiteSpace(audioUrl)) AudioUrl = audioUrl.Trim();
+        if (!string.IsNullOrWhiteSpace(transcricaoAudio)) TranscricaoAudio = transcricaoAudio.Trim();
     }
 
     public void AtualizarStatus(

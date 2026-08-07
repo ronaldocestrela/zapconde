@@ -33,7 +33,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-medium">Plugins Registrados</span>
-                        <h4 class="fw-bold text-dark mb-0 mt-1">4 (Boleto, Reserva, Portaria & Vision OCR)</h4>
+                        <h4 class="fw-bold text-dark mb-0 mt-1">5 (Boleto, Reserva, Portaria, Vision OCR & Ocorrência)</h4>
                     </div>
                     <div class="rounded-3 p-3 bg-primary-subtle text-primary">
                         <span class="material-symbols-outlined fs-3">extension</span>
@@ -47,7 +47,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-medium">Tools em Produção</span>
-                        <h6 class="fw-bold text-success mb-0 mt-1">Boleto / Reserva / Portaria / Vision OCR</h6>
+                        <h6 class="fw-bold text-success mb-0 mt-1">Boleto / Reserva / Portaria / Vision OCR / Triagem IA</h6>
                     </div>
                     <div class="rounded-3 p-3 bg-success-subtle text-success">
                         <span class="material-symbols-outlined fs-3">function</span>
@@ -61,7 +61,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted small fw-medium">Recursos Inclusos</span>
-                        <h6 class="fw-bold text-dark mb-0 mt-1">PIX + PDF + Reserva + OCR Etiquetas</h6>
+                        <h6 class="fw-bold text-dark mb-0 mt-1">PIX + PDF + Reserva + OCR + Triagem Foto/Áudio</h6>
                     </div>
                     <div class="rounded-3 p-3 bg-info-subtle text-info">
                         <span class="material-symbols-outlined fs-3">event_available</span>
@@ -106,6 +106,11 @@
                 @onclick='() => SetActiveTab("package_vision")'>
             <span class="material-symbols-outlined fs-5">center_focus_strong</span>
             <span>Tool 4: ReadPackageLabel (Visão/OCR & Encomendas)</span>
+        </button>
+        <button class="btn @(ActiveTab == "ocorrencia" ? "btn-primary" : "btn-light") rounded-pill px-4 fw-semibold d-flex align-items-center gap-2"
+                @onclick='() => SetActiveTab("ocorrencia")'>
+            <span class="material-symbols-outlined fs-5">report_problem</span>
+            <span>Tool 5: TriarEAbrirOcorrencia (Triagem IA & Foto/Áudio)</span>
         </button>
     </div>
 
@@ -665,6 +670,130 @@
             </div>
         </div>
     }
+
+    @if (ActiveTab == "ocorrencia")
+    {
+        <!-- Seção de Teste de Function Calling (Triagem de Ocorrência) -->
+        <div class="row g-4">
+            <!-- Coluna de Entrada & Execução -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined text-primary fs-4">terminal</span>
+                        <h5 class="fw-bold text-dark mb-0">Parâmetros do Kernel (TriarEAbrirOcorrencia)</h5>
+                    </div>
+                    <p class="text-muted small mb-4">Invocação simulada do plugin de triagem de ocorrências por foto, áudio e relato textual.</p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small">URL da Foto / Evidência Visual</label>
+                        <input type="text" class="form-control" @bind="OcorrenciaFotoUrl" placeholder="https://..." />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small">URL de Áudio / Transcrição</label>
+                        <input type="text" class="form-control" @bind="OcorrenciaAudioUrl" placeholder="https://... ou transcrição" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small">Relato Livre do Morador</label>
+                        <textarea class="form-control" rows="2" @bind="OcorrenciaRelatoTexto" placeholder="Relato em linguagem natural..."></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-dark small">ID Morador</label>
+                            <input type="text" class="form-control" @bind="OcorrenciaMoradorId" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-dark small">Nome Morador</label>
+                            <input type="text" class="form-control" @bind="OcorrenciaMoradorNome" />
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary rounded-3 w-100 py-2.5 fw-semibold d-flex align-items-center justify-content-center gap-2"
+                            @onclick="ExecutarPluginOcorrencia" disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                            <span>Executando Tool IA...</span>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined fs-5">play_arrow</span>
+                            <span>Executar Tool TriarEAbrirOcorrencia</span>
+                        }
+                    </button>
+                </div>
+            </div>
+
+            <!-- Coluna de Resultado & Comprovante Stitch -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined text-success fs-4">check_circle</span>
+                            <h5 class="fw-bold text-dark mb-0">Retorno da Tool & Triagem Registrada</h5>
+                        </div>
+                        <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-semibold">200 OK / Function Calling</span>
+                    </div>
+
+                    @if (ExecutionResultOcorrencia == null)
+                    {
+                        <div class="text-center py-5 my-auto">
+                            <div class="rounded-circle p-4 bg-light d-inline-flex mb-3">
+                                <span class="material-symbols-outlined fs-1 text-muted">report_problem</span>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1">Nenhuma execução realizada ainda</h6>
+                            <p class="text-muted small">Preencha os campos ao lado e clique em Executar Tool para simular o Semantic Kernel.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-4 rounded-4 bg-light border mb-3">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <span class="text-muted extra-small fw-bold text-uppercase d-block">Chamado Registrado</span>
+                                    <h6 class="fw-bold text-primary mb-0">#@(ExecutionResultOcorrencia.OcorrenciaCriadaId?.ToString()[..8] ?? "N/A")</h6>
+                                </div>
+                                <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold">
+                                    @((ExecutionResultOcorrencia.NivelConfianca * 100).ToString("F0"))% Confiança IA
+                                </span>
+                            </div>
+
+                            <h6 class="fw-bold text-dark mb-1">@ExecutionResultOcorrencia.TituloSugerido</h6>
+                            <p class="text-muted small mb-3">@ExecutionResultOcorrencia.DescricaoDetalhada</p>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-4">
+                                    <div class="p-2 bg-white rounded border text-center">
+                                        <small class="text-muted d-block extra-small font-weight-bold">CATEGORIA</small>
+                                        <strong class="text-dark">@ExecutionResultOcorrencia.CategoriaInferida</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-2 bg-white rounded border text-center">
+                                        <small class="text-muted d-block extra-small font-weight-bold">PRIORIDADE</small>
+                                        <strong class="text-danger">@ExecutionResultOcorrencia.PrioridadeInferida</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-2 bg-white rounded border text-center">
+                                        <small class="text-muted d-block extra-small font-weight-bold">ORIGEM</small>
+                                        <strong class="text-purple">@ExecutionResultOcorrencia.OrigemTriagem</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-white rounded border">
+                                <small class="fw-bold text-dark d-block mb-1">Local & Setor Direcionado:</small>
+                                <small class="text-muted">@ExecutionResultOcorrencia.LocalizacaoSugerida • @ExecutionResultOcorrencia.SetorResponsavelSugerido</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -697,12 +826,20 @@
     private string VisionRecebidoPor = "Portaria IA (Vision OCR)";
     private bool VisionEnviarNotificacao = true;
 
+    // Campos Simulador de Triagem de Ocorrência
+    private string? OcorrenciaFotoUrl = "https://storage.smartcondo.com/evidences/infiltracao-garagem-b2.jpg";
+    private string? OcorrenciaAudioUrl = null;
+    private string? OcorrenciaRelatoTexto = "Infiltração com pingos constantes caindo sobre a vaga 42 no subsolo 2";
+    private string OcorrenciaMoradorId = "morador-10";
+    private string OcorrenciaMoradorNome = "Carlos Mendes (Bloco B)";
+
     private bool IsLoading = false;
     private string? ErrorMessage;
     private BoletoPluginExecutionResultDto? ExecutionResultBoleto;
     private ReservaPluginExecutionResultDto? ExecutionResultReserva;
     private AuthorizeGuestPluginExecutionResultDto? ExecutionResultPortaria;
     private PackageVisionPluginExecutionResultDto? ExecutionResultPackageVision;
+    private ResultadoTriagemOcorrenciaDto? ExecutionResultOcorrencia;
     private IEnumerable<AreaComumDto>? ActiveAreas;
 
     protected override async Task OnInitializedAsync()
@@ -911,6 +1048,43 @@
         catch (Exception ex)
         {
             ErrorMessage = $"Exceção ao invocar a API de leitura de etiquetas: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task ExecutarPluginOcorrencia()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        ExecutionResultOcorrencia = null;
+
+        try
+        {
+            var req = new Modules.AIEngine.Endpoints.ExecuteOcorrenciaPluginRequest(
+                FotoUrl: OcorrenciaFotoUrl,
+                AudioUrl: OcorrenciaAudioUrl,
+                RelatoTexto: OcorrenciaRelatoTexto,
+                MoradorId: OcorrenciaMoradorId,
+                MoradorNome: OcorrenciaMoradorNome,
+                CondoId: 1
+            );
+
+            var result = await AiClient.ExecuteOcorrenciaPluginAsync(req);
+            if (result != null && result.IsSuccess && result.Data != null)
+            {
+                ExecutionResultOcorrencia = result.Data;
+            }
+            else
+            {
+                ErrorMessage = result?.Message ?? "Não foi possível executar o plugin de triagem de ocorrências.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Exceção ao invocar a API de triagem de ocorrências: {ex.Message}";
         }
         finally
         {

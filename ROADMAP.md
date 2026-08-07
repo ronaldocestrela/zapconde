@@ -684,7 +684,17 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
   - Navegação Consistente: Alinhamento e integração das abas de navegação cruzadas em `AINavTabs.razor` e `AccessControlNavTabs.razor`.
 
 
-* [] **Subfase 7.2.5:** [FN-OPE-IA02] Triagem de ocorrências enviadas por foto/áudio e abertura automática de chamados direcionados.
+* [x] **Subfase 7.2.5:** [FN-OPE-IA02] Triagem de ocorrências enviadas por foto/áudio e abertura automática de chamados direcionados.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & EF Core 10 Migration: Adicionadas propriedades de triagem por IA (`OrigemTriagemIa`, `ResumoTriagemIa`, `ConfiancaTriagemIa`, `AudioUrl`, `TranscricaoAudio`, `SetorResponsavelSugerido`) e método de domínio `AssociarTriagemIa(...)` na entidade `Ocorrencia.cs`, mapeamento em `OcorrenciaConfiguration.cs` e migration `20260807213000_AddIaTriagemToOcorrencia` no schema `operations."Ocorrencias"`.
+  - Serviço de Triagem IA & Plugin Semantic Kernel: Abstração `IOcorrenciaTriagemService` e implementação `OcorrenciaTriagemService` com inteligência multimodal (foto/áudio/texto) para classificação automática de categoria, prioridade, título, localização e setor responsável. Criado `OcorrenciaTriagemPlugin.cs` em `Modules.AIEngine.Application.Plugins` expondo `[KernelFunction("TriarEAbrirOcorrencia")]` e `[KernelFunction("AnalisarOcorrenciaMultimodal")]` com auto-registro no `Kernel`.
+  - FastEndpoints API (Result Pattern): Endpoints em `OcorrenciaTriagemEndpoints.cs` sob `/api/ai/triagem-ocorrencia/analisar` (análise prévia sem persistir), `/api/ai/triagem-ocorrencia/processar-e-abrir` (triagem + abertura de chamado em Operações) e `/api/ai/plugins/ocorrencia/execute` (simulador interativo de Function Calling) encapsulados em `Result<T>`.
+  - LivingDoc & TDD: Especificação BDD Gherkin em `tests/LivingDoc/Features/Fase7_2_5_TriagemOcorrenciaFotoAudioIa.feature`, suíte de testes unitários `OcorrenciaTriagemPluginTests` (100% aprovada) e teste de integração end-to-end `OcorrenciaTriagemIntegrationTests` com Testcontainers (PostgreSQL 17 real) validando abertura de chamado e isolamento por `tenant_id`.
+  - Blazor UI & Stitch Visual Design: Atualização do cliente HTTP `AiApiClient.cs`, modal interativo `TriagemOcorrenciaModal.razor` com prévias de foto/áudio, badges de confiança de IA e botão "Triagem por IA (Foto/Áudio)" em `/operacoes/ocorrencias` (`Tickets.razor`), e nova aba **Tool 5: TriarEAbrirOcorrencia (Triagem IA & Foto/Áudio)** na página `/ai/plugins` (`AiPluginsPage.razor`).
+  - Navegação Consistente: Manutenção e integração das barras de navegação entre `AINavTabs.razor` e `OperationsNavTabs.razor`.
 
 
 

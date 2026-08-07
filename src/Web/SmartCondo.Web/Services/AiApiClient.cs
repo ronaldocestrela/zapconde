@@ -261,5 +261,44 @@ public class AiApiClient
             return Result<Modules.AIEngine.Endpoints.PackageVisionPluginExecutionResultDto>.Failure($"Erro ao executar plugin de leitura de etiquetas: {ex.Message}");
         }
     }
+
+    public async Task<Result<Modules.Operations.Application.DTOs.ResultadoTriagemOcorrenciaDto>?> AnalisarTriagemOcorrenciaAsync(Modules.Operations.Application.DTOs.TriagemOcorrenciaRequestDto request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/ai/triagem-ocorrencia/analisar", request);
+            return await response.Content.ReadFromJsonAsync<Result<Modules.Operations.Application.DTOs.ResultadoTriagemOcorrenciaDto>>();
+        }
+        catch (Exception ex)
+        {
+            return Result<Modules.Operations.Application.DTOs.ResultadoTriagemOcorrenciaDto>.Failure($"Erro ao realizar análise prévia de triagem: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<Modules.Operations.Application.DTOs.ResultadoTriagemOcorrenciaDto>?> ProcessarEAbrirTriagemOcorrenciaAsync(Modules.Operations.Application.DTOs.TriagemOcorrenciaRequestDto request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/ai/triagem-ocorrencia/processar-e-abrir", request);
+            return await response.Content.ReadFromJsonAsync<Result<Modules.Operations.Application.DTOs.ResultadoTriagemOcorrenciaDto>>();
+        }
+        catch (Exception ex)
+        {
+            return Result<Modules.Operations.Application.DTOs.ResultadoTriagemOcorrenciaDto>.Failure($"Erro ao triar e abrir chamado de ocorrência: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<Modules.Operations.Application.DTOs.ResultadoTriagemOcorrenciaDto>?> ExecuteOcorrenciaPluginAsync(Modules.AIEngine.Endpoints.ExecuteOcorrenciaPluginRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/ai/plugins/ocorrencia/execute", request);
+            return await response.Content.ReadFromJsonAsync<Result<Modules.Operations.Application.DTOs.ResultadoTriagemOcorrenciaDto>>();
+        }
+        catch (Exception ex)
+        {
+            return Result<Modules.Operations.Application.DTOs.ResultadoTriagemOcorrenciaDto>.Failure($"Erro ao executar plugin de triagem de ocorrências: {ex.Message}");
+        }
+    }
 }
 

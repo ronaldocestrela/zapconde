@@ -20,7 +20,13 @@ public record OcorrenciaDto(
     string? ResponsavelNome,
     string? ObservacaoResolucao,
     IReadOnlyCollection<AnexoOcorrenciaDto> Anexos,
-    IReadOnlyCollection<HistoricoOcorrenciaDto> Historico
+    IReadOnlyCollection<HistoricoOcorrenciaDto> Historico,
+    string? OrigemTriagemIa = null,
+    string? ResumoTriagemIa = null,
+    double? ConfiancaTriagemIa = null,
+    string? AudioUrl = null,
+    string? TranscricaoAudio = null,
+    string? SetorResponsavelSugerido = null
 );
 
 public record AnexoOcorrenciaDto(
@@ -62,7 +68,13 @@ public record CriarOcorrenciaRequest(
     CategoriaOcorrencia Categoria,
     PrioridadeOcorrencia Prioridade,
     string Localizacao,
-    List<CriarAnexoDto>? AnexosIniciais = null
+    List<CriarAnexoDto>? AnexosIniciais = null,
+    string? OrigemTriagemIa = null,
+    string? ResumoTriagemIa = null,
+    double? ConfiancaTriagemIa = null,
+    string? AudioUrl = null,
+    string? TranscricaoAudio = null,
+    string? SetorResponsavelSugerido = null
 );
 
 public record CriarAnexoDto(
@@ -86,4 +98,26 @@ public record AdicionarAnexoOcorrenciaRequest(
     string ContentType,
     long TamanhoBytes,
     string UploadPorUserId
+);
+
+public record TriagemOcorrenciaRequestDto(
+    string? FotoUrl,
+    string? AudioUrl,
+    string? RelatoTexto,
+    string MoradorId = "morador-default",
+    string MoradorNome = "Morador Residente",
+    int CondoId = 1
+);
+
+public record ResultadoTriagemOcorrenciaDto(
+    string TituloSugerido,
+    string DescricaoDetalhada,
+    CategoriaOcorrencia CategoriaInferida,
+    PrioridadeOcorrencia PrioridadeInferida,
+    string LocalizacaoSugerida,
+    string SetorResponsavelSugerido,
+    double NivelConfianca,
+    string JustificativaIa,
+    string OrigemTriagem,
+    Guid? OcorrenciaCriadaId = null
 );

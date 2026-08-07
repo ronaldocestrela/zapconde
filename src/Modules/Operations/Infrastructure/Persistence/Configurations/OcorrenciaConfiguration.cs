@@ -64,6 +64,23 @@ public class OcorrenciaConfiguration : IEntityTypeConfiguration<Ocorrencia>
         builder.Property(o => o.ObservacaoResolucao)
             .HasMaxLength(2000);
 
+        builder.Property(o => o.OrigemTriagemIa)
+            .HasMaxLength(50);
+
+        builder.Property(o => o.ResumoTriagemIa)
+            .HasMaxLength(1000);
+
+        builder.Property(o => o.ConfiancaTriagemIa);
+
+        builder.Property(o => o.AudioUrl)
+            .HasMaxLength(1000);
+
+        builder.Property(o => o.TranscricaoAudio)
+            .HasMaxLength(4000);
+
+        builder.Property(o => o.SetorResponsavelSugerido)
+            .HasMaxLength(200);
+
         builder.HasMany(o => o.Anexos)
             .WithOne()
             .HasForeignKey(a => a.OcorrenciaId)
