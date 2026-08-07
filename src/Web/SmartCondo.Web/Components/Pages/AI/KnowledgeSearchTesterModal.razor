@@ -1,0 +1,166 @@
+@using Modules.AIEngine.Application.DTOs
+@using SmartCondo.Web.Services
+@inject AiApiClient AiClient
+
+@if (IsOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content shadow border-0 rounded-4">
+                <div class="modal-header border-bottom pb-3 px-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-primary fs-3">manage_search</span>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark mb-0">Testar Busca Vetorial por Similaridade (Pgvector RAG)</h5>
+                            <small class="text-muted">Simule perguntas de moradores e veja quais cláusulas do regimento são resgatadas.</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" @onclick="CloseModal" disabled="@IsSearching"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="card border-0 bg-light rounded-4 p-3 mb-4">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-9">
+                                <label class="form-label fw-semibold">Pergunta do Morador (Linguagem Natural)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0 text-muted">
+                                        <span class="material-symbols-outlined fs-5">search</span>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 ps-0" placeholder="Ex: Qual o horário limite para som alto na churrasqueira?" @bind="QueryText" @bind:event="oninput" @onkeyup="HandleKeyUp" disabled="@IsSearching" />
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <button type="button" class="btn btn-primary w-100 rounded-3 fw-semibold py-2 d-flex align-items-center justify-content-center gap-2" @onclick="ExecuteSearch" disabled="@IsSearching">
+                                    @if (IsSearching)
+                                    {
+                                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                                        <span>Pesquisando...</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="material-symbols-outlined">bolt</span>
+                                        <span>Consultar Pgvector</span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger d-flex align-items-center gap-2 rounded-3 mb-3">
+                            <span class="material-symbols-outlined">error</span>
+                            <span>@ErrorMessage</span>
+                        </div>
+                    }
+
+                    @if (SearchResults != null)
+                    {
+                        @if (!SearchResults.Any())
+                        {
+                            <div class="text-center py-5 text-muted">
+                                <span class="material-symbols-outlined fs-1 mb-2 text-secondary">search_off</span>
+                                <p class="mb-0">Nenhum trecho do regimento atingiu o limiar de similaridade para esta pergunta.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="fw-bold text-dark mb-0">Trechos Relevantes Encontrados (@SearchResults.Count)</h6>
+                                <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-medium">Ordenados por Similaridade L2</span>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3">
+                                @foreach (var item in SearchResults)
+                                {
+                                    <div class="card border border-light-subtle rounded-4 p-3 shadow-sm">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge bg-secondary-subtle text-secondary rounded-2 px-2 py-1">Chunk #@item.ChunkIndex</span>
+                                                <span class="fw-bold text-dark">@item.DocumentTitle</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <small class="text-muted fw-semibold">Score:</small>
+                                                <span class="badge @GetScoreBadgeClass(item.SimilarityScore) px-3 py-2 rounded-pill fs-7">
+                                                    @((item.SimilarityScore * 100).ToString("F1"))% Similaridade
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="p-3 bg-light rounded-3 font-monospace text-dark fs-7">
+                                            @item.Content
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="modal-footer bg-light border-top px-4 py-3">
+                    <button type="button" class="btn btn-secondary rounded-3 fw-semibold px-4" @onclick="CloseModal">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    private string QueryText { get; set; } = string.Empty;
+    private bool IsSearching { get; set; }
+    private string? ErrorMessage { get; set; }
+    private List<KnowledgeSearchResultDto>? SearchResults { get; set; }
+
+    private async Task CloseModal()
+    {
+        ErrorMessage = null;
+        SearchResults = null;
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await ExecuteSearch();
+        }
+    }
+
+    private async Task ExecuteSearch()
+    {
+        if (string.IsNullOrWhiteSpace(QueryText))
+        {
+            ErrorMessage = "Digite uma pergunta para consultar a base vetorial.";
+            return;
+        }
+
+        IsSearching = true;
+        ErrorMessage = null;
+
+        var request = new KnowledgeSearchQueryRequest(QueryText, TopK: 4, MinSimilarity: 0.0);
+        var result = await AiClient.SearchKnowledgeChunksAsync(request);
+
+        IsSearching = false;
+
+        if (result != null && result.IsSuccess)
+        {
+            SearchResults = result.Data?.ToList() ?? new List<KnowledgeSearchResultDto>();
+        }
+        else
+        {
+            ErrorMessage = result?.Message ?? "Erro ao executar consulta vetorial.";
+        }
+    }
+
+    private static string GetScoreBadgeClass(double score) => score switch
+    {
+        >= 0.7 => "bg-success text-white",
+        >= 0.4 => "bg-warning text-dark",
+        _ => "bg-secondary text-white"
+    };
+}

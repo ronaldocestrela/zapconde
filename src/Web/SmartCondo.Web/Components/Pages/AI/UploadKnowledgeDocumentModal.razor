@@ -1,0 +1,123 @@
+@using Modules.AIEngine.Application.DTOs
+@using Modules.AIEngine.Domain.Enums
+@using SmartCondo.Web.Services
+@inject AiApiClient AiClient
+
+@if (IsOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow border-0 rounded-4">
+                <div class="modal-header border-bottom pb-3 px-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-primary fs-3">post_add</span>
+                        <h5 class="modal-title fw-bold text-dark mb-0">Cadastrar Documento RAG (Regimento / Convenção)</h5>
+                    </div>
+                    <button type="button" class="btn-close" @onclick="CloseModal" disabled="@IsLoading"></button>
+                </div>
+                <div class="modal-body p-4">
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger d-flex align-items-center gap-2 rounded-3 mb-3">
+                            <span class="material-symbols-outlined">error</span>
+                            <span>@ErrorMessage</span>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Título do Documento <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" placeholder="Ex: Regimento Interno 2026, Regulamento da Piscina..." @bind="Title" disabled="@IsLoading" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo do Documento <span class="text-danger">*</span></label>
+                        <select class="form-select rounded-3" @bind="DocumentType" disabled="@IsLoading">
+                            <option value="@KnowledgeDocumentType.RegimentoInterno">Regimento Interno</option>
+                            <option value="@KnowledgeDocumentType.ConvencaoCondominial">Convenção Condominial</option>
+                            <option value="@KnowledgeDocumentType.RegulamentoAreaComum">Regulamento de Áreas Comuns</option>
+                            <option value="@KnowledgeDocumentType.ManualCondomino">Manual do Condômino</option>
+                            <option value="@KnowledgeDocumentType.Outros">Outros</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Conteúdo Bruto / Cláusulas Normativas <span class="text-danger">*</span></label>
+                        <textarea class="form-control rounded-3 font-monospace" rows="8" placeholder="Cole aqui o texto completo das normas, regras e cláusulas do condomínio..." @bind="Content" disabled="@IsLoading"></textarea>
+                        <div class="form-text">O sistema irá fragmentar o texto automaticamente em chunks semânticos e gerar os embeddings vetoriais no pgvector.</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top px-4 py-3">
+                    <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold px-4" @onclick="CloseModal" disabled="@IsLoading">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary rounded-3 fw-semibold px-4 d-flex align-items-center gap-2" @onclick="ProcessUpload" disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                            <span>Processando & Indexando...</span>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined">auto_awesome</span>
+                            <span>Indexar no Pgvector</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EventCallback OnDocumentUploaded { get; set; }
+
+    private string Title { get; set; } = string.Empty;
+    private KnowledgeDocumentType DocumentType { get; set; } = KnowledgeDocumentType.RegimentoInterno;
+    private string Content { get; set; } = string.Empty;
+    private bool IsLoading { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    private async Task CloseModal()
+    {
+        ErrorMessage = null;
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private async Task ProcessUpload()
+    {
+        if (string.IsNullOrWhiteSpace(Title))
+        {
+            ErrorMessage = "Informe o título do documento.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Content))
+        {
+            ErrorMessage = "Cole o conteúdo das normas do condomínio.";
+            return;
+        }
+
+        IsLoading = true;
+        ErrorMessage = null;
+
+        var request = new UploadKnowledgeDocumentRequest(Title, DocumentType, Content);
+        var result = await AiClient.UploadKnowledgeDocumentAsync(request);
+
+        IsLoading = false;
+
+        if (result != null && result.IsSuccess)
+        {
+            Title = string.Empty;
+            Content = string.Empty;
+            await CloseModal();
+            await OnDocumentUploaded.InvokeAsync();
+        }
+        else
+        {
+            ErrorMessage = result?.Message ?? "Falha ao processar e indexar o documento vetorial.";
+        }
+    }
+}

@@ -615,7 +615,17 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 
 
-* [] **Subfase 7.1.2:** [FN-OPE-IA03] Criação do pipeline de RAG: Leitura da Convenção/Regimento Interno, geração de embeddings e busca por similaridade vetorial via **pgvector**.
+* [x] **Subfase 7.1.2:** [FN-OPE-IA03] Criação do pipeline de RAG: Leitura da Convenção/Regimento Interno, geração de embeddings e busca por similaridade vetorial via **pgvector**.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & Multi-tenancy: Entidades Aggregate Root `KnowledgeDocument` e `KnowledgeChunk` no schema `ai` (`ai."KnowledgeDocuments"` e `ai."KnowledgeChunks"`), com suporte ao tipo `ITenantScoped`, filtro de consulta global por `TenantId`, enum `KnowledgeDocumentType` (`RegimentoInterno`, `ConvencaoCondominial`, `RegulamentoAreaComum`, `ManualCondomino`, `Outros`) e exceção de domínio `AiEngineDomainException`.
+  - EF Core 10 & Persistence (Pgvector): Mapeamento Fluent API em `AiDbContext` (`KnowledgeDocumentConfiguration`, `KnowledgeChunkConfiguration`) com coluna `vector(1536)` para embeddings vetoriais (OpenAI `text-embedding-3-small`), índices compostos `(TenantId, IsActive)` e `(TenantId, DocumentType)`, e migration `20260807194532_AddKnowledgeRagEntities`.
+  - Serviços de Aplicação & RAG Pipeline: Implementações `TextChunkerService` (chunking semântico de parágrafos/frases), `TextEmbeddingService` (geração de vetores de 1536 dimensões com fallback determinístico normalizado por L2) e `KnowledgeBaseService` (upload, chunking, indexação e busca por similaridade vetorial via pgvector `L2Distance` / Cosseno), com respostas encapsuladas padronizadamente via Result Pattern (`Result<T>`).
+  - FastEndpoints API: Endpoints sob `/api/ai/knowledge` (`POST /api/ai/knowledge/upload` para cadastro/indexação, `GET /api/ai/knowledge/documents` para listagem, `GET /api/ai/knowledge/documents/{id}` para inspeção de chunks, `DELETE /api/ai/knowledge/documents/{id}` para exclusão, `POST /api/ai/knowledge/search` para busca semântica vetorial e `GET /api/ai/knowledge/summary` para resumo KPI).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase7_1_2_RagPipelinePgvectorRegimentoInterno.feature`, suíte unitária (`TextChunkerServiceTests`, `KnowledgeBaseServiceTests`) e teste de integração end-to-end com Testcontainers (`RagPipelineIntegrationTests` rodando PostgreSQL 17 + extensão pgvector real) — 100% aprovados.
+  - Blazor UI & Visual Design (Stitch): Cliente HTTP `AiApiClient`, componentes `UploadKnowledgeDocumentModal.razor` (modal de envio/indexação do regimento) e `KnowledgeSearchTesterModal.razor` (modal interativo de simulação de busca vetorial RAG com porcentagens de similaridade), página principal `/ai/knowledge` (`AiKnowledgePage.razor` com 4 KPI cards e tabela interativa) e atualização da barra de abas `AINavTabs.razor` integrando a aba **Base de Conhecimento (RAG)**.
 
 
 

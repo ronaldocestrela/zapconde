@@ -1,0 +1,230 @@
+@page "/ai/knowledge"
+@using Modules.AIEngine.Application.DTOs
+@using SmartCondo.Web.Services
+@inject AiApiClient AiClient
+
+<PageTitle>Base de Conhecimento RAG - SmartCondo</PageTitle>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">Base de Conhecimento RAG</h3>
+            <p class="text-muted mb-0">Gestão de Regimento Interno, Convenções e busca por similaridade vetorial via Pgvector.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary rounded-3 fw-semibold d-flex align-items-center gap-2" @onclick="() => IsSearchTesterOpen = true">
+                <span class="material-symbols-outlined fs-5">manage_search</span>
+                <span>Testar Busca Vetorial</span>
+            </button>
+            <button class="btn btn-primary rounded-3 fw-semibold d-flex align-items-center gap-2" @onclick="() => IsUploadModalOpen = true">
+                <span class="material-symbols-outlined fs-5">add</span>
+                <span>Novo Documento</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Navegação de Abas -->
+    <AINavTabs />
+
+    <!-- KPI Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-medium">Documentos Ativos</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1">@(Summary?.ActiveDocuments ?? 0)</h3>
+                    </div>
+                    <div class="rounded-3 p-3 bg-primary-subtle text-primary">
+                        <span class="material-symbols-outlined fs-3">menu_book</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-medium">Fragmentos Vetoriais</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1">@(Summary?.TotalChunks ?? 0)</h3>
+                    </div>
+                    <div class="rounded-3 p-3 bg-success-subtle text-success">
+                        <span class="material-symbols-outlined fs-3">data_object</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-medium">Dimensão Vetorial</span>
+                        <h4 class="fw-bold text-dark mb-0 mt-1">1536 Dimensões</h4>
+                    </div>
+                    <div class="rounded-3 p-3 bg-info-subtle text-info">
+                        <span class="material-symbols-outlined fs-3">grain</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-medium">Engine de Busca</span>
+                        <h4 class="fw-bold text-dark mb-0 mt-1">Pgvector (PostgreSQL)</h4>
+                    </div>
+                    <div class="rounded-3 p-3 bg-warning-subtle text-warning">
+                        <span class="material-symbols-outlined fs-3">storage</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Documentos RAG -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="fw-bold text-dark mb-0">Documentos Normativos Indexados</h5>
+            <button class="btn btn-sm btn-light rounded-3 d-flex align-items-center gap-1" @onclick="LoadData">
+                <span class="material-symbols-outlined fs-6">refresh</span>
+                <span>Atualizar</span>
+            </button>
+        </div>
+
+        @if (IsLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="text-muted mt-2 mb-0">Carregando documentos da base RAG...</p>
+            </div>
+        }
+        else if (Documents == null || !Documents.Any())
+        {
+            <div class="text-center py-5">
+                <span class="material-symbols-outlined fs-1 text-muted mb-2">find_in_page</span>
+                <h6 class="fw-semibold text-dark">Nenhum documento cadastrado</h6>
+                <p class="text-muted small">Cadastre o Regimento Interno ou Convenção Condominial para habilitar o RAG no assistente de IA.</p>
+                <button class="btn btn-primary rounded-3 btn-sm mt-2" @onclick="() => IsUploadModalOpen = true">
+                    + Cadastrar Primeiro Documento
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0">Documento</th>
+                            <th class="border-0">Tipo</th>
+                            <th class="border-0">Trechos Vetoriais</th>
+                            <th class="border-0">Status</th>
+                            <th class="border-0">Data de Indexação</th>
+                            <th class="border-0 text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in Documents)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="material-symbols-outlined text-primary fs-4">description</span>
+                                        <div>
+                                            <div class="fw-bold text-dark">@doc.Title</div>
+                                            <small class="text-muted">@doc.OriginalFileName</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+                                        @doc.DocumentTypeName
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border px-3 py-2 rounded-2">
+                                        @doc.ChunkCount Chunks
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (doc.IsActive)
+                                    {
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">
+                                            ● Indexado & Ativo
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2">
+                                            Inativo
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <small class="text-muted">@doc.CriadoEm.ToString("dd/MM/yyyy HH:mm")</small>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex align-items-center justify-content-end gap-2">
+                                        <button class="btn btn-sm btn-outline-danger rounded-3" @onclick="() => DeleteDocument(doc.Id)" title="Excluir documento">
+                                            <span class="material-symbols-outlined fs-6">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modais -->
+<UploadKnowledgeDocumentModal @bind-IsOpen="IsUploadModalOpen" OnDocumentUploaded="LoadData" />
+<KnowledgeSearchTesterModal @bind-IsOpen="IsSearchTesterOpen" />
+
+@code {
+    private bool IsLoading { get; set; } = true;
+    private bool IsUploadModalOpen { get; set; }
+    private bool IsSearchTesterOpen { get; set; }
+    private List<KnowledgeDocumentDto>? Documents { get; set; }
+    private KnowledgeSummaryDto? Summary { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+        var docsResult = await AiClient.GetKnowledgeDocumentsAsync();
+        var summaryResult = await AiClient.GetKnowledgeSummaryAsync();
+
+        if (docsResult != null && docsResult.IsSuccess)
+        {
+            Documents = docsResult.Data?.ToList();
+        }
+
+        if (summaryResult != null && summaryResult.IsSuccess)
+        {
+            Summary = summaryResult.Data;
+        }
+
+        IsLoading = false;
+    }
+
+    private async Task DeleteDocument(int id)
+    {
+        var result = await AiClient.DeleteKnowledgeDocumentAsync(id);
+        if (result != null && result.IsSuccess)
+        {
+            await LoadData();
+        }
+    }
+}

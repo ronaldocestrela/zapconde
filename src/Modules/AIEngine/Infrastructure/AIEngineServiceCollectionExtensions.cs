@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Modules.AIEngine.Application.Services;
 using Modules.AIEngine.Infrastructure.Persistence;
+using Modules.AIEngine.Infrastructure.Services;
 
 namespace Modules.AIEngine.Infrastructure;
 
@@ -24,6 +25,9 @@ public static class AIEngineServiceCollectionExtensions
 
         services.AddSingleton<IAiKernelFactory, AiKernelFactory>();
         services.AddScoped<IAiOrchestratorService, AiOrchestratorService>();
+        services.AddSingleton<ITextChunkerService, TextChunkerService>();
+        services.AddScoped<ITextEmbeddingService, TextEmbeddingService>();
+        services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
 
         return services;
     }

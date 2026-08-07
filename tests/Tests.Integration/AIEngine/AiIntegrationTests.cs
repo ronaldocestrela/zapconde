@@ -12,7 +12,7 @@ namespace Tests.Integration.AIEngine;
 public sealed class AiIntegrationTests : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:17-alpine")
+        .WithImage("pgvector/pgvector:pg17")
         .WithDatabase("smartcondo_ai_test")
         .WithUsername("smartcondo")
         .WithPassword("smartcondo")
@@ -37,7 +37,9 @@ public sealed class AiIntegrationTests : IAsyncLifetime
         };
 
         var options = new DbContextOptionsBuilder<AiDbContext>()
-            .UseNpgsql(_postgresContainer.GetConnectionString())
+            .UseNpgsql(
+                _postgresContainer.GetConnectionString(),
+                npgsqlOptions => npgsqlOptions.UseVector())
             .Options;
 
         return new AiDbContext(options, tenantService);
