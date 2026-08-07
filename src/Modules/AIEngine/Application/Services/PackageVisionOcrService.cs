@@ -65,7 +65,7 @@ Entrada da imagem: {targetInput[..Math.Min(100, targetInput.Length)]}...";
             TipoEncomenda tipoSugerido = TipoEncomenda.Pacote;
             double confianca = 92.5;
 
-            if (aiResult.IsSuccess && aiResult.Data is not null && !string.IsNullOrWhiteSpace(aiResult.Data.Response))
+            if (aiResult?.IsSuccess == true && aiResult.Data is not null && !string.IsNullOrWhiteSpace(aiResult.Data.Response))
             {
                 try
                 {

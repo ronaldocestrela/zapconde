@@ -76,16 +76,16 @@ public sealed class AssembleiaIntegrationTests : IAsyncLifetime
             var createResult = await service.CriarAssembleiaAsync(createRequest);
             createResult.IsSuccess.Should().BeTrue(createResult.Message);
             createResult.Data.Should().NotBeNull();
-            createResult.Data.Pautas.Should().HaveCount(2);
-            createResult.Data.Status.Should().Be(StatusAssembleia.Agendada);
+            createResult.Data!.Pautas.Should().HaveCount(2);
+            createResult.Data!.Status.Should().Be(StatusAssembleia.Agendada);
 
-            var assembleiaId = createResult.Data.Id;
-            var pautaContas = createResult.Data.Pautas.First(p => p.Ordem == 1);
+            var assembleiaId = createResult.Data!.Id;
+            var pautaContas = createResult.Data!.Pautas.First(p => p.Ordem == 1);
 
             // 3. Start Assembly
             var startResult = await service.AtualizarStatusAsync(assembleiaId, StatusAssembleia.EmAndamento);
             startResult.IsSuccess.Should().BeTrue();
-            startResult.Data.Status.Should().Be(StatusAssembleia.EmAndamento);
+            startResult.Data!.Status.Should().Be(StatusAssembleia.EmAndamento);
 
             // 4. Register Vote for Unit 101
             var vote1Request = new RegistrarVotoRequest("morador-101", "101", "Sim");
@@ -105,16 +105,16 @@ public sealed class AssembleiaIntegrationTests : IAsyncLifetime
             // 7. Finalize Assembly & Generate Ata
             var finalizeResult = await service.EncerrarEGerarAtaAsync(assembleiaId);
             finalizeResult.IsSuccess.Should().BeTrue();
-            finalizeResult.Data.Status.Should().Be(StatusAssembleia.Encerrada);
-            finalizeResult.Data.AtaTexto.Should().NotBeNullOrWhiteSpace();
-            finalizeResult.Data.AtaTexto.Should().Contain("Quórum Total de Unidades Participantes: 2 unidade(s)");
+            finalizeResult.Data!.Status.Should().Be(StatusAssembleia.Encerrada);
+            finalizeResult.Data!.AtaTexto.Should().NotBeNullOrWhiteSpace();
+            finalizeResult.Data!.AtaTexto.Should().Contain("Quórum Total de Unidades Participantes: 2 unidade(s)");
 
             // 8. Verify Summary KPI
             var summaryResult = await service.ObterResumoKpiAsync(10);
             summaryResult.IsSuccess.Should().BeTrue();
-            summaryResult.Data.Total.Should().Be(1);
-            summaryResult.Data.Encerradas.Should().Be(1);
-            summaryResult.Data.TotalVotosRegistrados.Should().Be(2);
+            summaryResult.Data!.Total.Should().Be(1);
+            summaryResult.Data!.Encerradas.Should().Be(1);
+            summaryResult.Data!.TotalVotosRegistrados.Should().Be(2);
         }
 
         // 9. Tenant 2 Isolation Check

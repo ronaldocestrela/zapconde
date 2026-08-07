@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <NoWarn>$(NoWarn);1591</NoWarn>
     <Version>1.0.0</Version>
   </PropertyGroup>
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('Tests'))">

@@ -90,8 +90,8 @@ public sealed class RagPipelineIntegrationTests : IAsyncLifetime
         searchResult.IsSuccess.Should().BeTrue();
         searchResult.Data.Should().NotBeNull();
         searchResult.Data.Should().NotBeEmpty();
-        searchResult.Data[0].DocumentTitle.Should().Contain("Regimento Interno");
-        searchResult.Data[0].SimilarityScore.Should().BeGreaterThan(0.5);
+        searchResult.Data![0].DocumentTitle.Should().Contain("Regimento Interno");
+        searchResult.Data![0].SimilarityScore.Should().BeGreaterThan(0.5);
     }
 
     [Fact]

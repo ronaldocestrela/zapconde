@@ -75,20 +75,20 @@ public sealed class VisitanteIntegrationTests : IAsyncLifetime
 
         var createResult = await service.AuthorizeVisitanteAsync(createRequest);
         createResult.IsSuccess.Should().BeTrue();
-        var visitanteId = createResult.Data.Id;
-        createResult.Data.Status.Should().Be(StatusVisitante.Agendado);
+        var visitanteId = createResult.Data!.Id;
+        createResult.Data!.Status.Should().Be(StatusVisitante.Agendado);
 
         // 4. Act - Register Entry
         var entryResult = await service.RegistrarEntradaAsync(visitanteId, operadorId: 42);
         entryResult.IsSuccess.Should().BeTrue();
-        entryResult.Data.Status.Should().Be(StatusVisitante.Presente);
-        entryResult.Data.DataHoraEntrada.Should().NotBeNull();
+        entryResult.Data!.Status.Should().Be(StatusVisitante.Presente);
+        entryResult.Data!.DataHoraEntrada.Should().NotBeNull();
 
         // 5. Act - Register Exit
         var exitResult = await service.RegistrarSaidaAsync(visitanteId, operadorId: 43);
         exitResult.IsSuccess.Should().BeTrue();
-        exitResult.Data.Status.Should().Be(StatusVisitante.Finalizado);
-        exitResult.Data.DataHoraSaida.Should().NotBeNull();
+        exitResult.Data!.Status.Should().Be(StatusVisitante.Finalizado);
+        exitResult.Data!.DataHoraSaida.Should().NotBeNull();
 
         // 6. Assert - Query List & Summary
         var listResult = await service.GetVisitantesAsync(busca: "Fernanda");
@@ -97,7 +97,7 @@ public sealed class VisitanteIntegrationTests : IAsyncLifetime
 
         var summaryResult = await service.GetSummaryAsync();
         summaryResult.IsSuccess.Should().BeTrue();
-        summaryResult.Data.TotalHoje.Should().Be(1);
+        summaryResult.Data!.TotalHoje.Should().Be(1);
     }
 
     private sealed class TestCurrentTenantService : ICurrentTenantService

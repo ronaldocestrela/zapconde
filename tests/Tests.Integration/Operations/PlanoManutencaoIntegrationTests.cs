@@ -73,10 +73,10 @@ public sealed class PlanoManutencaoIntegrationTests : IAsyncLifetime
             var createResult = await service.CriarPlanoAsync(createRequest);
             createResult.IsSuccess.Should().BeTrue(createResult.Message);
             createResult.Data.Should().NotBeNull();
-            createResult.Data.Titulo.Should().Be("Manutenção Preventiva de Elevador Social");
-            createResult.Data.Status.Should().Be(StatusManutencao.Proxima);
+            createResult.Data!.Titulo.Should().Be("Manutenção Preventiva de Elevador Social");
+            createResult.Data!.Status.Should().Be(StatusManutencao.Proxima);
 
-            var planoId = createResult.Data.Id;
+            var planoId = createResult.Data!.Id;
 
             // 3. Conclude Maintenance
             var completeRequest = new ConcluirManutencaoRequest(
@@ -88,16 +88,16 @@ public sealed class PlanoManutencaoIntegrationTests : IAsyncLifetime
 
             var completeResult = await service.ConcluirManutencaoAsync(planoId, completeRequest);
             completeResult.IsSuccess.Should().BeTrue();
-            completeResult.Data.Status.Should().Be(StatusManutencao.EmDia);
-            completeResult.Data.CustoReal.Should().Be(1150.00m);
-            completeResult.Data.DataProximaManutencao.Should().Be(DateTime.Today.AddMonths(1));
+            completeResult.Data!.Status.Should().Be(StatusManutencao.EmDia);
+            completeResult.Data!.CustoReal.Should().Be(1150.00m);
+            completeResult.Data!.DataProximaManutencao.Should().Be(DateTime.Today.AddMonths(1));
 
             // 4. Verify Summary KPI
             var summaryResult = await service.ObterResumoMetricasAsync(100);
             summaryResult.IsSuccess.Should().BeTrue();
-            summaryResult.Data.Total.Should().Be(1);
-            summaryResult.Data.EmDia.Should().Be(1);
-            summaryResult.Data.TotalCustoReal.Should().Be(1150.00m);
+            summaryResult.Data!.Total.Should().Be(1);
+            summaryResult.Data!.EmDia.Should().Be(1);
+            summaryResult.Data!.TotalCustoReal.Should().Be(1150.00m);
         }
 
         // 5. Tenant 2 Isolation Check

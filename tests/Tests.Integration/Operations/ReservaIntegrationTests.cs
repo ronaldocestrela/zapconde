@@ -94,7 +94,7 @@ public sealed class ReservaIntegrationTests : IAsyncLifetime
 
             var areaRes = await areaAppService.CreateAsync(createAreaReq);
             areaRes.IsSuccess.Should().BeTrue();
-            areaComumId = areaRes.Data.Id;
+            areaComumId = areaRes.Data!.Id;
         }
 
         var dataRef = DateTime.UtcNow.Date.AddDays(5);
@@ -123,8 +123,8 @@ public sealed class ReservaIntegrationTests : IAsyncLifetime
 
             var res1 = await appService.CriarReservaAsync(req1);
             res1.IsSuccess.Should().BeTrue();
-            res1.Data.Status.Should().Be(StatusReserva.Confirmada);
-            res1.Data.ValorTotal.Should().Be(200.00m);
+            res1.Data!.Status.Should().Be(StatusReserva.Confirmada);
+            res1.Data!.ValorTotal.Should().Be(200.00m);
         }
 
         // Act 2: Tentar criar uma segunda reserva com sobreposição temporal no mesmo espaço (16:00 às 20:00)

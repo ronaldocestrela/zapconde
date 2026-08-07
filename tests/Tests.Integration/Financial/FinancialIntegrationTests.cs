@@ -91,7 +91,7 @@ public sealed class FinancialIntegrationTests : IAsyncLifetime
             var listRes = await invoiceService.GetInvoicesAsync(competencia: "2026-08");
             listRes.IsSuccess.Should().BeTrue();
             listRes.Data.Should().HaveCount(1);
-            listRes.Data.First().TotalFinal.Should().Be(550.00m);
+            listRes.Data!.First().TotalFinal.Should().Be(550.00m);
         }
 
         // 3. Consulta no Tenant 2 (isolamento) NÃO deve enxergar a fatura do Tenant 1

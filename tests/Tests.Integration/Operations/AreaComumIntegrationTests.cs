@@ -80,8 +80,8 @@ public sealed class AreaComumIntegrationTests : IAsyncLifetime
 
             createResult.IsSuccess.Should().BeTrue();
             createResult.Data.Should().NotBeNull();
-            createResult.Data.CustoTotalReserva.Should().Be(240.00m);
-            createResult.Data.Status.Should().Be(StatusAreaComum.Ativa);
+            createResult.Data!.CustoTotalReserva.Should().Be(240.00m);
+            createResult.Data!.Status.Should().Be(StatusAreaComum.Ativa);
         }
 
         // Act 2: Tenant 2 tenta listar áreas comuns
@@ -108,12 +108,12 @@ public sealed class AreaComumIntegrationTests : IAsyncLifetime
 
             listResult.IsSuccess.Should().BeTrue();
             listResult.Data.Should().HaveCount(1);
-            var area = listResult.Data.First();
+            var area = listResult.Data!.First();
             area.Nome.Should().Be("Salão de Festas Principal");
 
             var statusResult = await appService.ChangeStatusAsync(area.Id, new ChangeAreaComumStatusRequest(StatusAreaComum.Manutencao));
             statusResult.IsSuccess.Should().BeTrue();
-            statusResult.Data.Status.Should().Be(StatusAreaComum.Manutencao);
+            statusResult.Data!.Status.Should().Be(StatusAreaComum.Manutencao);
         }
     }
 }
