@@ -184,5 +184,30 @@ public class AiApiClient
             return Result<IEnumerable<Modules.Financial.Application.DTOs.PendingBoletoDto>>.Failure($"Erro ao consultar boletos pendentes: {ex.Message}");
         }
     }
+
+    public async Task<Result<Modules.AIEngine.Endpoints.ReservaPluginExecutionResultDto>?> ExecuteReservaPluginAsync(Modules.AIEngine.Endpoints.ExecuteReservaPluginRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/ai/plugins/reservas/execute", request);
+            return await response.Content.ReadFromJsonAsync<Result<Modules.AIEngine.Endpoints.ReservaPluginExecutionResultDto>>();
+        }
+        catch (Exception ex)
+        {
+            return Result<Modules.AIEngine.Endpoints.ReservaPluginExecutionResultDto>.Failure($"Erro ao executar plugin de reserva de área comum: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<IEnumerable<Modules.Operations.Application.DTOs.AreaComumDto>>?> GetActiveAreasComunsAsync(int condoId = 1)
+    {
+        try
+        {
+            return await _httpClient.GetFromJsonAsync<Result<IEnumerable<Modules.Operations.Application.DTOs.AreaComumDto>>>($"/api/ai/plugins/reservas/areas?condoId={condoId}");
+        }
+        catch (Exception ex)
+        {
+            return Result<IEnumerable<Modules.Operations.Application.DTOs.AreaComumDto>>.Failure($"Erro ao consultar áreas comuns ativas: {ex.Message}");
+        }
+    }
 }
 

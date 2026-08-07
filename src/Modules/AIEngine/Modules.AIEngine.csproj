@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.Infrastructure\BuildingBlocks.Infrastructure.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.Shared\BuildingBlocks.Shared.csproj" />
     <ProjectReference Include="..\Financial\Modules.Financial.csproj" />
+    <ProjectReference Include="..\Operations\Modules.Operations.csproj" />
   </ItemGroup>
 
 

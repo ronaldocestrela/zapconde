@@ -29,6 +29,7 @@ public static class AIEngineServiceCollectionExtensions
         services.AddScoped<ITextEmbeddingService, TextEmbeddingService>();
         services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
         services.AddScoped<Application.Plugins.BoletoPlugin>();
+        services.AddScoped<Application.Plugins.ReservaPlugin>();
 
         return services;
     }

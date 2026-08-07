@@ -646,7 +646,16 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 
 
-* [] **Subfase 7.2.2:** [FN-OPE-IA01] Plugin `ReserveCommonArea(areaId, data, moradorId)` -> Valida e agenda área comum pelo chat.
+* [x] **Subfase 7.2.2:** [FN-OPE-IA01] Plugin `ReserveCommonArea(areaId, data, moradorId)` -> Valida e agenda área comum pelo chat.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Plugin Semantic Kernel (Function Calling): Criado `ReservaPlugin.cs` em `Modules.AIEngine.Application.Plugins` expondo as ferramentas `[KernelFunction("ReserveCommonArea")]` (validação e agendamento de áreas comuns com parsing flexível de datas, checagem de colisão, capacidade, antecedência, regras de horário e cálculo de taxas) e `[KernelFunction("GetAvailableCommonAreas")]` (consulta do catálogo de áreas comuns ativas).
+  - Registro no Kernel & Orchestrator: Atualizados `AiOrchestratorService.cs` e `AIEngineServiceCollectionExtensions.cs` para registrar e injetar o `ReservaPlugin` na lista de ferramentas do `Kernel` com suporte a `tenant_id` (`ITenantScoped`).
+  - FastEndpoints API: Endpoints em `ReservaPluginEndpoints.cs` sob `/api/ai/plugins/reservas` (`POST /api/ai/plugins/reservas/execute` para simulação interativa de Function Calling de reservas e `GET /api/ai/plugins/reservas/areas` para catálogo de áreas ativas) encapsulados com Result Pattern (`Result<T>`).
+  - LivingDoc & TDD: Especificação em Gherkin `tests/LivingDoc/Features/Fase7_2_2_PluginReservaAreaComumSemanticKernel.feature`, suíte de testes unitários `ReservaPluginTests` (100% aprovada) e teste de integração end-to-end com Testcontainers (`ReservaPluginIntegrationTests` executando em PostgreSQL 17 real) garantindo agendamento e isolamento por tenant.
+  - Blazor UI & Visual Design (Stitch): Atualização do cliente HTTP `AiApiClient.cs` e aprimoramento da página `/ai/plugins` (`AiPluginsPage.razor`) com KPI cards de plugins (2 ativos), seletor de abas de ferramentas (Boleto x Reserva), formulário com seletor de área comum, data/hora e convidados, e comprovante visual de solicitação no padrão Stitch.
 
 
 * [] **Subfase 7.2.3:** [FN-ACC-IA01] Plugin `AuthorizeGuest(nome, documento, data)` -> Registra liberação de visitante na portaria.
