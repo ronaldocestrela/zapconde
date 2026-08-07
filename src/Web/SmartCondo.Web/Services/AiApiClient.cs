@@ -1,8 +1,10 @@
 using System.Net.Http.Json;
 using BuildingBlocks.Shared;
 using Modules.AIEngine.Application.DTOs;
+using Modules.Financial.Application.DTOs;
 
 namespace SmartCondo.Web.Services;
+
 
 public class AiApiClient
 {
@@ -153,4 +155,34 @@ public class AiApiClient
             return Result<KnowledgeSummaryDto>.Failure($"Erro ao obter resumo da base RAG: {ex.Message}");
         }
     }
+
+    // ================================================
+    // Métodos para Plugins / Function Calling
+    // ================================================
+
+    public async Task<Result<BoletoPluginExecutionResultDto>?> ExecuteBoletoPluginAsync(int moradorId)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/ai/plugins/boletos/execute", new { MoradorId = moradorId });
+            return await response.Content.ReadFromJsonAsync<Result<BoletoPluginExecutionResultDto>>();
+        }
+        catch (Exception ex)
+        {
+            return Result<BoletoPluginExecutionResultDto>.Failure($"Erro ao executar plugin de boleto: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<IEnumerable<Modules.Financial.Application.DTOs.PendingBoletoDto>>?> GetPendingBoletosByMoradorAsync(int moradorId)
+    {
+        try
+        {
+            return await _httpClient.GetFromJsonAsync<Result<IEnumerable<Modules.Financial.Application.DTOs.PendingBoletoDto>>>($"/api/ai/plugins/boletos/pending/{moradorId}");
+        }
+        catch (Exception ex)
+        {
+            return Result<IEnumerable<Modules.Financial.Application.DTOs.PendingBoletoDto>>.Failure($"Erro ao consultar boletos pendentes: {ex.Message}");
+        }
+    }
 }
+

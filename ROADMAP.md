@@ -631,7 +631,19 @@ Este plano de execução foi estruturado em **Fases Funcionais e Arquiteturais e
 
 ### 7.2. Plugins e Function Calling para o Agente
 
-* [] **Subfase 7.2.1:** [FN-FIN-IA01] Plugin `GetPendingBoletos(moradorId)` -> Retorna chave PIX Copia e Cola e link de PDF do boleto em aberto.
+* [x] **Subfase 7.2.1:** [FN-FIN-IA01] Plugin `GetPendingBoletos(moradorId)` -> Retorna chave PIX Copia e Cola e link de PDF do boleto em aberto.
+
+  **Status:** ✅ Concluída
+
+  **Entregáveis implementados:**
+  - Domínio & Serviço Financeiro: Criação do `PendingBoletoDto` e método `GetPendingBoletosByMoradorAsync(int moradorId)` no `InvoiceService` / `IInvoiceService` com filtro de faturas pendentes/parcialmente pagas e isolamento por `tenant_id` (`ITenantScoped`).
+  - EF Core 10 & Indexing: Configuração do índice composto `(TenantId, MoradorId, Status)` em `FaturaConfiguration` para otimização de consultas financeiras por morador.
+  - Plugin Semantic Kernel (Function Calling): Implementado `BoletoPlugin.cs` em `Modules.AIEngine.Application.Plugins` com método `[KernelFunction("GetPendingBoletos")]` e `[Description(...)]`, retornando payload JSON completo com chave PIX Copia e Cola, linha digitável, código de barras, valor, data de vencimento e link do PDF do boleto.
+  - Registro no Kernel & Orchestrator: Atualização de `IAiKernelFactory`, `AiKernelFactory` e `AiOrchestratorService` para auto-registrar o `BoletoPlugin` no `Kernel` do Semantic Kernel e habilitar invocação dinâmica via Function Calling.
+  - FastEndpoints API: Endpoints sob `/api/ai/plugins/boletos` (`GET /api/ai/plugins/boletos/pending/{moradorId}` para consulta direta de cobranças pendentes e `POST /api/ai/plugins/boletos/execute` para simulação interativa de Function Calling) encapsulados com Result Pattern (`Result<T>`).
+  - LivingDoc & TDD: Especificação BDD em Gherkin `tests/LivingDoc/Features/Fase7_2_1_PluginBoletoSemanticKernel.feature`, suíte de testes unitários `BoletoPluginTests` (100% aprovada) e teste de integração end-to-end com Testcontainers (`BoletoPluginIntegrationTests` executando em PostgreSQL 17 real) validando busca real e isolamento por tenant.
+  - Blazor UI & Visual Design (Stitch): Atualização do cliente HTTP `AiApiClient`, criação da página `/ai/plugins` (`AiPluginsPage.razor`) com KPI cards de plugins/tools, simulador interativo de chamadas do agente, cópia rápida de chave PIX para área de transferência e botão de visualização em PDF, além da integração da nova aba **Plugins & Function Calling** no componente de navegação `AINavTabs.razor`.
+
 
 
 * [] **Subfase 7.2.2:** [FN-OPE-IA01] Plugin `ReserveCommonArea(areaId, data, moradorId)` -> Valida e agenda área comum pelo chat.

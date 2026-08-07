@@ -177,6 +177,49 @@ public class InvoiceService : IInvoiceService
         }
     }
 
+    public async Task<Result<IEnumerable<PendingBoletoDto>>> GetPendingBoletosByMoradorAsync(int moradorId, CancellationToken ct = default)
+    {
+        if (!_currentTenantService.TenantId.HasValue)
+        {
+            return Result<IEnumerable<PendingBoletoDto>>.Failure("Tenant não resolvido no contexto atual.");
+        }
+
+        if (moradorId <= 0)
+        {
+            return Result<IEnumerable<PendingBoletoDto>>.ValidationFailure(["Identificador de morador (moradorId) inválido."]);
+        }
+
+        var faturas = await _dbContext.Faturas
+            .Include(f => f.Boleto)
+            .AsNoTracking()
+            .Where(f => f.MoradorId == moradorId && (f.Status == StatusFatura.Pendente || f.Status == StatusFatura.ParcialmentePago))
+            .OrderBy(f => f.DataVencimento)
+            .ToListAsync(ct);
+
+        var now = DateTime.UtcNow;
+
+        var dtos = faturas.Select(f => new PendingBoletoDto(
+            FaturaId: f.Id,
+            BoletoId: f.Boleto?.Id,
+            MoradorId: f.MoradorId,
+            UnidadeId: f.UnidadeId,
+            Competencia: f.Competencia,
+            NumeroFatura: f.NumeroFatura,
+            ValorTotal: f.Boleto?.Valor ?? f.TotalFinal,
+            DataVencimento: f.DataVencimento,
+            StatusFatura: f.Status,
+            StatusFaturaDescricao: f.Status.ToString(),
+            CodigoPixCopiaECola: f.Boleto?.CodigoPixCopiaECola ?? string.Empty,
+            LinhaDigitavel: f.Boleto?.LinhaDigitavel ?? string.Empty,
+            CodigoBarras: f.Boleto?.CodigoBarras ?? string.Empty,
+            PdfUrl: f.Boleto?.PdfUrl ?? $"/api/financial/invoices/{f.Id}/pdf",
+            Vencido: f.DataVencimento < now
+        ));
+
+        return Result<IEnumerable<PendingBoletoDto>>.Success(dtos);
+    }
+
+
     private static FaturaSummaryDto MapToSummary(Fatura f) => new(
         Id: f.Id,
         CondoId: f.CondoId,

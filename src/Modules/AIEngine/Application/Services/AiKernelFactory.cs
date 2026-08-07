@@ -7,7 +7,7 @@ namespace Modules.AIEngine.Application.Services;
 
 public class AiKernelFactory : IAiKernelFactory
 {
-    public Kernel CreateKernel(AiKernelConfig config)
+    public Kernel CreateKernel(AiKernelConfig config, IEnumerable<object>? plugins = null)
     {
         if (config == null)
             throw new ArgumentNullException(nameof(config));
@@ -16,6 +16,17 @@ public class AiKernelFactory : IAiKernelFactory
             throw new AiEngineDomainException("A configuração do Semantic Kernel para este condomínio está inativa.");
 
         var builder = Kernel.CreateBuilder();
+
+        if (plugins != null)
+        {
+            foreach (var plugin in plugins)
+            {
+                if (plugin != null)
+                {
+                    builder.Plugins.AddFromObject(plugin);
+                }
+            }
+        }
 
         switch (config.Provider)
         {
@@ -53,3 +64,4 @@ public class AiKernelFactory : IAiKernelFactory
         return builder.Build();
     }
 }
+

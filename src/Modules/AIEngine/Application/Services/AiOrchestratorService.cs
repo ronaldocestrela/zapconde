@@ -15,16 +15,20 @@ public class AiOrchestratorService : IAiOrchestratorService
     private readonly AiDbContext _dbContext;
     private readonly ICurrentTenantService _currentTenantService;
     private readonly IAiKernelFactory _kernelFactory;
+    private readonly Application.Plugins.BoletoPlugin? _boletoPlugin;
 
     public AiOrchestratorService(
         AiDbContext dbContext,
         ICurrentTenantService currentTenantService,
-        IAiKernelFactory kernelFactory)
+        IAiKernelFactory kernelFactory,
+        Application.Plugins.BoletoPlugin? boletoPlugin = null)
     {
         _dbContext = dbContext;
         _currentTenantService = currentTenantService;
         _kernelFactory = kernelFactory;
+        _boletoPlugin = boletoPlugin;
     }
+
 
     public async Task<Result<AiKernelConfigDto>> GetConfigAsync(CancellationToken ct = default)
     {
@@ -134,7 +138,9 @@ public class AiOrchestratorService : IAiOrchestratorService
             }
             else
             {
-                var kernel = _kernelFactory.CreateKernel(config);
+                var plugins = _boletoPlugin != null ? new object[] { _boletoPlugin } : Array.Empty<object>();
+                var kernel = _kernelFactory.CreateKernel(config, plugins);
+
                 var executionSettings = new PromptExecutionSettings
                 {
                     ModelId = config.ModelId,

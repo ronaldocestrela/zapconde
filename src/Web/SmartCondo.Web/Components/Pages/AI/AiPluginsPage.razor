@@ -1,0 +1,284 @@
+@page "/ai/plugins"
+@using Modules.Financial.Application.DTOs
+@using SmartCondo.Web.Services
+@inject AiApiClient AiClient
+@inject IJSRuntime JS
+
+<PageTitle>Plugins & Function Calling - SmartCondo AI</PageTitle>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">Plugins & Function Calling (Semantic Kernel)</h3>
+            <p class="text-muted mb-0">Execução de ferramentas fortemente tipadas e integrações de domínio via linguagem natural.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary rounded-3 fw-semibold d-flex align-items-center gap-2" @onclick="SimularComMoradorPadrao">
+                <span class="material-symbols-outlined fs-5">play_arrow</span>
+                <span>Simular Morador #10</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Navegação de Abas -->
+    <AINavTabs />
+
+    <!-- KPI Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-medium">Plugins Registrados</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1">1 (BoletoPlugin)</h3>
+                    </div>
+                    <div class="rounded-3 p-3 bg-primary-subtle text-primary">
+                        <span class="material-symbols-outlined fs-3">extension</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-medium">Function Name</span>
+                        <h4 class="fw-bold text-success mb-0 mt-1">GetPendingBoletos</h4>
+                    </div>
+                    <div class="rounded-3 p-3 bg-success-subtle text-success">
+                        <span class="material-symbols-outlined fs-3">function</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-medium">Recursos Inclusos</span>
+                        <h5 class="fw-bold text-dark mb-0 mt-1">PIX + PDF + Linha Dig.</h5>
+                    </div>
+                    <div class="rounded-3 p-3 bg-info-subtle text-info">
+                        <span class="material-symbols-outlined fs-3">qr_code_2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-medium">Isolamento Multi-tenant</span>
+                        <h4 class="fw-bold text-primary mb-0 mt-1">Ativo (`tenant_id`)</h4>
+                    </div>
+                    <div class="rounded-3 p-3 bg-warning-subtle text-warning">
+                        <span class="material-symbols-outlined fs-3">shield</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de Teste de Function Calling -->
+    <div class="row g-4">
+        <!-- Coluna de Entrada & Execução -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-primary fs-4">terminal</span>
+                    <h5 class="fw-bold text-dark mb-0">Simulador de Function Calling</h5>
+                </div>
+                <p class="text-muted small">
+                    Selecione ou informe o ID do morador para acionar a tool <code>GetPendingBoletos(moradorId)</code> registrada no Semantic Kernel.
+                </p>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">ID do Morador (moradorId)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">#</span>
+                        <input type="number" class="form-control bg-light border-start-0" @bind="SelectedMoradorId" placeholder="Ex: 10" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Prompt Simulação de Morador</label>
+                    <textarea class="form-control bg-light" rows="3" readonly>
+"Pode me enviar a segunda via do boleto e a chave PIX para pagamento da fatura pendente?"
+                    </textarea>
+                </div>
+
+                <div class="d-flex gap-2 mt-auto pt-3">
+                    <button class="btn btn-primary w-100 py-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-2"
+                            @onclick="ExecutarPlugin" disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                            <span>Executando Tool...</span>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined fs-5">play_arrow</span>
+                            <span>Executar Tool GetPendingBoletos</span>
+                        }
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-danger rounded-3 mt-3 mb-0 small" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>@ErrorMessage
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Coluna de Resultado e Payload Formatado -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-success fs-4">smart_toy</span>
+                        <h5 class="fw-bold text-dark mb-0">Resposta Gerada pelo Agente</h5>
+                    </div>
+                    @if (ExecutionResult != null)
+                    {
+                        <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-semibold">
+                            @(ExecutionResult.QuantidadePendencias > 0 ? $"{ExecutionResult.QuantidadePendencias} Débito(s) Encontrado(s)" : "Morador Adimplente")
+                        </span>
+                    }
+                </div>
+
+                @if (ExecutionResult == null)
+                {
+                    <div class="text-center py-5 my-auto">
+                        <span class="material-symbols-outlined text-muted fs-1 mb-2">extension_off</span>
+                        <p class="text-muted mb-0">Nenhuma execução realizada. Clique no botão de execução para simular.</p>
+                    </div>
+                }
+                else
+                {
+                    <!-- Resposta em Linguagem Natural -->
+                    <div class="p-3 bg-light rounded-4 border mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="badge bg-primary text-white rounded-pill px-2 py-1 small">Agente de IA</span>
+                            <small class="text-muted">Function Choice: Auto</small>
+                        </div>
+                        <p class="text-dark mb-0 style-ai-response" style="white-space: pre-line;">@ExecutionResult.MensagemFormatadaFormatadaIa</p>
+                    </div>
+
+                    <!-- Lista de Boletos Retornados -->
+                    @if (ExecutionResult.Boletos != null && ExecutionResult.Boletos.Any())
+                    {
+                        <h6 class="fw-bold text-dark mb-3">Detalhes do(s) Boleto(s) Retornado(s)</h6>
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var boleto in ExecutionResult.Boletos)
+                            {
+                                <div class="card border border-light-subtle rounded-3 p-3 shadow-none bg-body-tertiary">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fw-bold text-dark">@boleto.NumeroFatura</span>
+                                            <span class="badge bg-secondary-subtle text-secondary">Comp: @boleto.Competencia</span>
+                                            @if (boleto.Vencido)
+                                            {
+                                                <span class="badge bg-danger text-white">Vencido</span>
+                                            }
+                                        </div>
+                                        <h5 class="fw-bold text-primary mb-0">R$ @boleto.ValorTotal.ToString("F2")</h5>
+                                    </div>
+
+                                    <div class="row g-2 mb-3 small text-muted">
+                                        <div class="col-md-6">
+                                            <strong>Vencimento:</strong> @boleto.DataVencimento.ToString("dd/MM/yyyy")
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Linha Digitável:</strong> <code>@boleto.LinhaDigitavel</code>
+                                        </div>
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(boleto.CodigoPixCopiaECola))
+                                    {
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-semibold text-dark mb-1">Chave PIX Copia e Cola:</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="text" class="form-control bg-white font-monospace small" value="@boleto.CodigoPixCopiaECola" readonly />
+                                                <button class="btn btn-outline-primary" @onclick="() => CopiarPix(boleto.CodigoPixCopiaECola)">
+                                                    <span class="material-symbols-outlined fs-6 align-middle">content_copy</span> Copiar PIX
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="d-flex justify-content-end mt-2">
+                                        <a href="@boleto.PdfUrl" target="_blank" class="btn btn-sm btn-outline-dark rounded-2 d-flex align-items-center gap-1">
+                                            <span class="material-symbols-outlined fs-6">picture_as_pdf</span>
+                                            <span>Visualizar PDF</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int SelectedMoradorId = 10;
+    private bool IsLoading = false;
+    private string? ErrorMessage;
+    private BoletoPluginExecutionResultDto? ExecutionResult;
+
+    private async Task SimularComMoradorPadrao()
+    {
+        SelectedMoradorId = 10;
+        await ExecutarPlugin();
+    }
+
+    private async Task ExecutarPlugin()
+    {
+        ErrorMessage = null;
+
+        if (SelectedMoradorId <= 0)
+        {
+            ErrorMessage = "Informe um ID de morador válido (maior que zero).";
+            return;
+        }
+
+        IsLoading = true;
+
+        try
+        {
+            var result = await AiClient.ExecuteBoletoPluginAsync(SelectedMoradorId);
+            if (result != null && result.IsSuccess && result.Data != null)
+            {
+                ExecutionResult = result.Data;
+            }
+            else
+            {
+                ErrorMessage = result?.Message ?? "Não foi possível executar o plugin de boleto.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Exceção ao invocar a API: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task CopiarPix(string codigoPix)
+    {
+        if (!string.IsNullOrEmpty(codigoPix))
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", codigoPix);
+        }
+    }
+}

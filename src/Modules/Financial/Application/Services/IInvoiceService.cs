@@ -18,4 +18,7 @@ public interface IInvoiceService
     Task<Result<FaturaDetailDto>> CreateInvoiceAsync(CreateFaturaRequest request, CancellationToken ct = default);
 
     Task<Result> CancelInvoiceAsync(int id, CancellationToken ct = default);
+
+    Task<Result<IEnumerable<PendingBoletoDto>>> GetPendingBoletosByMoradorAsync(int moradorId, CancellationToken ct = default);
 }
+

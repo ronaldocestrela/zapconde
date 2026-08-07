@@ -57,7 +57,9 @@ public class FaturaConfiguration : IEntityTypeConfiguration<Fatura>
 
         builder.HasIndex(f => new { f.TenantId, f.CondoId, f.Competencia });
         builder.HasIndex(f => new { f.TenantId, f.UnidadeId });
+        builder.HasIndex(f => new { f.TenantId, f.MoradorId, f.Status });
         builder.HasIndex(f => new { f.TenantId, f.NumeroFatura }).IsUnique();
+
 
         builder.HasMany(f => f.Itens)
             .WithOne(i => i.Fatura)

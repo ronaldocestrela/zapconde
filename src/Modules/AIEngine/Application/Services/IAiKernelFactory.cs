@@ -9,7 +9,8 @@ namespace Modules.AIEngine.Application.Services;
 public interface IAiKernelFactory
 {
     /// <summary>
-    /// Cria uma instância configurada do Kernel do Semantic Kernel
+    /// Cria uma instância configurada do Kernel do Semantic Kernel com suporte a plugins/tools
     /// </summary>
-    Kernel CreateKernel(AiKernelConfig config);
+    Kernel CreateKernel(AiKernelConfig config, IEnumerable<object>? plugins = null);
 }
+
