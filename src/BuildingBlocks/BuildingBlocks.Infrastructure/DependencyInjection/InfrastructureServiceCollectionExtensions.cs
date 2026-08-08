@@ -1,12 +1,15 @@
 using BuildingBlocks.Infrastructure.Caching;
+using BuildingBlocks.Infrastructure.Email;
 using BuildingBlocks.Infrastructure.Messaging;
 using BuildingBlocks.Infrastructure.MultiTenancy;
 using BuildingBlocks.Shared.Caching;
+using BuildingBlocks.Shared.Email;
 using BuildingBlocks.Shared.MultiTenancy;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Globalization;
 
@@ -101,6 +104,11 @@ public static class InfrastructureServiceCollectionExtensions
 
         // Registra serviço de contexto de tenant (scoped para suportar isolamento por requisição)
         services.AddScoped<ICurrentTenantService, CurrentTenantService>();
+
+        // Registra serviços de e-mail SMTP Microsoft Outlook
+        services.Configure<OutlookSmtpOptions>(configuration.GetSection(OutlookSmtpOptions.SectionName));
+        services.AddSingleton<IValidateOptions<OutlookSmtpOptions>, OutlookSmtpOptionsValidator>();
+        services.AddScoped<IEmailService, OutlookSmtpEmailService>();
 
         return services;
     }

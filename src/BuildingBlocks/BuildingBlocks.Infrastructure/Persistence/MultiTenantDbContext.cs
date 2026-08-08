@@ -28,6 +28,12 @@ public abstract class MultiTenantDbContext : DbContext
         _currentTenantService = currentTenantService;
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    }
+
     /// <summary>
     /// Tenant ID resolvido no contexto atual (null quando não identificado).
     /// </summary>

@@ -17,6 +17,12 @@ public class IdentityDbContext : IdentityDbContext<ApplicationUser, ApplicationR
         _currentTenantService = currentTenantService;
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    }
+
     public DbSet<UserCondoMembership> UserCondoMemberships => Set<UserCondoMembership>();
 
     public DbSet<UserRefreshToken> UserRefreshTokens => Set<UserRefreshToken>();

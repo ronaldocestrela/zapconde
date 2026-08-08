@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BuildingBlocks.Shared;
 
 /// <summary>
@@ -12,7 +14,8 @@ public class Result<T> : Result
     /// </summary>
     public T? Data { get; private init; }
 
-    private Result(bool isSuccess, string message, T? data = default, IEnumerable<string>? errors = null)
+    [JsonConstructor]
+    public Result(bool isSuccess, string message, T? data = default, IEnumerable<string>? errors = null)
         : base(isSuccess, message, errors)
     {
         Data = data;
