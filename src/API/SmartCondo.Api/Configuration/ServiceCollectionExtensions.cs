@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddInfrastructure(configuration, busConfigurator =>
         {
             busConfigurator.AddConsumer<Modules.WhatsApp.Application.Consumers.WhatsAppInboundConsumer>();
+            busConfigurator.AddConsumer<BuildingBlocks.Infrastructure.Email.SendEmailConsumer>();
 
             busConfigurator.AddEntityFrameworkOutbox<WhatsAppDbContext>(o =>
             {

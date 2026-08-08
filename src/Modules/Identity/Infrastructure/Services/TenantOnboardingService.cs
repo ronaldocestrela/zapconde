@@ -1,10 +1,14 @@
 using BuildingBlocks.Shared;
 using BuildingBlocks.Shared.Caching;
+using BuildingBlocks.Shared.Events;
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Modules.Identity.Application;
 using Modules.Identity.Application.Dtos;
+using Modules.Identity.Application.Services;
 using Modules.Identity.Domain;
 using Modules.Identity.Infrastructure.Persistence;
 
@@ -14,7 +18,9 @@ public sealed class TenantOnboardingService(
     IdentityDbContext dbContext,
     UserManager<ApplicationUser> userManager,
     IOnboardingDraftService draftService,
-    IHostEnvironment environment) : ITenantOnboardingService
+    IHostEnvironment environment,
+    IPublishEndpoint publishEndpoint,
+    ILogger<TenantOnboardingService> logger) : ITenantOnboardingService
 {
     public async Task<Result<TenantCreatedDto>> CreateAsync(CreateTenantRequestDto request, CancellationToken ct = default)
     {
@@ -102,6 +108,7 @@ public sealed class TenantOnboardingService(
                 ? SmartCondoRoles.Sindico
                 : request.Contatos.MasterRole;
 
+            string tempPasswordDisplay = "[Senha mantida - Usuário já existente no sistema]";
             var masterUser = await userManager.FindByEmailAsync(request.Contatos.CorporateEmail);
             if (masterUser is null)
             {
@@ -116,6 +123,7 @@ public sealed class TenantOnboardingService(
                 };
 
                 var tempPassword = $"Zap@{Guid.NewGuid():N}"[..16];
+                tempPasswordDisplay = tempPassword;
                 var createResult = await userManager.CreateAsync(masterUser, tempPassword);
                 if (!createResult.Succeeded)
                 {
@@ -152,6 +160,24 @@ public sealed class TenantOnboardingService(
             if (transaction is not null)
             {
                 await transaction.CommitAsync(ct);
+            }
+
+            try
+            {
+                var welcomeEmail = TenantWelcomeEmailBuilder.BuildWelcomeEmail(
+                    request.Contatos.CorporateEmail,
+                    request.Contatos.MasterAdminName,
+                    request.Condominio.Nome,
+                    nextTenantId,
+                    tempPasswordDisplay);
+
+                await publishEndpoint.Publish(new SendEmailCommand(welcomeEmail, nextTenantId), ct);
+                logger.LogInformation("SendEmailCommand publicado com sucesso para Tenant {TenantId} (E-mail: {Email})",
+                    nextTenantId, request.Contatos.CorporateEmail);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Falha ao publicar SendEmailCommand durante onboarding do Tenant {TenantId}", nextTenantId);
             }
 
             if (request.DraftId.HasValue)
