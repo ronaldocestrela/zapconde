@@ -80,10 +80,10 @@ public sealed class OcorrenciaIntegrationTests : IAsyncLifetime
             createResult.IsSuccess.Should().BeTrue(createResult.Message);
             createResult.Data.Should().NotBeNull();
             createResult.Data!.Status.Should().Be(StatusOcorrencia.Aberta);
-            createResult.Data.Anexos.Should().HaveCount(1);
-            createResult.Data.Historico.Should().HaveCount(1);
+            createResult.Data!.Anexos.Should().HaveCount(1);
+            createResult.Data!.Historico.Should().HaveCount(1);
 
-            var ticketId = createResult.Data.Id;
+            var ticketId = createResult.Data!.Id;
 
             // Update status (Aberta -> EmAndamento)
             var updateResult = await appService.AtualizarStatusAsync(ticketId, new AtualizarStatusOcorrenciaRequest(
@@ -95,13 +95,13 @@ public sealed class OcorrenciaIntegrationTests : IAsyncLifetime
 
             updateResult.IsSuccess.Should().BeTrue(updateResult.Message);
             updateResult.Data!.Status.Should().Be(StatusOcorrencia.EmAndamento);
-            updateResult.Data.Historico.Should().HaveCount(2);
+            updateResult.Data!.Historico.Should().HaveCount(2);
 
             // Fetch metrics
             var metricsResult = await appService.ObterResumoMetricasAsync(100);
             metricsResult.IsSuccess.Should().BeTrue(metricsResult.Message);
             metricsResult.Data!.Total.Should().Be(1);
-            metricsResult.Data.EmAndamento.Should().Be(1);
+            metricsResult.Data!.EmAndamento.Should().Be(1);
         }
 
         // 3. Tenant 2 tries to access Tenant 1 Ticket -> Query Filter enforces isolation

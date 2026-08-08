@@ -3,7 +3,9 @@ using System.Net.Sockets;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.RabbitMq;
 
 namespace Tests.Integration.Infrastructure;
@@ -77,7 +79,8 @@ public sealed class RabbitMqMessagingBootstrapIntegrationTests : IAsyncLifetime
             ["RabbitMQ:Password"] = "guest",
             ["Identity:SeedOnStartup"] = "false",
             ["Database:MigrateOnStartup"] = "false",
-            ["Identity:UseInMemoryDatabase"] = "true"
+            ["Identity:UseInMemoryDatabase"] = "true",
+            ["Infrastructure:UseInMemoryCache"] = "true"
         };
 
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
@@ -86,6 +89,14 @@ public sealed class RabbitMqMessagingBootstrapIntegrationTests : IAsyncLifetime
             builder.ConfigureAppConfiguration((_, configurationBuilder) =>
             {
                 configurationBuilder.AddInMemoryCollection(settings);
+            });
+
+            builder.ConfigureTestServices(services =>
+            {
+                var mockMultiplexer = new Moq.Mock<StackExchange.Redis.IConnectionMultiplexer>();
+                var mockDatabase = new Moq.Mock<StackExchange.Redis.IDatabase>();
+                mockMultiplexer.Setup(m => m.GetDatabase(Moq.It.IsAny<int>(), Moq.It.IsAny<object>())).Returns(mockDatabase.Object);
+                services.AddSingleton(mockMultiplexer.Object);
             });
         });
     }

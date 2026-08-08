@@ -107,7 +107,7 @@ public sealed class AreaComumIntegrationTests : IAsyncLifetime
             var listResult = await appService.GetAllAsync(condoId: 1);
 
             listResult.IsSuccess.Should().BeTrue();
-            listResult.Data.Should().HaveCount(1);
+            listResult.Data!.Should().HaveCount(1);
             var area = listResult.Data!.First();
             area.Nome.Should().Be("Salão de Festas Principal");
 

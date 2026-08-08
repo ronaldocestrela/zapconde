@@ -4,7 +4,10 @@ using Modules.Identity.Infrastructure;
 using Modules.Operations.Infrastructure;
 using Modules.WhatsApp.Infrastructure;
 using Modules.AIEngine.Infrastructure;
+using BuildingBlocks.Infrastructure.Environment;
 using SmartCondo.Api.Configuration;
+
+EnvLoader.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 

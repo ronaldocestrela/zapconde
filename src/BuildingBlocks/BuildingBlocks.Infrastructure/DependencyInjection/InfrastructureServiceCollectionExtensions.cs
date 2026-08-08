@@ -107,6 +107,32 @@ public static class InfrastructureServiceCollectionExtensions
 
         // Registra serviços de e-mail SMTP Microsoft Outlook
         services.Configure<OutlookSmtpOptions>(configuration.GetSection(OutlookSmtpOptions.SectionName));
+        services.PostConfigure<OutlookSmtpOptions>(options =>
+        {
+            var host = System.Environment.GetEnvironmentVariable("SMTP_HOST");
+            if (!string.IsNullOrWhiteSpace(host)) options.Host = host;
+
+            var portStr = System.Environment.GetEnvironmentVariable("SMTP_PORT");
+            if (int.TryParse(portStr, out var port)) options.Port = port;
+
+            var username = System.Environment.GetEnvironmentVariable("SMTP_USERNAME");
+            if (!string.IsNullOrWhiteSpace(username)) options.Username = username;
+
+            var password = System.Environment.GetEnvironmentVariable("SMTP_PASSWORD");
+            if (!string.IsNullOrWhiteSpace(password)) options.Password = password;
+
+            var fromEmail = System.Environment.GetEnvironmentVariable("SMTP_FROM_EMAIL") ?? System.Environment.GetEnvironmentVariable("SMTP_FROMEMAIL");
+            if (!string.IsNullOrWhiteSpace(fromEmail)) options.FromEmail = fromEmail;
+
+            var fromName = System.Environment.GetEnvironmentVariable("SMTP_FROM_NAME") ?? System.Environment.GetEnvironmentVariable("SMTP_FROMNAME");
+            if (!string.IsNullOrWhiteSpace(fromName)) options.FromName = fromName;
+
+            var enableTlsStr = System.Environment.GetEnvironmentVariable("SMTP_ENABLE_START_TLS");
+            if (bool.TryParse(enableTlsStr, out var enableTls)) options.EnableStartTls = enableTls;
+
+            var timeoutStr = System.Environment.GetEnvironmentVariable("SMTP_TIMEOUT_MS") ?? System.Environment.GetEnvironmentVariable("SMTP_TIMEOUT_MILLISECONDS");
+            if (int.TryParse(timeoutStr, out var timeout)) options.TimeoutMilliseconds = timeout;
+        });
         services.AddSingleton<IValidateOptions<OutlookSmtpOptions>, OutlookSmtpOptionsValidator>();
         services.AddScoped<IEmailService, OutlookSmtpEmailService>();
 

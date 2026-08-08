@@ -17,10 +17,10 @@ public sealed class VinculoUnidadeConfiguration : IEntityTypeConfiguration<Vincu
         builder.Property(x => x.CreatedByUserId).HasMaxLength(64);
 
         builder.Property(x => x.Dependencias)
-            .HasColumnType("jsonb")
             .HasConversion(
                 v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
                 v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<string>())
+            .HasColumnType("jsonb")
             .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<string>>(
                 (a, b) => (a == null && b == null) || (a != null && b != null && a.SequenceEqual(b)),
                 v => v.Aggregate(0, (hash, s) => HashCode.Combine(hash, s.GetHashCode())),
